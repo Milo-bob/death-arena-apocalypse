@@ -156,7 +156,7 @@ Object.assign(HEROES.weaver, { name: 'Plant', cost: 350, start: 'w_crossbow', bl
 Object.assign(HEROES.clock, { name: 'Steroids', cost: 450, start: 'w_revolver', start2: 'w_revolver', blurb: 'Dual wields: both guns fire together. Q: berserk.',
   ability: { type: 'overdrive', name: 'Berserk', cd: 13, dur: 5, rate: 1.5 }, mod(P) { P.dual = 1; P.ammoMul *= 1.2; } });
 Object.assign(HEROES.brute, { name: 'Robot', cost: 550, start: 'w_shotgun', blurb: 'Eats weapons for ammo and health with Q.',
-  ability: { type: 'eat', name: 'Eat Weapon', cd: 3 }, mod(P) { P.ammoMul *= 1.1; } });
+  ability: { type: 'eat', name: 'Eat Weapon', cd: 3 }, mod(P) { P.ammoMul *= 1.1; P.dropMul *= 1.8; P.lootTier += 1; } });
 Object.assign(HEROES.siege, { name: 'Rebel', cost: 650, start: 'w_popgun', blurb: 'Brings a drone ally. Q: call another.',
   ability: { type: 'turret', name: 'Ally Drone', cd: 8, dur: 14, rate: 4, dmg: 8 }, mod(P) { P.maxhp -= 20; P.regen += 0.3; } });
 Object.assign(HEROES.hive, { name: 'Chicken', cost: 750, start: 'w_machete', blurb: 'Keeps going when it should be dead (revive). Q: flap dash.',
@@ -174,7 +174,7 @@ Object.assign(HEROES.weaver, { passive: 'Walks faster and slowly regenerates.', 
 Object.assign(HEROES.runner, { passive: 'Shoots faster and ammo lasts longer.', active: 'Pop Pop: rapid fire for a few seconds.' });
 Object.assign(HEROES.clock, { passive: 'Dual wield: both weapons fire at once.', active: 'Berserk: fire even faster for a few seconds.' });
 Object.assign(HEROES.hive, { passive: 'Keeps going once when it should be dead.', active: 'Flap: a quick roll, you cannot be hit.' });
-Object.assign(HEROES.brute, { passive: 'Starts with a shotgun and a bigger appetite.', active: 'Eat Weapon: turns a nearby weapon into ammo and health.' });
+Object.assign(HEROES.brute, { passive: 'Better drop rates: more ammo, health and weapons, and better weapon loot.', active: 'Eat Weapon: turns a nearby weapon into ammo and health.' });
 HEROES.sun.clan = 'aqua'; HEROES.gunner.clan = 'void'; HEROES.weaver.clan = 'bio'; HEROES.brute.clan = 'iron';
 HEROES.sun.ultras = [
   { name: 'Gun Nut', d: '+60% ammo from pickups, +15% damage.', a: P => { P.ammoMul *= 1.6; P.dmg *= 1.15; } },
@@ -474,7 +474,7 @@ function newStats() {
   return { dmg: 1, rate: 1, speed: 1, maxhp: 80, pierce: 0, extra: 0, crit: 0.05, critMul: 1.75, killHeal: 0, regen: 0, dashCd: 1, dashDmg: 0, range: 1,
     blades: 0, spin: 1, bladeDmg: 1, orbitR: 1, bladeKnock: 0, poison: 0, poisonMul: 1, poisonSlow: 0, poisonSpread: 0, poisonLeech: 0, burn: 0, killBlast: 0, blastRad: 1, blastMul: 1,
     chain: 0, thorns: 0, taken: 1, goldMul: 1, aura: 0, clearHeal: 0, enemyHp: 1, noHeal: 0, homing: 0, phoenix: 0, dashBlast: 0, critBlast: 0, berserk: 0, still: 0,
-    mutagen: 0, trail: 0, execute: 0, abCd: 1, ammoMul: 1, magnet: 1, dual: 0, xpMul: 1, ammoCost: 1, tags: {} };
+    mutagen: 0, trail: 0, execute: 0, abCd: 1, ammoMul: 1, magnet: 1, dual: 0, xpMul: 1, ammoCost: 1, dropMul: 1, lootTier: 0, tags: {} };
 }
 function buildStats(run, save) {
   const hero = HEROES[run.hero], P = newStats();

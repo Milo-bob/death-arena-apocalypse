@@ -199,8 +199,8 @@ Object.assign(Game, {
     for (let i = 0; i < n; i++) this.spawnItem(e.x, e.y, 'rad', { amt: xp / n });
     run.ammo = run.ammo || startAmmo();
     const want = this.ammoWanted(), low = run.ammo[want] / AMMO[want].max < 0.35;
-    if (!e.boss && Math.random() < (low ? 0.34 : 0.17)) this.spawnItem(e.x, e.y, 'ammo', { type: want, amt: AMMO[want].amt });
-    if (!e.boss && !P.noHeal && Math.random() < (run.hp < P.maxhp * 0.5 ? 0.09 : 0.03)) this.spawnItem(e.x, e.y, 'heal', { amt: 10 });
+    if (!e.boss && Math.random() < Math.min(0.85, (low ? 0.34 : 0.17) * P.dropMul)) this.spawnItem(e.x, e.y, 'ammo', { type: want, amt: AMMO[want].amt });
+    if (!e.boss && !P.noHeal && Math.random() < (run.hp < P.maxhp * 0.5 ? 0.09 : 0.03) * Math.min(P.dropMul, 1.8)) this.spawnItem(e.x, e.y, 'heal', { amt: 10 });
     run.coreAcc = (run.coreAcc || 0) + (e.boss ? 0 : e.elite ? 3 : ENEMY[e.type].cost * 0.4) * (1 + 0.15 * run.act) * (1 + 0.2 * run.heat);
     if (run.coreAcc >= 1) { const g = Math.floor(run.coreAcc); run.coreAcc -= g; run.cores += g; }
     if (e.free) {
@@ -310,7 +310,7 @@ Object.assign(Game, {
   },
   openChest(ch) {
     const C = this.C; Sfx.good(); C.shake = Math.max(C.shake, 3);
-    if (ch.kind === 'ammo') for (let i = 0; i < 4; i++) { const t = this.ammoWanted(); this.spawnItem(ch.x, ch.y, 'ammo', { type: t, amt: AMMO[t].amt }); }
+    if (ch.kind === 'ammo') for (let i = 0, k = Math.round(4 * this.P.dropMul); i < k; i++) { const t = this.ammoWanted(); this.spawnItem(ch.x, ch.y, 'ammo', { type: t, amt: AMMO[t].amt }); }
     else if (ch.kind === 'weapon') this.spawnWeapon(ch.x, ch.y + 30, false, true);
     else for (let i = 0; i < 2; i++) this.spawnItem(ch.x, ch.y, 'heal', { amt: 10 });
   },
@@ -467,13 +467,13 @@ Object.assign(Game, {
   },
   // ---------- weapons on the ground (swap with E) ----------
   spawnWeapon(x, y, quiet, better) {
-    const C = this.C, run = this.run, mine = [run.wpn || run.hero, run.wpn2], cap = 1 + Math.floor(run.act * 0.8) + (better ? 1 : 0);
+    const C = this.C, run = this.run, mine = [run.wpn || run.hero, run.wpn2], cap = 1 + Math.floor(run.act * 0.8) + (better ? 1 : 0) + this.P.lootTier;
     let ids = Object.keys(HEROES).filter(k => HEROES[k].pool && !mine.includes(k) && !C.wdrops.some(d => d.id === k) && weaponTier(k) <= cap);
     if (!ids.length) ids = Object.keys(HEROES).filter(k => HEROES[k].pool && !mine.includes(k));
     if (!ids.length) return;
     C.wdrops.push({ id: pick(ids), x, y }); if (!quiet) this.floatText(x, y - 30, 'WEAPON', '#ffd91f');
   },
-  dropWeapon(e) { if (Math.random() < (e.boss ? 1 : e.elite ? 0.4 : 0.02)) this.spawnWeapon(e.x, e.y); },
+  dropWeapon(e) { if (Math.random() < Math.min(1, (e.boss ? 1 : e.elite ? 0.4 : 0.02) * this.P.dropMul)) this.spawnWeapon(e.x, e.y); },
   pickWeapon(d) {
     const C = this.C, run = this.run, cur = run.wpn || run.hero;
     C.wdrops = C.wdrops.filter(x => x !== d);

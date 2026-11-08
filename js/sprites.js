@@ -187,12 +187,11 @@ const HERO_ART = {
 // ---------- Fish, Crystal, Plant, Robot: same top-down look as the other heroes (bright edge, dark fill, cyan weapon marker, facing right) ----------
 const sE = (cx, cy, rx, ry) => (x, y) => (Math.hypot((x - cx) / rx, (y - cy) / ry) - 1) * Math.min(rx, ry);
 const HERO_FRONT = {};   // no front-view heroes: everyone is drawn from above and turns towards the cursor
-HERO_ART.sun = P => [   // fish
-  part(sP([[0.5, 5], [8, 12], [0.5, 19], [3.2, 12]]), 'acc'),
-  part(sP([[7.5, 6.8], [12, 1.8], [14.5, 6.8]]), 'dark'), part(sP([[7.5, 17.2], [12, 22.2], [14.5, 17.2]]), 'dark'),
-  part(sE(12, 12, 9.4, 5.9), 'body'), part(sE(10, 12, 4.4, 2.8), 'dark'), dot(9, 11, P.a), dot(11, 13, P.a), dot(7, 12, P.a),
-  part(sC(16.5, 9.2, 1.7), 'acc'), part(sC(16.5, 14.8, 1.7), 'acc'), dot(17, 9, '#ffffff'), dot(17, 15, '#ffffff'),
-  part(sB(19.5, 12, 2.2, 1.5), 'dark'), part(sB(22.2, 12, 1.2, 0.9), 'cy'), dot(23, 12, CY),
+HERO_ART.sun = P => [   // fish: big round head, bulging eyes, forked tail
+  part(sP([[0.8, 5.5], [7.5, 12], [0.8, 18.5], [3.4, 12]]), 'dark'),
+  part(sC(10.5, 12, 7.8), 'body'), part(sLine(3.5, 12, 10.5, 12, 0.6), 'dark'), dot(8, 9, P.a), dot(8, 15, P.a), dot(11, 12, P.a),
+  part(sC(15.6, 6.9, 3.2), 'acc'), part(sC(15.6, 17.1, 3.2), 'acc'), dot(16, 6, '#ffffff'), dot(16, 17, '#ffffff'), dot(17, 7, '#101018'), dot(17, 16, '#101018'),
+  part(sB(19.8, 12, 2.6, 1.5), 'dark'), part(sB(22.5, 12, 1.2, 0.9), 'cy'), dot(23, 12, CY),
 ];
 HERO_ART.gunner = P => [   // crystal
   part(sStar(11.5, 12, 6, 11, 6.4, 0.3), 'dark'),
@@ -208,13 +207,13 @@ HERO_ART.weaver = P => [   // plant: leaves around a bulb with a flytrap mouth
   part(sP([[13, 5.6], [22.5, 9.2], [17, 11.2]]), 'acc'), part(sP([[13, 18.4], [22.5, 14.8], [17, 12.8]]), 'acc'),
   dot(19, 10, P.a), dot(21, 10, P.a), dot(19, 14, P.a), dot(21, 14, P.a), part(sB(17.5, 12, 3.2, 0.7), 'cy'), dot(23, 12, CY),
 ];
-HERO_ART.brute = P => [   // robot: boxy hull on treads
-  part(sB(11, 4.8, 8.6, 2.2, 0.6), 'dark'), part(sB(11, 19.2, 8.6, 2.2, 0.6), 'dark'),
-  dot(4, 4, P.a), dot(8, 4, P.a), dot(12, 4, P.a), dot(16, 4, P.a), dot(4, 20, P.a), dot(8, 20, P.a), dot(12, 20, P.a), dot(16, 20, P.a),
-  part(sB(11, 12, 7.8, 6.2, 1.6), 'body'),
-  part(sB(9.5, 12, 3.8, 3.5, 0.6), 'dark'), dot(8, 10, P.a), dot(8, 14, P.a), dot(10, 12, P.x),
-  part(sC(14.8, 12, 2.5), 'acc'), dot(15, 12, P.x),
-  part(sB(19.3, 12, 3.8, 1.8), 'dark'), part(sB(22.4, 12, 1.2, 1.2), 'cy'), dot(23, 12, CY),
+HERO_ART.brute = P => [   // robot: shoulders, square body, square head with a glowing visor (seen from above)
+  part(sB(10, 4.2, 2.8, 1.8, 0.5), 'acc'), part(sB(10, 19.8, 2.8, 1.8, 0.5), 'acc'),
+  part(sB(3.8, 12, 1.6, 4.6, 0.5), 'acc'), dot(3, 10, P.x), dot(3, 14, P.x),
+  part(sB(10.5, 12, 6.6, 7, 1.5), 'body'),
+  part(sB(13.8, 12, 3.7, 3.7, 0.8), 'dark'), part(sC(12.5, 12, 1.4), 'acc'), dot(12, 12, P.x),
+  part(sB(15.8, 12, 0.8, 2.6), 'cy'),
+  part(sB(20.2, 12, 2.9, 1.5), 'dark'), part(sB(22.7, 12, 1, 0.9), 'cy'), dot(23, 12, CY),
 ];
 
 // ---------- enemies (red team, yellow marker) and bosses ----------
