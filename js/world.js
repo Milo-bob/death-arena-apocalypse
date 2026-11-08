@@ -101,8 +101,8 @@ Object.assign(Game, {
   startRun() {
     const s = Save.data, hero = HEROES[s.hero];
     const lo = (s.loadout && s.loadout[s.hero]) || {}, own = id => (id && s.heroes[id] && HEROES[id].clan === hero.clan ? id : s.hero);
-    this.run = { hero: s.hero, wpn: hero.start || s.hero, abl: s.hero, clan: hero.clan, act: 0, seed: (Math.random() * 1e9) | 0, cstate: {}, cleared: 0, perks: [], drawbacks: [], hp: 100, gold: 20 + 25 * (s.meta.fort || 0), cores: 0,
-      heat: s.heat, kills: 0, rooms: 0, xp: 0, plv: 1, coreAcc: 0, ammo: startAmmo(), wpn2: hero.start2 || null, bonus: { mut: 0 }, mutKills: 0, killAcc: 0, phoenixUsed: false, t0: Date.now() };
+    this.run = { hero: s.hero, wpn: hero.start || s.hero, abl: s.hero, clan: hero.clan, act: 0, seed: (Math.random() * 1e9) | 0, cstate: {}, cleared: 0, perks: [], drawbacks: [], hp: 100, gold: 20 + 25 * (s.meta.fort || 0),
+      kills: 0, rooms: 0, xp: 0, plv: 1, coreAcc: 0, ammo: startAmmo(), wpn2: hero.start2 || null, bonus: { mut: 0 }, mutKills: 0, killAcc: 0, phoenixUsed: false, t0: Date.now() };
     this.P = buildStats(this.run, s); this.run.hp = this.P.maxhp;
     this.enterAct();
   },
@@ -185,7 +185,7 @@ Object.assign(Game, {
   },
   spawnRoamers(Wd) {
     const C = this.C, run = this.run, act = run.act, R = rng(run.seed + 99), sc = Wd.cells[Wd.startId], boss = Wd.cells.find(c => c.type === 'boss');
-    C.hpS = (1 + 0.14 * act) * (1 + 0.15 * run.heat) * this.P.enemyHp * 1.15; C.dmgS = (1 + 0.06 * act) * (1 + 0.12 * run.heat); C.spdS = 1;
+    C.hpS = (1 + 0.14 * act) * this.P.enemyHp * 1.15; C.dmgS = (1 + 0.06 * act); C.spdS = 1;
     const budget = (40 + act * 4) * (boss ? 0.55 : 1), caves = Wd.nodes.filter(n => n.type === 'cave' && Math.hypot(n.x - sc.cx, n.y - sc.cy) > 520), tot = caves.reduce((s, n) => s + n.r, 0) || 1;
     const maggots = AREA_ENEMIES[areaOf(act)].includes('maggot');
     // rule: enemy packs sit in the caverns (bigger cavern = more enemies), never within 520px of where you start
@@ -232,8 +232,6 @@ Object.assign(Game, {
     const want = this.ammoWanted(), low = run.ammo[want] / AMMO[want].max < 0.35;
     if (!e.boss && Math.random() < Math.min(0.85, (low ? 0.34 : 0.17) * P.dropMul)) this.spawnItem(e.x, e.y, 'ammo', { type: want, amt: AMMO[want].amt });
     if (!e.boss && !P.noHeal && Math.random() < (run.hp < P.maxhp * 0.5 ? 0.09 : 0.03) * Math.min(P.dropMul, 1.8)) this.spawnItem(e.x, e.y, 'heal', { amt: 10 });
-    run.coreAcc = (run.coreAcc || 0) + (e.boss ? 0 : e.elite ? 3 : ENEMY[e.type].cost * 0.4) * (1 + 0.15 * run.act) * (1 + 0.2 * run.heat);
-    if (run.coreAcc >= 1) { const g = Math.floor(run.coreAcc); run.coreAcc -= g; run.cores += g; }
     if (P.bloodlust && !e.boss && !P.noHeal && Math.random() < P.bloodlust) this.healP(10);
     if (e.free) {
       C.lvlKills++;
@@ -458,11 +456,11 @@ Object.assign(Game, {
     curse = curse || null;
     if (curse && curse.halfhp) { P.maxhp = Math.round(P.maxhp / 2); run.hp = Math.min(run.hp, P.maxhp); }
     C.enc = cell; C.curse = curse || {}; C.cellEnc = cell; C.intro = 1.0; C.waves = []; C.waveIdx = 0; C.waveCd = 0; C.boss = null; C.elitesLeft = elite ? 2 : 0;
-    C.hpS = (1 + 0.12 * act) * (1 + 0.04 * row) * (1 + 0.15 * run.heat) * P.enemyHp * ((curse && curse.hp) || 1);
-    C.dmgS = (1 + 0.03 * act) * (1 + 0.12 * run.heat) * ((curse && curse.dmg) || 1);
+    C.hpS = (1 + 0.12 * act) * (1 + 0.04 * row) * P.enemyHp * ((curse && curse.hp) || 1);
+    C.dmgS = (1 + 0.03 * act) * ((curse && curse.dmg) || 1);
     C.spdS = (curse && curse.speed) || 1;
     if (boss) {
-      const b = BOSSES[areaOf(act)], hp = b.hp * (1 + 0.2 * run.heat) * (1 + 0.5 * Math.floor(act / LOOP_LEVELS)) * P.enemyHp, sp = this.safeSpot(cell.cx, cell.cy - 80, 34), x = sp.x, y = sp.y;
+      const b = BOSSES[areaOf(act)], hp = b.hp * (1 + 0.5 * Math.floor(act / LOOP_LEVELS)) * P.enemyHp, sp = this.safeSpot(cell.cx, cell.cy - 80, 34), x = sp.x, y = sp.y;
       C.boss = { type: 'boss', boss: true, x, y, lx: x, ly: y, r: b.r, hp, maxhp: hp, sh: 0, flash: 0, phase: 1, pat: null, pt: 0, cd: 2, n: 0, sa: 0, atk: 0, col: b.col, name: b.name, vx: 0, vy: 0, slow: 0, slowT: 0, poison: 0, poisonT: 0, burn: 0, burnT: 0, spawnT: 0, bladeCd: 0, ang: 0, stage: 0 };
       C.en.push(C.boss); C.bannerText = b.name.toUpperCase(); Sfx.bossIntro();
     } else {
@@ -486,12 +484,10 @@ Object.assign(Game, {
   encClear() {
     const C = this.C, run = this.run, cell = C.enc, n = cell.type, p = C.p;
     cell.state.cleared = true; run.rooms++; run.cleared++; if (n === 'boss') run.bosses = (run.bosses || 0) + 1;
-    const base = { fight: 6, elite: 14, curse: 22, boss: 45 }[n] || 0, got = Math.round(base * (1 + 0.35 * run.act) * (1 + 0.2 * run.heat));
-    run.cores += got;
+    const base = { fight: 6, elite: 14, curse: 22, boss: 45 }[n] || 0, got = Math.round(base * (1 + 0.35 * run.act));
     C.eb.length = 0; C.beams.length = 0; C.haz = C.haz.filter(h => h.friendly); C.enc = null; C.boss = null; C.clearMsg = 2;
     this.P = buildStats(run, Save.data); run.hp = Math.min(run.hp, this.P.maxhp);
     if (this.P.clearHeal) this.heal(this.P.clearHeal);
-    this.floatText(p.x, p.y - 34, '+' + got + ' CORES', '#3de8ff', 1.1);
     if (n === 'elite' || (n === 'fight' && Math.random() < 0.3)) this.spawnWeapon(cell.cx, cell.cy + 90);
     const kind = cell.rewardKind;
     if (n === 'curse' || kind === 'epic') cell.state.reward = { kind: 'perk', min: 'epic', cores: got };

@@ -104,7 +104,7 @@ const UI = {
     const s = Save.data, c = CLANS[s.clan];
     for (const id of PLAYABLE) if (!s.heroes[id]) { s.heroes[id] = 1; Save.write(true); }   // every hero is selectable from the start Menu.set('hub', s.clan, s.hero);
     let h = '<div class="row" style="justify-content:space-between;align-items:center"><div><h1 style="margin:0;font-size:26px">WASTELAND CAMP</h1></div>'
-      + '<div style="text-align:right"><div style="font-family:Silk;color:#3de8ff">CORES ' + s.cores + '</div><button class="btn" onclick="UI.title()">MAIN MENU</button><button class="btn red" onclick="UI.delSlot(0)">DELETE SAVE</button></div></div>';
+      + '<div style="text-align:right"><button class="btn" onclick="UI.title()">MAIN MENU</button><button class="btn red" onclick="UI.delSlot(0)">DELETE SAVE</button></div></div>';
     h += '<div class="tabs">' + [].map(t => '<button class="btn ' + (this.tab === t[0] ? 'sel' : '') + '" onclick="UI.hub(\'' + t[0] + '\')">' + t[1] + '</button>').join('') + '</div>';
     if (this.tab === 'run') {
       h += this.selectHtml(s);
@@ -158,10 +158,8 @@ const UI = {
       + (own ? '' : '<div class="cs-lab" style="color:#ff6a6a">LOCKED</div><p>' + esc(u ? u.d + ' (' + u.prog(s) + ')' : '') + '</p>');
     let act = '';
     if (!own) act = '<button class="btn big" disabled>LOCKED</button>';
-    else if (s.run) act = '<button class="btn big" onclick="Game.resume()">RESUME RUN</button><button class="btn red" onclick="if(confirm(\'Abandon the current run? You keep 25% of its cores.\')){UI.summary(Game.abandonSaved())}">ABANDON</button>';
+    else if (s.run) act = '<button class="btn big" onclick="Game.resume()">RESUME RUN</button><button class="btn red" onclick="if(confirm(\'Abandon the current run?\')){UI.summary(Game.abandonSaved())}">ABANDON</button>';
     else act = '<button class="btn big" onclick="Game.startRun()">START</button>';
-    act += '<span class="sm" style="margin-left:14px">HEAT</span>';
-    for (let i = 0; i <= 5; i++) act += '<button class="btn ' + (s.heat === i ? 'sel' : '') + '" style="padding:5px 10px" ' + (i > s.heatMax ? 'disabled' : '') + ' onclick="Save.data.heat=' + i + ';UI.selectChar(UI.selId)">' + i + '</button>';
     document.getElementById('csActions').innerHTML = act;
   },
   startFromSelect() { const s = Save.data; if (!s || !s.heroes[this.selId]) return; if (s.run) Game.resume(); else Game.startRun(); },
@@ -221,7 +219,7 @@ const UI = {
   },
   status() {
     const run = Game.run, P = Game.P;
-    let h = '<div class="sm" style="width:100%;display:flex;justify-content:space-between;margin-bottom:6px"><span>HEARTS ' + Math.ceil(run.hp / 10) + '/' + Math.round(P.maxhp / 10) + '</span><span style="color:#ffd91f">GOLD ' + run.gold + '</span><span style="color:#3de8ff">CORES AT RISK ' + run.cores + '</span></div>';
+    let h = '<div class="sm" style="width:100%;display:flex;justify-content:space-between;margin-bottom:6px"><span>HEARTS ' + Math.ceil(run.hp / 10) + '/' + Math.round(P.maxhp / 10) + '</span><span style="color:#ffd91f">GOLD ' + run.gold + '</span></div>';
     return h;
   },
   buildList() {
@@ -237,7 +235,7 @@ const UI = {
 
   // ---------- rewards ----------
   reward(rw, cores) {
-    let h = '<h2>ROOM CLEARED</h2><p class="dim sm">+' + cores + ' cores (at risk until you exit)</p>' + this.status();
+    let h = '<h2>ROOM CLEARED</h2>' + this.status();
     if (rw.kind === 'gold') {
       Game.run.gold += rw.amount;
       h += '<p style="margin:20px;color:#ffd91f;font-family:Silk;font-size:22px">+' + rw.amount + ' GOLD</p><button class="btn big" onclick="Game.nodeDone()">CONTINUE</button>';
@@ -312,17 +310,17 @@ const UI = {
       this.show(h); this.acts(...n.ev.offers.map((o, i) => () => this.trade(i)));
     } else {
       const cost = Math.round(Game.P.maxhp * 0.25);
-      this.show('<h2>BLOOD FOUNT</h2>' + this.status() + '<p class="dim">The fount offers riches for blood.</p><div class="row" style="margin-top:16px"><div class="card" onclick="UI.blood()"><h3>SACRIFICE</h3><p>Lose ' + cost + ' HP.</p><p class="pro">+90 gold, +12 cores</p></div></div><div class="row"><button class="btn big" onclick="Game.nodeDone()">WALK AWAY</button></div>');
+      this.show('<h2>BLOOD FOUNT</h2>' + this.status() + '<p class="dim">The fount offers riches for blood.</p><div class="row" style="margin-top:16px"><div class="card" onclick="UI.blood()"><h3>SACRIFICE</h3><p>Lose ' + cost + ' HP.</p><p class="pro">+90 gold</p></div></div><div class="row"><button class="btn big" onclick="Game.nodeDone()">WALK AWAY</button></div>');
       this.acts(() => this.blood());
     }
   },
   trade(i) { const run = Game.run, n = Game.C.node, o = n.ev.offers[i]; Game.takeDrawback(o.draw); Game.takePerk(o.perk); Game.nodeDone(); },
-  blood() { const run = Game.run, P = Game.P; run.hp = Math.max(1, run.hp - Math.round(P.maxhp * 0.25)); run.gold += 90; run.cores += 12; Game.nodeDone(); },
+  blood() { const run = Game.run, P = Game.P; run.hp = Math.max(1, run.hp - Math.round(P.maxhp * 0.25)); run.gold += 90; Game.nodeDone(); },
 
   // ---------- curse room ----------
   curse(n) {
     if (!n.cu) n.cu = Object.keys(CURSES).sort(() => Math.random() - 0.5).slice(0, 3);
-    let h = '<h2>CURSED ROOM</h2>' + this.status() + '<p class="dim">Pick a curse for this fight. Win to claim an <b style="color:#b24bff">EPIC</b> perk choice and +22 cores.</p><div class="row" style="margin-top:14px">';
+    let h = '<h2>CURSED ROOM</h2>' + this.status() + '<p class="dim">Pick a curse for this fight. Win to claim an <b style="color:#b24bff">EPIC</b> perk choice.</p><div class="row" style="margin-top:14px">';
     n.cu.forEach((id, i) => { h += '<div class="card" style="--c:#ff3de8" onclick="UI.takeCurse(\'' + id + '\')"><span class="dim sm" style="position:absolute;right:8px;top:6px">[' + (i + 1) + ']</span><h3 style="color:#ff3de8">' + CURSES[id].name.toUpperCase() + '</h3><p>' + CURSES[id].d + '</p></div>'; });
     h += '</div><div class="row"><button class="btn" onclick="Game.nodeDone()">WALK AWAY</button></div>';
     this.show(h); this.acts(...n.cu.map(id => () => this.takeCurse(id)));
@@ -347,12 +345,12 @@ const UI = {
   summary(res) {
     const head = res.why === 'win' ? 'VICTORY' : res.why === 'exit' ? 'ESCAPED' : 'RUN OVER';
     const col = res.why === 'dead' ? '#ff2d3d' : '#39ff6e';
-    this.show('<h1 style="color:' + col + ';text-shadow:0 0 14px ' + col + '">' + head + '</h1><table><tr><td>Levels cleared</td><td>' + res.run.rooms + '</td></tr><tr><td>Enemies defeated</td><td>' + res.run.kills + '</td></tr><tr><td>Act reached</td><td>' + (res.run.act + 1) + '</td></tr><tr><td>Cores earned</td><td>' + res.unbanked + '</td></tr><tr><td>Cores banked</td><td style="color:#3de8ff">' + res.got + '</td></tr>'
-      + (res.lost > 0 ? '<tr><td>Lost</td><td class="con">' + res.lost + '</td></tr>' : '') + '</table><div class="row" style="margin-top:20px"><button class="btn big" onclick="UI.hub(\'run\')">BACK TO HQ</button></div>');
+    this.show('<h1 style="color:' + col + ';text-shadow:0 0 14px ' + col + '">' + head + '</h1><table><tr><td>Levels cleared</td><td>' + res.run.rooms + '</td></tr><tr><td>Enemies defeated</td><td>' + res.run.kills + '</td></tr><tr><td>Act reached</td><td>' + (res.run.act + 1) + '</td></tr>'
+      + '</table><div class="row" style="margin-top:20px"><button class="btn big" onclick="UI.hub(\'run\')">BACK TO HQ</button></div>');
     try { window.parent !== window && window.parent.postMessage({ type: 'gameOver', score: res.run.rooms }, '*'); } catch (e) { /* ignore */ }
   },
   pause() {
-    this.show('<h1 style="margin-top:120px">PAUSED</h1><div class="row"><button class="btn big" onclick="Game.togglePause()">RESUME</button></div><div class="row"><button class="btn red" onclick="if(confirm(\'Abandon the run? You keep 25% of its cores.\')){Game.paused=false;UI.summary(Game.bank(0.25,\'dead\'))}">ABANDON RUN</button></div><p class="dim sm">P or Backspace also resumes.</p>', 'clear');
+    this.show('<h1 style="margin-top:120px">PAUSED</h1><div class="row"><button class="btn big" onclick="Game.togglePause()">RESUME</button></div><div class="row"><button class="btn red" onclick="if(confirm(\'Abandon the run?\')){Game.paused=false;UI.summary(Game.bank(0.25,\'dead\'))}">ABANDON RUN</button></div><p class="dim sm">P or Backspace also resumes.</p>', 'clear');
   },
 };
 

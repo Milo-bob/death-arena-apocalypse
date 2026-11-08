@@ -147,14 +147,13 @@ const Game = {
   takeDrawback(id) { this.run.drawbacks.push(id); this.recalc(); },
   bank(frac, why) {
     const run = this.run, s = Save.data;
-    const got = Math.round(run.cores * frac);
-    s.cores += got; s.stats.runs++; s.stats.kills += run.kills;
+    s.stats.runs++; s.stats.kills += run.kills;
     s.stats.bestAct = Math.max(s.stats.bestAct, run.act + 1);
     s.stats.bestRooms = Math.max(s.stats.bestRooms, run.rooms);
     s.stats.bestPlv = Math.max(s.stats.bestPlv || 0, run.plv || 1); s.stats.bosses = (s.stats.bosses || 0) + (run.bosses || 0);
-    if (why === 'win') { s.stats.wins++; if (run.heat >= s.heatMax && s.heatMax < 5) s.heatMax = run.heat + 1; }
+    if (why === 'win') s.stats.wins++;
     if (why === 'dead') s.stats.deaths++;
-    const res = { why, got, lost: run.cores - got, run: Object.assign({}, run), unbanked: run.cores };
+    const res = { why, run: Object.assign({}, run) };
     s.run = null; Save.write(true);
     this.run = null; this.C = null; this.mode = 'menu';
     return res;
@@ -179,8 +178,8 @@ const Game = {
     const C = this.C = { node, curse: curse || {}, t: 0, intro: 1.2, en: [], eb: [], pb: [], haz: [], zones: [], gold: [], parts: [], fl: [], turrets: [], beams: [], markers: [], pillars: [], fx: [],
       waves: [], waveIdx: 0, waveCd: 0, shake: 0, cleared: false, clearT: 0, boss: null, bladeAng: 0, noHit: true, banner: 0, bannerText: '', roomMax: P.maxhp, elitesLeft: elite ? 2 : 0,
       p: { x: W / 2, y: 450, r: 12, aim: -Math.PI / 2, fireT: 0.3, dashT: 0, dashCd: 0, dashDir: 0, dashHit: [], inv: 0.5, abT: 2, flash: 0, over: 0, overRate: 1, shield: 0, still: 0, trailT: 0, regenAcc: 0, face: -Math.PI / 2 },
-      hpS: (1 + 0.35 * act) * (1 + 0.04 * row) * (1 + 0.15 * run.heat) * P.enemyHp * ((curse && curse.hp) || 1),
-      dmgS: (1 + 0.3 * act) * (1 + 0.12 * run.heat) * ((curse && curse.dmg) || 1), spdS: (curse && curse.speed) || 1 };
+      hpS: (1 + 0.35 * act) * (1 + 0.04 * row) * P.enemyHp * ((curse && curse.hp) || 1),
+      dmgS: (1 + 0.3 * act) * ((curse && curse.dmg) || 1), spdS: (curse && curse.speed) || 1 };
     // symmetric pillars give each room a readable shape
     if (!boss && !safe) {
       const k = rndi(1, 2);
@@ -191,7 +190,7 @@ const Game = {
     }
     if (boss) {
       const b = BOSSES[areaOf(act)];
-      const hp = b.hp * (1 + 0.2 * run.heat) * P.enemyHp;
+      const hp = b.hp * P.enemyHp;
       C.boss = { type: 'boss', boss: true, x: W / 2, y: 170, r: b.r, hp, maxhp: hp, sh: 0, flash: 0, phase: 1, pat: null, pt: 0, cd: 2, n: 0, sa: 0, atk: 0, col: b.col, name: b.name, vx: 0, vy: 0, slow: 0, slowT: 0, poison: 0, poisonT: 0, burn: 0, burnT: 0, spawnT: 0, bladeCd: 0, ang: 0, stage: 0 };
       C.en.push(C.boss);
       C.bannerText = b.name.toUpperCase();
@@ -398,7 +397,7 @@ const Game = {
     const run = this.run, C = this.C, n = C.node;
     run.rooms++;
     const base = { fight: 6, elite: 14, curse: 22, boss: 45 }[n.type] || 0;
-    const got = Math.round(base * (1 + 0.35 * run.act) * (1 + 0.2 * run.heat));
+    const got = Math.round(base * (1 + 0.35 * run.act));
     run.cores += got;
     this.P = buildStats(run, Save.data); run.hp = Math.min(run.hp, this.P.maxhp);
     if (this.P.clearHeal) this.heal(this.P.clearHeal);
@@ -946,7 +945,6 @@ const Game = {
     ctx.fillStyle = '#fff'; ctx.fillText(HEROES[run.hero].name.toUpperCase() + ' / ' + w.weapon.name.toUpperCase(), W / 2, 36);
     if (this.drawWeaponHud) this.drawWeaponHud();
     ctx.textAlign = 'right'; ctx.font = '14px Silk, monospace'; ctx.fillStyle = '#ffd91f'; ctx.fillText('GOLD ' + run.gold, W - 14, 20);
-    ctx.fillStyle = '#3de8ff'; ctx.font = '11px Silk, monospace'; ctx.fillText('CORES ' + run.cores + ' (AT RISK)', W - 14, 38);
     // tags
     ctx.textAlign = 'left'; ctx.font = '10px Silk, monospace'; let tx = 14;
     for (const t of Object.keys(P.tags)) {
