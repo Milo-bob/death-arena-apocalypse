@@ -259,7 +259,7 @@ const UI = {
     }
     const offers = Game.offerPerks(4 + (Game.P.choices || 0), 'common');
     if (!offers.length) { Game.nodeDone(); return; }
-    this.show('<h2>LEVEL UP</h2><p class="dim sm">Level ' + run.plv + ': choose a mutation</p>' + this.status() + '<div class="row">' + offers.map((id, i) => this.perkCard(id, "UI.take('" + id + "')", '', i + 1)).join('') + '</div>' + this.buildList());
+    this.show('<div class="lvbig">LEVEL ' + run.plv + '</div><h2 class="lvh">CHOOSE A MUTATION</h2>' + this.status() + '<div class="row lvrow">' + offers.map((id, i) => this.perkCard(id, "UI.take('" + id + "')", '', i + 1).replace('<div class="card', '<div style="animation-delay:' + (i * 0.09) + 's" class="lvcard card').replace('<h3>', '<div class="lvico">' + PERKS[id].name[0] + '</div><h3>')).join('') + '</div>' + this.buildList());
     this.acts(...offers.map(id => () => this.take(id)));
   },
 
