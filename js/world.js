@@ -1,53 +1,87 @@
-// World: one connected map per act (5x4 screens, no map shown to the player). Walk freely between cells; arenas seal their gates while a fight runs.
+// World: one connected map per act (a big organic cave, no map shown to the player, Nuclear Throne style). Walk freely; arenas are open caverns, enemies also roam the tunnels.
 // Loaded after game.js; replaces the old door-room flow of Game.
-const COLS = 5, ROWS = 4, WORLD_W = COLS * 960, WORLD_H = ROWS * 540, NEED_CLEAR = 6;
+const TILE = 40, COLS = 110, ROWS = 70, WORLD_W = COLS * TILE, WORLD_H = ROWS * TILE, NEED_CLEAR = 6;
 const CELL_COL = { fight: '#ff6a6a', elite: '#ff8a1f', shop: '#ffd91f', camp: '#39ff6e', event: '#b24bff', curse: '#ff3de8', boss: '#ff2d3d' };
 const CELL_NAME = { fight: 'ARENA', elite: 'ELITE ARENA', shop: 'BLACK MARKET', camp: 'CAMP', event: 'STRANGE ALTAR', curse: 'CURSED SHRINE', boss: 'BOSS LAIR' };
 const CELL_LET = { fight: 'F', elite: 'E', shop: '$', camp: 'C', event: 'A', curse: 'X', boss: 'B' };
 
 function genWorld(act, seed) {
-  const R = rng(seed), cells = [], rects = [], regions = [], gates = [], pillars = [];
-  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) cells.push({ id: r * COLS + c, c, r, x0: c * 960, y0: r * 540, type: 'fight', links: [], combat: true });
-  const startId = Math.floor(R() * cells.length), nb = id => { const c = cells[id], o = []; if (c.c > 0) o.push(id - 1); if (c.c < COLS - 1) o.push(id + 1); if (c.r > 0) o.push(id - COLS); if (c.r < ROWS - 1) o.push(id + COLS); return o; };
-  // boss lair: one of the cells farthest from the start, so you never begin next to it
-  const dS = id => Math.abs(cells[id].c - cells[startId].c) + Math.abs(cells[id].r - cells[startId].r), far = Math.max(...cells.map(c => dS(c.id))), farIds = cells.map(c => c.id).filter(i => dS(i) >= far - 1);
-  const bossId = farIds[Math.floor(R() * farIds.length)];
-  const link = (a, b) => { if (!cells[a].links.includes(b)) { cells[a].links.push(b); cells[b].links.push(a); } };
-  // spanning tree over all non-boss cells, then hang the boss on one neighbour
-  const inTree = new Set([startId]);
-  while (inTree.size < cells.length - 1) {
-    const opts = []; for (const a of inTree) for (const b of nb(a)) if (b !== bossId && !inTree.has(b)) opts.push([a, b]);
-    const [a, b] = opts[Math.floor(R() * opts.length)]; link(a, b); inTree.add(b);
+  const R = rng(seed), grid = new Uint8Array(COLS * ROWS), cells = [], pillars = [];
+  const carve = (tx, ty, rad) => {
+    for (let y = Math.max(2, Math.floor(ty - rad)); y <= Math.min(ROWS - 3, Math.ceil(ty + rad)); y++)
+      for (let x = Math.max(2, Math.floor(tx - rad)); x <= Math.min(COLS - 3, Math.ceil(tx + rad)); x++)
+        if ((x - tx) * (x - tx) + (y - ty) * (y - ty) <= rad * rad) grid[y * COLS + x] = 1;
+  };
+  const floorAt = (px, py) => { const tx = Math.floor(px / TILE), ty = Math.floor(py / TILE); return tx >= 0 && ty >= 0 && tx < COLS && ty < ROWS && grid[ty * COLS + tx] === 1; };
+  const open = (px, py, rad) => { if (!floorAt(px, py)) return false; for (let a = 0; a < 6.3; a += 0.8) if (!floorAt(px + Math.cos(a) * rad, py + Math.sin(a) * rad)) return false; return true; };
+  // 1) chamber centres, spread over the whole map
+  const pts = [];
+  for (let tries = 0; pts.length < 15 && tries < 5000; tries++) {
+    const x = 9 + R() * (COLS - 18), y = 9 + R() * (ROWS - 18);
+    if (pts.every(q => Math.hypot(q[0] - x, q[1] - y) > 16)) pts.push([x, y]);
   }
-  const bn = nb(bossId); link(bossId, bn[Math.floor(R() * bn.length)]);
-  // a few extra loops make it feel like a place, not a tree
-  for (let i = 0; i < 8; i++) { const a = Math.floor(R() * cells.length); if (a === bossId) continue; const b = nb(a)[Math.floor(R() * nb(a).length)]; if (b !== bossId && !cells[a].links.includes(b)) link(a, b); }
-  if (R() < 0.4) { const b2 = bn.find(x => !cells[bossId].links.includes(x)); if (b2 !== undefined) link(bossId, b2); }
-  // fill types
-  const ids = cells.map(c => c.id).filter(i => i !== startId && i !== bossId).sort(() => R() - 0.5);
-  const types = ids.map((_, i) => i < 3 ? 'elite' : i < 5 ? 'shop' : i < 7 ? 'event' : i < 9 ? 'curse' : i < 10 ? 'camp' : 'fight').sort(() => R() - 0.5);
-  ids.forEach((id, i) => { cells[id].type = types[i]; });
-  cells[startId].type = 'camp'; cells[bossId].type = 'boss';
-  for (const c of cells) {
-    c.combat = ['fight', 'elite', 'boss'].includes(c.type); c.safe = ['camp', 'shop', 'event', 'curse'].includes(c.type);
-    c.rewardKind = c.type === 'fight' ? (R() < 0.35 ? 'gold' : 'perk') : c.type === 'elite' ? 'rare' : c.type === 'curse' ? 'epic' : c.type === 'boss' ? 'rare' : '';
-    c.ix = c.x0 + 26; c.iy = c.y0 + 58; c.iw = 908; c.ih = 456;
-    rects.push({ x: c.ix, y: c.iy, w: c.iw, h: c.ih }); regions.push({ x: c.ix, y: c.iy, w: c.iw, h: c.ih, big: true });
-    if (c.type === 'fight' || c.type === 'elite') {
-      const k = 1 + Math.floor(R() * 2);
-      for (let i = 0; i < k; i++) { const w = 40 + Math.floor(R() * 40), h = 40 + Math.floor(R() * 40), x = c.x0 + 150 + R() * (480 - 150 - 90 - w / 2), y = c.y0 + 130 + R() * 230; pillars.push({ x, y, w, h }, { x: c.x0 + 960 - x - w, y, w, h }); }
+  const n = pts.length, startId = Math.floor(R() * n);
+  const dS = i => Math.hypot(pts[i][0] - pts[startId][0], pts[i][1] - pts[startId][1]);
+  const far = pts.map((_, i) => i).filter(i => i !== startId).sort((a, b) => dS(b) - dS(a));
+  const bossId = far[Math.floor(R() * 2)];
+  const rest = pts.map((_, i) => i).filter(i => i !== startId && i !== bossId).sort(() => R() - 0.5);
+  const kinds = rest.map((_, i) => i < 2 ? 'elite' : i < 4 ? 'shop' : i < 5 ? 'event' : i < 7 ? 'curse' : i < 8 ? 'camp' : 'fight').sort(() => R() - 0.5);
+  const typeOf = []; typeOf[startId] = 'camp'; typeOf[bossId] = 'boss'; rest.forEach((id, i) => { typeOf[id] = kinds[i]; });
+  const RAD = { fight: () => 5.2 + R() * 1.2, elite: () => 6, boss: () => 8, shop: () => 3, camp: () => 3.4, event: () => 3, curse: () => 4 };
+  // 2) carve each chamber as an irregular blob
+  pts.forEach((q, id) => {
+    const rt = RAD[typeOf[id]](); q.push(rt);
+    carve(q[0], q[1], rt * 0.7);
+    for (let k = 0; k < 7; k++) { const a = R() * 6.283, d = rt * (0.35 + R() * 0.5); carve(q[0] + Math.cos(a) * d, q[1] + Math.sin(a) * d, rt * (0.3 + R() * 0.3)); }
+  });
+  // 3) wandering tunnels: spanning tree plus a few extra loops
+  const tunnel = (a, b) => {
+    let x = pts[a][0], y = pts[a][1], ang = Math.atan2(pts[b][1] - y, pts[b][0] - x);
+    const tx = pts[b][0], ty = pts[b][1];
+    for (let s = 0; s < 500 && Math.hypot(tx - x, ty - y) > 2.5; s++) {
+      let diff = Math.atan2(ty - y, tx - x) - ang; diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+      ang += diff * 0.16 + (R() - 0.5) * 1.3; x += Math.cos(ang); y += Math.sin(ang); carve(x, y, 1.1 + R() * 0.6);
+    }
+    const len = Math.hypot(tx - x, ty - y); for (let t = 0; t <= len; t += 0.7) carve(x + (tx - x) * t / len, y + (ty - y) * t / len, 1.2);
+  };
+  const edges = [], linked = new Set([startId]), has = (a, b) => edges.some(e => (e[0] === a && e[1] === b) || (e[0] === b && e[1] === a));
+  while (linked.size < n) {
+    let best = null;
+    for (const a of linked) for (let b = 0; b < n; b++) if (!linked.has(b)) { const d = Math.hypot(pts[a][0] - pts[b][0], pts[a][1] - pts[b][1]); if (!best || d < best[2]) best = [a, b, d]; }
+    edges.push(best); linked.add(best[1]);
+  }
+  for (let i = 0; i < 4; i++) {
+    const a = Math.floor(R() * n), near = pts.map((_, b) => b).filter(b => b !== a).sort((u, v) => Math.hypot(pts[u][0] - pts[a][0], pts[u][1] - pts[a][1]) - Math.hypot(pts[v][0] - pts[a][0], pts[v][1] - pts[a][1])).slice(0, 3);
+    const b = near[Math.floor(R() * near.length)]; if (!has(a, b)) edges.push([a, b]);
+  }
+  for (const [a, b] of edges) tunnel(a, b);
+  // 4) drunkard-walk side caves and dead ends
+  for (let w = 0; w < 7; w++) {
+    let x = pts[Math.floor(R() * n)][0], y = pts[Math.floor(R() * n)][1], ang = R() * 6.283;
+    for (let s = 0; s < 100; s++) {
+      if (R() < 0.15) ang += (R() - 0.5) * 2.4;
+      x = clamp(x + Math.cos(ang), 6, COLS - 7); y = clamp(y + Math.sin(ang), 6, ROWS - 7); carve(x, y, 1.0 + R() * 0.8);
     }
   }
-  // corridors = gates (open/closed per frame)
-  const seen = new Set();
-  for (const c of cells) for (const o of c.links) {
-    const key = Math.min(c.id, o) + '-' + Math.max(c.id, o); if (seen.has(key)) continue; seen.add(key);
-    const A = cells[Math.min(c.id, o)], B = cells[Math.max(c.id, o)];
-    const g = A.r === B.r ? { x: A.x0 + 934, y: A.y0 + 226, w: 52, h: 120, dir: 'h' } : { x: A.x0 + 420, y: A.y0 + 514, w: 120, h: 84, dir: 'v' };
-    g.a = A.id; g.b = B.id; g.boss = A.id === bossId || B.id === bossId; g.open = true; gates.push(g);
-    regions.push({ x: g.x, y: g.y, w: g.w, h: g.h, big: false });
+  // 5) zones (logic) + rocks
+  pts.forEach((q, id) => {
+    const type = typeOf[id], r = q[2] * TILE * 0.85, cx = q[0] * TILE, cy = q[1] * TILE;
+    const c = { id, type, cx, cy, r, x0: cx - r, y0: cy - r, ix: cx - r, iy: cy - r, iw: 2 * r, ih: 2 * r, links: [], combat: ['fight', 'elite', 'boss'].includes(type), safe: ['camp', 'shop', 'event', 'curse'].includes(type) };
+    c.rewardKind = type === 'fight' ? (R() < 0.35 ? 'gold' : 'perk') : type === 'elite' ? 'rare' : type === 'curse' ? 'epic' : type === 'boss' ? 'rare' : '';
+    cells.push(c);
+    if (type === 'fight' || type === 'elite') {
+      for (let i = 0, k = 3 + Math.floor(R() * 3); i < k * 3 && k > 0; i++) {
+        const a = R() * 6.283, d = r * (0.3 + R() * 0.45), w = 40 + Math.floor(R() * 36), h = 40 + Math.floor(R() * 36), x = cx + Math.cos(a) * d, y = cy + Math.sin(a) * d;
+        if (open(x, y, 80)) { pillars.push({ x: x - w / 2, y: y - h / 2, w, h }); k--; }
+      }
+    }
+  });
+  for (const [a, b] of edges) { cells[a].links.push(b); cells[b].links.push(a); }
+  for (let i = 0; i < 40; i++) {   // loose rocks in the open caves
+    const x = (4 + R() * (COLS - 8)) * TILE, y = (4 + R() * (ROWS - 8)) * TILE, w = 36 + Math.floor(R() * 30), h = 36 + Math.floor(R() * 30);
+    if (open(x, y, 100) && cells.every(c => Math.hypot(c.cx - x, c.cy - y) > 130)) pillars.push({ x: x - w / 2, y: y - h / 2, w, h });
   }
-  return { cells, rects, regions, gates, pillars, startId, bossId, need: NEED_CLEAR, w: WORLD_W, h: WORLD_H, total: cells.filter(c => c.combat && c.type !== 'boss').length + cells.filter(c => c.type === 'curse').length };
+  return { cells, grid, pillars, startId, bossId, need: NEED_CLEAR, w: WORLD_W, h: WORLD_H, total: cells.filter(c => c.combat && c.type !== 'boss').length + cells.filter(c => c.type === 'curse').length };
 }
 
 Object.assign(Game, {
@@ -71,31 +105,26 @@ Object.assign(Game, {
     const sc = W.cells[W.startId]; sc.state.visited = true;
     const P = this.P = buildStats(run, Save.data);
     const C = this.C = { world: W, t: 0, en: [], eb: [], pb: [], haz: [], zones: [], gold: [], parts: [], fl: [], turrets: [], beams: [], markers: [], fx: [], pillars: W.pillars,
-      waves: [], waveIdx: 0, waveCd: 0, shake: 0, boss: null, bladeAng: 0, intro: 0, banner: 2.6, bannerText: ACT_NAMES[(act % 3)].toUpperCase(), enc: null, wdrops: [], hitstop: 0, curCell: sc, cam: { x: sc.x0, y: sc.y0 }, mx: 0, my: 0,
+      waves: [], waveIdx: 0, waveCd: 0, shake: 0, boss: null, bladeAng: 0, intro: 0, banner: 2.6, bannerText: ACT_NAMES[(act % 3)].toUpperCase(), enc: null, wdrops: [], hitstop: 0, curCell: sc, cam: { x: clamp(sc.cx - W_ / 2, 0, W.w - W_), y: clamp(sc.cy + 70 - H / 2, 0, W.h - H) }, mx: 0, my: 0,
       noHit: true, hpS: 1, dmgS: 1, spdS: 1, curse: {}, clearMsg: 0, near: null,
-      p: { x: sc.x0 + 480, y: sc.y0 + 430, lx: sc.x0 + 480, ly: sc.y0 + 430, r: 12, aim: -Math.PI / 2, fireT: 0.3, dashT: 0, dashCd: 0, dashDir: 0, dashHit: [], inv: 0.5, abT: 2, flash: 0, over: 0, overRate: 1, shield: 0, still: 0, trailT: 0, regenAcc: 0 },
+      p: { x: sc.cx, y: sc.cy + 70, lx: sc.cx, ly: sc.cy + 70, r: 12, aim: -Math.PI / 2, fireT: 0.3, dashT: 0, dashCd: 0, dashDir: 0, dashHit: [], inv: 0.5, abT: 2, flash: 0, over: 0, overRate: 1, shield: 0, still: 0, trailT: 0, regenAcc: 0 },
       dust: Array.from({ length: 36 }, () => ({ x: rnd(0, W_), y: rnd(60, H), vx: rnd(-6, 6), vy: act === 1 ? rnd(-22, -8) : rnd(-4, 6) })) };
     for (const c of W.cells) {
       c.obj = null;
-      if (c.type === 'camp') c.obj = { kind: 'rest', x: c.x0 + 480, y: c.y0 + 270 };
-      else if (c.type === 'shop' || c.type === 'event' || c.type === 'curse') c.obj = { kind: c.type, x: c.x0 + 480, y: c.y0 + 260 };
+      if (c.type === 'camp') c.obj = { kind: 'rest', x: c.cx, y: c.cy };
+      else if (c.type === 'shop' || c.type === 'event' || c.type === 'curse') c.obj = { kind: c.type, x: c.cx, y: c.cy };
     }
-    C.floor = buildWorldFloor(act, run.seed, W.regions, W.w, W.h);
+    C.floor = buildCaveFloor(act, run.seed, W); this.spawnRoamers(W);
     this.mode = 'fight'; this.paused = false; this.frozen = false; this.fade = { t: 0.25, done: true, fn() {} }; document.body.classList.add('fight'); UI.hide();
     Music.play('menu'); this.persist();
   },
   persist() { Save.data.run = this.run; Save.write(); },
 
   // ---------- geometry ----------
-  gatesUpdate() {
-    const C = this.C, run = this.run;
-    for (const g of C.world.gates) g.open = !(C.enc && (g.a === C.enc.id || g.b === C.enc.id)) && !(g.boss && run.cleared < C.world.need);
-  },
+  gatesUpdate() {},
   walkable(x, y) {
-    const W = this.world;
-    for (const r of W.rects) if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) return true;
-    for (const g of W.gates) if (g.open && x >= g.x && x <= g.x + g.w && y >= g.y && y <= g.y + g.h) return true;
-    return false;
+    const W = this.world, tx = Math.floor(x / TILE), ty = Math.floor(y / TILE);
+    return tx >= 0 && ty >= 0 && tx < COLS && ty < ROWS && W.grid[ty * COLS + tx] === 1;
   },
   fits(x, y, r) {
     const d = r * 0.72;
@@ -109,31 +138,47 @@ Object.assign(Game, {
       if (this.fits(o.x, o.ly, r)) { o.y = o.ly; o.lx = o.x; }
       else if (this.fits(o.lx, o.y, r)) { o.x = o.lx; o.ly = o.y; }
       else { o.x = o.lx; o.y = o.ly; }
-    } else { const c = this.cellAt(o.x, o.y) || C.curCell; o.x = c.x0 + 480; o.y = c.y0 + 286; }
+    } else { const c = this.cellAt(o.x, o.y) || C.curCell; o.x = c.cx; o.y = c.cy; }
     for (const q of C.pillars) { const n = circRect(o.x, o.y, r, q); if (n) { o.x = n[0]; o.y = n[1]; } }
   },
-  cellAt(x, y) { for (const c of this.world.cells) if (x >= c.ix && x <= c.ix + c.iw && y >= c.iy && y <= c.iy + c.ih) return c; return null; },
+  cellAt(x, y) { let best = null, bd = 1e9; for (const c of this.world.cells) { const d = Math.hypot(x - c.cx, y - c.cy); if (d < c.r && d < bd) { bd = d; best = c; } } return best; },
   arena() { const c = this.C.enc || this.C.curCell; return { x0: c.ix, y0: c.iy, x1: c.ix + c.iw, y1: c.iy + c.ih }; },
   spawnPos() {
     const C = this.C, A = this.arena();
     for (let i = 0; i < 40; i++) {
       const x = rnd(A.x0 + 40, A.x1 - 40), y = rnd(A.y0 + 40, A.y1 - 40);
-      if (Math.hypot(x - C.p.x, y - C.p.y) < 230) continue;
+      if (Math.hypot(x - C.p.x, y - C.p.y) < 230 || !this.fits(x, y, 18)) continue;
       if (C.pillars.some(q => x > q.x - 30 && x < q.x + q.w + 30 && y > q.y - 30 && y < q.y + q.h + 30)) continue;
       return [x, y];
     }
-    return [A.x0 + 80, A.y0 + 80];
+    return [(A.x0 + A.x1) / 2, (A.y0 + A.y1) / 2];
   },
   camUpdate(dt) {
-    const C = this.C, p = C.p, W = this.world, cam = C.cam; let tx, ty;
-    const c = this.cellAt(p.x, p.y);
-    if (c) { tx = c.x0; ty = c.y0; }
-    else {   // in a corridor: slide between the two cells
-      const g = W.gates.find(g => p.x >= g.x && p.x <= g.x + g.w && p.y >= g.y && p.y <= g.y + g.h);
-      if (g) { const A = W.cells[g.a], B = W.cells[g.b], t = g.dir === 'h' ? clamp((p.x - g.x) / g.w, 0, 1) : clamp((p.y - g.y) / g.h, 0, 1); tx = A.x0 + (B.x0 - A.x0) * t; ty = A.y0 + (B.y0 - A.y0) * t; } else { tx = cam.x; ty = cam.y; }
+    const C = this.C, p = C.p, Wd = this.world, cam = C.cam;
+    const tx = clamp(p.x - W_ / 2 + (Input.mx - W_ / 2) * 0.28, 0, Wd.w - W_), ty = clamp(p.y - H / 2 + (Input.my - H / 2) * 0.28, 0, Wd.h - H), k = Math.min(1, dt * 7);
+    cam.x += (tx - cam.x) * k; cam.y += (ty - cam.y) * k;
+  },
+  portalPos(c) { return { x: c.cx, y: c.cy - 70 }; },
+  wake(e) {   // roaming enemies sleep until you come close (or hurt them); they give up when you get far away
+    const d = dist(e, this.C.p);
+    if (e.awake) { if (d > 1100 && e.hp >= e.maxhp) e.awake = false; return e.awake; }
+    if (d < 430 || e.hp < e.maxhp) { e.awake = true; return true; }
+    return false;
+  },
+  spawnRoamers(Wd) {
+    const C = this.C, run = this.run, act = run.act, R = rng(run.seed + 99), sc = Wd.cells[Wd.startId];
+    C.hpS = (1 + 0.35 * act) * (1 + 0.15 * run.heat) * this.P.enemyHp * 0.85; C.dmgS = (1 + 0.3 * act) * (1 + 0.12 * run.heat); C.spdS = 1;
+    let budget = 60 + act * 16;
+    for (let guard = 0; budget > 0 && guard < 80; guard++) {
+      const x = (3 + R() * (COLS - 6)) * TILE, y = (3 + R() * (ROWS - 6)) * TILE, cz = this.cellAt(x, y);
+      if (!this.fits(x, y, 24) || Math.hypot(x - sc.cx, y - sc.cy) < 750 || (cz && (cz.safe || cz.type === 'boss'))) continue;
+      const cost = 5 + act * 2, list = this.compose(Math.min(budget, cost), act, 2); budget -= cost;
+      for (const t of list) {
+        const ex = x + (R() - 0.5) * 90, ey = y + (R() - 0.5) * 90;
+        if (!this.fits(ex, ey, 20)) continue;
+        const e = this.makeEnemy(t, ex, ey); e.free = true; e.spawnT = 0;
+      }
     }
-    const k = Math.min(1, dt * 9); cam.x += (tx - cam.x) * k; cam.y += (ty - cam.y) * k;
-    if (Math.abs(tx - cam.x) < 0.5) cam.x = tx; if (Math.abs(ty - cam.y) < 0.5) cam.y = ty;
   },
 
   // ---------- encounters ----------
@@ -146,7 +191,7 @@ Object.assign(Game, {
     C.dmgS = (1 + 0.3 * act) * (1 + 0.12 * run.heat) * ((curse && curse.dmg) || 1);
     C.spdS = (curse && curse.speed) || 1;
     if (boss) {
-      const b = BOSSES[(act % 3)], hp = b.hp * (1 + 0.2 * run.heat) * (1 + 0.5 * Math.floor(act / 3)) * P.enemyHp, x = cell.x0 + 480, y = cell.y0 + 190;
+      const b = BOSSES[(act % 3)], hp = b.hp * (1 + 0.2 * run.heat) * (1 + 0.5 * Math.floor(act / 3)) * P.enemyHp, x = cell.cx, y = cell.cy - 80;
       C.boss = { type: 'boss', boss: true, x, y, lx: x, ly: y, r: b.r, hp, maxhp: hp, sh: 0, flash: 0, phase: 1, pat: null, pt: 0, cd: 2, n: 0, sa: 0, atk: 0, col: b.col, name: b.name, vx: 0, vy: 0, slow: 0, slowT: 0, poison: 0, poisonT: 0, burn: 0, burnT: 0, spawnT: 0, bladeCd: 0, ang: 0, stage: 0 };
       C.en.push(C.boss); C.bannerText = b.name.toUpperCase();
     } else {
@@ -163,8 +208,9 @@ Object.assign(Game, {
     const C = this.C;
     if (!C.enc || C.dead || C.intro > 0) return;
     C.encT += 1 / 60;
-    if (C.encT > 150 && !C.boss && C.en.length && C.en.length <= 3) { for (const e of C.en.slice()) this.kill(e); this.floatText(C.p.x, C.p.y - 40, 'THE ARENA COLLAPSES', '#ff8a1f', 1.2); }   // failsafe: nobody stays stuck
-    if (!C.markers.length && !C.en.length && C.waveIdx >= C.waves.length && (!C.boss || C.boss.dead)) this.encClear();
+    const live = C.en.filter(e => !e.free);
+    if (C.encT > 150 && !C.boss && live.length && live.length <= 3) { for (const e of live) this.kill(e); this.floatText(C.p.x, C.p.y - 40, 'THE ARENA COLLAPSES', '#ff8a1f', 1.2); }   // failsafe: nobody stays stuck
+    if (!C.markers.length && !live.length && C.waveIdx >= C.waves.length && (!C.boss || C.boss.dead)) this.encClear();
   },
   encClear() {
     const C = this.C, run = this.run, cell = C.enc, n = cell.type, p = C.p;
@@ -175,7 +221,7 @@ Object.assign(Game, {
     this.P = buildStats(run, Save.data); run.hp = Math.min(run.hp, this.P.maxhp);
     if (this.P.clearHeal) this.heal(this.P.clearHeal);
     this.floatText(p.x, p.y - 34, '+' + got + ' CORES', '#3de8ff', 1.1);
-    if (n === 'elite' || (n === 'fight' && Math.random() < 0.3)) this.spawnWeapon(cell.x0 + 480, cell.y0 + 400);
+    if (n === 'elite' || (n === 'fight' && Math.random() < 0.3)) this.spawnWeapon(cell.cx, cell.cy + 90);
     const kind = cell.rewardKind;
     if (n === 'curse' || kind === 'epic') cell.state.reward = { kind: 'perk', min: 'epic', cores: got };
     else if (n === 'boss' || n === 'elite') cell.state.reward = { kind: 'perk', min: 'rare', cores: got };
@@ -188,18 +234,18 @@ Object.assign(Game, {
     const C = this.C; C.curCell = cell;
     if (cell.safe || cell.type === 'boss') { C.banner = 2; C.bannerText = CELL_NAME[cell.type]; }
   },
-  orbPos(cell) { return { x: cell.x0 + 480, y: cell.y0 + (cell.type === 'boss' ? 340 : 300) }; },
+  orbPos(cell) { return { x: cell.cx, y: cell.cy + (cell.type === 'boss' ? 90 : 50) }; },
   worldUpdate() {
     const C = this.C, p = C.p, W = this.world, run = this.run; C.near = null; C.nearW = null;
     for (const d of C.wdrops) if (dist(d, p) < 36) C.nearW = d;
     const cc = this.cellAt(p.x, p.y);
     if (cc && cc !== C.curCell) this.discover(cc);
     if (C.clearMsg > 0) C.clearMsg -= 1 / 60;
-    if (cc && !C.enc && cc.combat && !cc.state.cleared && p.x > cc.ix + 70 && p.x < cc.ix + cc.iw - 70 && p.y > cc.iy + 70 && p.y < cc.iy + cc.ih - 70) this.startEncounter(cc, null);
+    if (cc && !C.enc && cc.combat && !cc.state.cleared && dist(p, { x: cc.cx, y: cc.cy }) < cc.r * 0.55 && (cc.type !== 'boss' || run.cleared >= W.need)) this.startEncounter(cc, null);
     for (const c of W.cells) {
       const s = c.state;
       if (s.cleared && s.reward && !s.rewarded) { const o = this.orbPos(c); if (dist(o, p) < 30) { C.nodeCell = c; C.node = s; C.pendingOrb = true; C.pendingObj = false; this.frozen = true; Input.down = false; Input.keys = {}; UI.reward(s.reward, s.reward.cores); return; } }
-      if (c.type === 'boss' && s.cleared && s.rewarded && dist({ x: c.x0 + 480, y: c.y0 + 190 }, p) < 40) { this.frozen = true; Input.keys = {}; UI.actClear(); return; }
+      if (c.type === 'boss' && s.cleared && s.rewarded && dist(this.portalPos(c), p) < 40) { this.frozen = true; Input.keys = {}; UI.actClear(); return; }
       if (c.obj && !s.used && dist(c.obj, p) < 52) C.near = c;
     }
   },
@@ -250,9 +296,9 @@ Object.assign(Game, {
       const s = c.state;
       if (c.obj) { Light.add(c.obj.x, c.obj.y, c.obj.kind === 'rest' && !s.used ? 250 : 140, 0.3); if (!s.used) glows.push([c.obj.x, c.obj.y, c.obj.kind === 'rest' ? 200 : 120, { rest: '255,130,30', curse: '255,61,232', event: '178,75,255', shop: '255,200,80' }[c.obj.kind], 0.05]); }
       if (s.cleared && s.reward && !s.rewarded) { const o = this.orbPos(c); Light.add(o.x, o.y, 130, 0.3); glows.push([o.x, o.y, 90, '120,160,255', 0.06]); }
-      if (c.type === 'boss' && s.cleared) Light.add(c.x0 + 480, c.y0 + 190, 150, 0.3);
+      if (c.type === 'boss' && s.cleared) { const q = this.portalPos(c); Light.add(q.x, q.y, 150, 0.3); }
     }
-    for (const g of this.world.gates) if (!g.open) Light.add(g.x + g.w / 2, g.y + g.h / 2, 90, 0.18);
+
     Light.end(ctx);
     ctx.globalCompositeOperation = 'lighter';
     const glow = (x, y, r, rgb, a) => { for (const k of [1, 0.66, 0.33]) { ctx.fillStyle = 'rgba(' + rgb + ',' + a + ')'; ctx.beginPath(); ctx.arc(x, y, r * k, 0, 6.283); ctx.fill(); } };
@@ -265,18 +311,8 @@ Object.assign(Game, {
   drawWorldObjs(C) {
     const cam = C.cam, vx0 = cam.x - 80, vx1 = cam.x + W + 80, vy0 = cam.y - 80, vy1 = cam.y + H + 80, run = this.run;
     ctx.textAlign = 'center';
-    for (const g of this.world.gates) {
-      if (g.x > vx1 || g.x + g.w < vx0 || g.y > vy1 || g.y + g.h < vy0) continue;
-      if (g.open) continue;
-      const lockedBoss = g.boss && run.cleared < this.world.need && !(C.enc && (g.a === C.enc.id || g.b === C.enc.id)), col = lockedBoss ? '#ffd91f' : '#ff3a3a';
-      ctx.fillStyle = '#0a0b0e'; ctx.fillRect(g.x, g.y, g.w, g.h);
-      if (g.dir === 'h') { for (let y = g.y + 4; y < g.y + g.h - 2; y += 12) { ctx.fillStyle = '#4a4d55'; ctx.fillRect(g.x, y, g.w, 6); ctx.fillStyle = '#7a7f89'; ctx.fillRect(g.x, y, g.w, 2); } }
-      else { for (let x = g.x + 4; x < g.x + g.w - 2; x += 12) { ctx.fillStyle = '#4a4d55'; ctx.fillRect(x, g.y, 6, g.h); ctx.fillStyle = '#7a7f89'; ctx.fillRect(x, g.y, 2, g.h); } }
-      ctx.fillStyle = col; ctx.fillRect(g.x + g.w / 2 - 6, g.y + g.h / 2 - 4, 12, 10); ctx.fillRect(g.x + g.w / 2 - 3, g.y + g.h / 2 - 10, 6, 8);
-      if (lockedBoss && dist({ x: g.x + g.w / 2, y: g.y + g.h / 2 }, C.p) < 320) { const t = 'SEALED: CLEAR ' + (this.world.need - run.cleared) + ' MORE'; ctx.font = '10px Silk, monospace'; ctx.fillStyle = '#000'; ctx.fillText(t, g.x + g.w / 2 + 1, g.y - 7); ctx.fillStyle = col; ctx.fillText(t, g.x + g.w / 2, g.y - 8); }
-    }
     for (const c of this.world.cells) {
-      if (c.x0 > vx1 || c.x0 + 960 < vx0 || c.y0 > vy1 || c.y0 + 540 < vy0) continue;
+      if (c.cx + c.r < vx0 || c.cx - c.r > vx1 || c.cy + c.r < vy0 || c.cy - c.r > vy1) continue;
       const s = c.state;
       if (s.cleared && s.reward && !s.rewarded) {
         const rc = { common: '#9fb4c8', rare: '#3d9bff', epic: '#b24bff' }[s.reward.min] || '#9fb4c8', o = this.orbPos(c), b = Math.sin(C.t * 3) * 3;
@@ -285,15 +321,11 @@ Object.assign(Game, {
         ctx.font = '10px Silk, monospace'; ctx.fillStyle = '#000'; ctx.fillText('REWARD', snap(o.x) + 1, o.y - 31); ctx.fillStyle = rc; ctx.fillText('REWARD', snap(o.x), o.y - 32);
       }
       if (c.type === 'boss' && s.cleared) {
-        const x = c.x0 + 480, y = c.y0 + 190; for (let i = 0; i < 3; i++) pxRing(x, y, 14 + i * 9 + Math.sin(C.t * 4 + i) * 2, ['#39ff6e', '#a0ffb0', '#39ff6e'][i], 2);
+        const q = this.portalPos(c), x = q.x, y = q.y; for (let i = 0; i < 3; i++) pxRing(x, y, 14 + i * 9 + Math.sin(C.t * 4 + i) * 2, ['#39ff6e', '#a0ffb0', '#39ff6e'][i], 2);
         ctx.font = '10px Silk, monospace'; ctx.fillStyle = '#39ff6e'; ctx.fillText(s.rewarded ? 'EXIT / DESCEND' : 'TAKE THE REWARD FIRST', x, y - 40);
       }
+      if (c.type === 'boss' && !s.cleared && run.cleared < this.world.need && dist({ x: c.cx, y: c.cy }, C.p) < 460) { const t = 'SEALED: CLEAR ' + (this.world.need - run.cleared) + ' MORE ARENAS'; ctx.font = '12px Silk, monospace'; ctx.fillStyle = '#000'; ctx.fillText(t, c.cx + 1, c.cy - 29); ctx.fillStyle = '#ffd91f'; ctx.fillText(t, c.cx, c.cy - 30); pxRing(c.cx, c.cy, 60 + Math.sin(C.t * 3) * 3, '#ffd91f', 2); }
       if (c.obj) this.drawObj(c, C.t);
-    }
-    for (const c of this.world.cells) if (c.type === 'boss' && c.state.cleared) {
-      const x = c.x0 + 480, y = c.y0 + 190; if (x < vx0 || x > vx1 || y < vy0 || y > vy1) continue;
-      for (let k = 0; k < 3; k++) { ctx.strokeStyle = ['#ffffff', '#3de8ff', '#a06bff'][k]; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, 12 + k * 8 + Math.sin(C.t * 5 + k) * 3, 0, 6.283); ctx.stroke(); }
-      ctx.font = '10px Silk, monospace'; ctx.fillStyle = '#fff'; ctx.fillText(c.state.rewarded ? 'PORTAL' : 'TAKE THE ORB', x, y + 44);
     }
     for (const d of C.wdrops) {
       if (d.x < vx0 || d.x > vx1 || d.y < vy0 || d.y > vy1) continue;

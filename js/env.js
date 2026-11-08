@@ -197,3 +197,26 @@ Object.assign(Menu, {
     for (const e of this.embers) { e.y -= e.v * 0.016; e.x += Math.sin(this.t + e.ph) * 0.3; if (e.y < -4) { e.y = H + 4; e.x = Math.random() * W; } ctx.fillStyle = Math.sin(this.t * 3 + e.ph) > 0 ? '#ff8a1f' : '#c0501a'; ctx.fillRect(sn(e.x), sn(e.y), 2, 2); }
   },
 });
+
+// organic cave floor: every floor tile is one painted slab, walls get shaded edges and a front face
+function buildCaveFloor(act, seed, Wd) {
+  const B = BIOME[act % 3], a = act % 3, R = rng(seed + 7), c = document.createElement('canvas'); c.width = Wd.w; c.height = Wd.h;
+  const g = c.getContext('2d'), fl = (x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS && Wd.grid[y * COLS + x] === 1;
+  paintWalls(g, R, B, Wd.w, Wd.h);
+  for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (fl(x, y)) paintRegion(g, R, B, a, x * TILE, y * TILE, TILE, TILE, false);
+  for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+    const px = x * TILE, py = y * TILE;
+    if (fl(x, y)) {
+      g.fillStyle = 'rgba(0,0,0,.38)';
+      if (!fl(x, y - 1)) g.fillRect(px, py, TILE, 10);
+      if (!fl(x - 1, y)) g.fillRect(px, py, 8, TILE);
+      if (!fl(x + 1, y)) g.fillRect(px + TILE - 8, py, 8, TILE);
+      if (!fl(x, y + 1)) g.fillRect(px, py + TILE - 6, TILE, 6);
+    } else if (fl(x, y + 1)) {
+      g.fillStyle = B.wall[1]; g.fillRect(px, py + TILE - 16, TILE, 16);
+      g.globalAlpha = 0.5; g.fillStyle = B.hi; g.fillRect(px, py + TILE - 16, TILE, 2); g.globalAlpha = 1;
+      g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(px, py + TILE - 6, TILE, 6);
+    }
+  }
+  return c;
+}

@@ -376,7 +376,7 @@ const Game = {
     for (const m of C.markers.filter(q => q.t <= 0)) { const e = this.makeEnemy(m.type, m.x, m.y, m.elite); this.burst(m.x, m.y, e.col, 8, 100); }
     C.markers = C.markers.filter(q => q.t > 0);
     // ---- entities ----
-    for (const e of C.en) if (!e.dead) this.updateEnemy(e, dt);
+    for (const e of C.en) if (!e.dead && (!e.free || this.wake(e))) this.updateEnemy(e, dt);
     this.separate();
     this.updateBullets(dt);
     this.updateHazards(dt);
@@ -410,7 +410,7 @@ const Game = {
   updateWaves(dt) {
     const C = this.C;
     if (C.waveIdx >= C.waves.length) return;
-    const alive = C.en.length + C.markers.length;
+    const alive = C.en.filter(e => !e.free).length + C.markers.length;
     if (alive <= (C.waveIdx === 0 ? 99 : 2)) {
       C.waveCd -= dt;
       if (C.waveCd <= 0 || C.waveIdx === 0) {
