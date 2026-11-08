@@ -459,7 +459,7 @@ const Game = {
       const rc = clamp(30 + w.dmg * n * 0.8, 30, 170); p.kvx = (p.kvx || 0) - Math.cos(a0) * rc; p.kvy = (p.kvy || 0) - Math.sin(a0) * rc;
       this.burst(p.x + Math.cos(a0) * 18, p.y + Math.sin(a0) * 18, '#fff3b0', 2, 130);
       for (let i = 0; i < n; i++) {
-        const a = a0 + (n > 1 ? (i - (n - 1) / 2) * w.spread * P.spreadMul : rnd(-w.spread, w.spread) * P.spreadMul / 2);
+        const a = a0 + (n > 1 ? (((i + 0.5) / n - 0.5) * w.spread * 1.1 + rnd(-0.04, 0.04) * w.spread) * P.spreadMul : rnd(-w.spread, w.spread) * P.spreadMul / 2);   // w.spread of a multi-shot weapon = the whole cone
         C.pb.push({ x: p.x + Math.cos(a) * 14, y: p.y + Math.sin(a) * 14, vx: Math.cos(a) * w.speed * 1.2, vy: Math.sin(a) * w.speed * 1.2, r: w.size, dmg: w.dmg * (w.ammo === 'shell' || ammoOf(w) === 'shell' ? P.shellMul : ammoOf(w) === 'energy' ? P.energyMul : 1), pierce: w.pierce + P.pierce, life: w.life * P.range, hit: [], homing: (w.homing || 0) + P.homing + (ammoOf(w) === 'bolt' ? P.boltHoming : 0), col, boom: w.boom || 0, boomDmg: w.boomDmg || 0, bounce: w.bounce || 0 });
       }
     } else if (w.type === 'cone') {
