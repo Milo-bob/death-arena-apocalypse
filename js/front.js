@@ -1,8 +1,8 @@
 // Slanted front view (like the original): characters are drawn standing, seen from the side, flipped left/right; walls show their front face.
 // Everything here is optional: View.front = false (key V, or the pause menu) brings the old top-down look back exactly as it was.
 const View = {
-  front: true,
-  init() { try { this.front = localStorage.getItem('apoc.view') !== 'top'; } catch (e) { /* default */ } },
+  front: false,   // default: top-down
+  init() { try { this.front = localStorage.getItem('apoc.view') === 'front'; } catch (e) { /* default */ } },
   set(f) {
     this.front = f; try { localStorage.setItem('apoc.view', f ? 'front' : 'top'); } catch (e) { /* ignore */ }
     if (typeof Game !== 'undefined' && Game.C && Game.world && Game.run) Game.C.floor = buildCaveFloor(Game.run.act, Game.run.seed, Game.world);   // walls change height
