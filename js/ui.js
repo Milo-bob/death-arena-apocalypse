@@ -270,16 +270,18 @@ const UI = {
 
   // ---------- act clear / end ----------
   actClear() {
-    const run = Game.run, last = run.act >= 2;
+    const run = Game.run, last = run.act % 3 === 2, loops = Math.floor(run.act / 3);
     Game.persist();
     if (last) {
-      this.show('<h1>THE APOCALYPSE ENDS</h1><p>You beat ' + BOSSES[2].name + '.</p>' + this.status() + '<div class="row" style="margin-top:20px"><button class="btn big" onclick="Game.winRun()">CLAIM VICTORY (x1.6 CORES)</button></div>');
+      this.show('<h1>THE APOCALYPSE ENDS</h1><p>You beat ' + BOSSES[run.act % 3].name + '.</p>' + this.status() + '<p class="dim" style="max-width:560px;text-align:center">Claim victory now, or loop back to the ruins. Enemies and bosses come back much tougher, victory pays more with every loop.</p><div class="row" style="margin-top:20px">'
+        + '<div class="card" onclick="Game.winRun()" style="--c:#39ff6e"><h3 class="pro">CLAIM VICTORY</h3><p>x' + (1.6 + 0.25 * loops).toFixed(2) + ' cores.</p></div>'
+        + '<div class="card" onclick="Game.descend()" style="--c:#ff2d3d"><h3 class="con">LOOP ' + (loops + 1) + '</h3><p>Back to the ruins, much tougher. Heal 35%. Keep all perks and weapons.</p></div></div>');
       return;
     }
     const ex = Math.round(run.cores * 1.25);
     this.show('<h1>ACT ' + (run.act + 1) + ' CLEARED</h1>' + this.status() + '<p class="dim" style="max-width:560px;text-align:center">Exit now and bank your cores with a 25% bonus, or descend. Deeper acts pay more, but if you die you only keep 40% of everything unbanked.</p><div class="row" style="margin-top:20px">'
       + '<div class="card" onclick="Game.exitRun()" style="--c:#39ff6e"><h3 class="pro">EXIT WITH LOOT</h3><p>Bank <b>' + ex + '</b> cores now.</p></div>'
-      + '<div class="card" onclick="Game.descend()" style="--c:#ff2d3d"><h3 class="con">DESCEND</h3><p>Act ' + (run.act + 2) + ': ' + ACT_NAMES[run.act + 1] + '. Heal 35%. Enemies are tougher, rewards bigger.</p></div></div>');
+      + '<div class="card" onclick="Game.descend()" style="--c:#ff2d3d"><h3 class="con">DESCEND</h3><p>Act ' + (run.act % 3 + 2) + ': ' + ACT_NAMES[(run.act + 1) % 3] + '. Heal 35%. Enemies are tougher, rewards bigger.</p></div></div>');
   },
   summary(res) {
     const head = res.why === 'win' ? 'VICTORY' : res.why === 'exit' ? 'ESCAPED' : 'RUN OVER';

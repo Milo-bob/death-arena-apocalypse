@@ -163,7 +163,7 @@ const Game = {
     const run = this.run; run.act++; run.room = 0; run.cur = { type: 'fight', reward: 'perk' };
     this.heal(0.35); this.frozen = false; this.enterRoom();
   },
-  winRun() { UI.summary(this.bank(1.6, 'win')); },
+  winRun() { UI.summary(this.bank(1.6 + 0.25 * Math.floor(this.run.act / 3), 'win')); },
   abandon() { UI.summary(this.bank(0.25, 'dead')); },
   die() {
     const salv = (Save.data.meta.salvage || 0) * 0.08;
@@ -189,7 +189,7 @@ const Game = {
       }
     }
     if (boss) {
-      const b = BOSSES[Math.min(act, 2)];
+      const b = BOSSES[(act % 3)];
       const hp = b.hp * (1 + 0.2 * run.heat) * P.enemyHp;
       C.boss = { type: 'boss', boss: true, x: W / 2, y: 170, r: b.r, hp, maxhp: hp, sh: 0, flash: 0, phase: 1, pat: null, pt: 0, cd: 2, n: 0, sa: 0, atk: 0, col: b.col, name: b.name, vx: 0, vy: 0, slow: 0, slowT: 0, poison: 0, poisonT: 0, burn: 0, burnT: 0, spawnT: 0, bladeCd: 0, ang: 0, stage: 0 };
       C.en.push(C.boss);
@@ -265,6 +265,7 @@ const Game = {
     if (!o.raw && !o.noCrit && Math.random() < P.crit) { crit = true; d *= P.critMul; }
     if (crit && P.execute && !e.boss && e.hp < e.maxhp * 0.3) d = e.hp + e.sh + 1;
     this.dealDamage(e, d, crit);
+    C.hitstop = Math.max(C.hitstop || 0, crit ? 0.05 : 0.018); C.shake = Math.max(C.shake, crit ? 3 : 1);
     Sfx.hit();
     if (o.noProc) return;
     if (P.poison > 0) { e.poison = Math.max(e.poison, P.poison * P.poisonMul); e.poisonT = 3; if (P.poisonSlow) { e.slow = 0.35; e.slowT = 1.5; } }
@@ -299,6 +300,8 @@ const Game = {
     if (quiet) return;
     run.kills++; C.kills = (C.kills || 0) + 1;
     this.burst(e.x, e.y, e.col, e.boss ? 40 : 10, e.boss ? 260 : 150); Sfx.kill();
+    C.hitstop = Math.max(C.hitstop || 0, e.boss ? 0.2 : e.elite ? 0.07 : 0.03); C.shake = Math.max(C.shake, e.boss ? 14 : e.elite ? 7 : 2.5);
+    if (this.dropWeapon) this.dropWeapon(e);
     if (e.boss) { C.eb.length = 0; C.haz.length = 0; C.beams.length = 0; C.markers.length = 0; for (const q of C.en) if (q !== e) q.dead = true; C.shake = 14; }
     const gv = Math.max(1, Math.round((e.boss ? 40 : e.elite ? 12 : ENEMY[e.type].cost * rnd(1.5, 3)) * P.goldMul));
     C.gold.push({ x: e.x, y: e.y, v: gv, vx: rnd(-60, 60), vy: rnd(-60, 60), t: 0 });
@@ -440,6 +443,7 @@ const Game = {
   // ---------- weapons ----------
   fire(w) {
     const C = this.C, P = this.P, p = C.p, hero = HEROES[this.run.hero], col = CLANS[hero.clan].color, a0 = p.aim;
+    C.shake = Math.max(C.shake, w.dmg >= 25 || w.type === 'mortar' ? 3 : 1);
     if (w.type === 'shot') {
       const n = w.n + P.extra; Sfx.shoot();
       for (let i = 0; i < n; i++) {
@@ -569,7 +573,7 @@ const Game = {
     }
   },
   updateBoss(b, dt, d, ang) {
-    const C = this.C, p = C.p, def = BOSSES[Math.min(this.run.act, 2)], sm = 1 - Math.min(0.5, b.slow);
+    const C = this.C, p = C.p, def = BOSSES[(this.run.act % 3)], sm = 1 - Math.min(0.5, b.slow);
     const ph = b.hp < b.maxhp * 0.33 ? 3 : b.hp < b.maxhp * 0.66 ? 2 : 1;
     if (ph > b.phase) {
       b.phase = ph; b.pat = null; b.cd = 1.4; C.eb.length = 0; C.haz = C.haz.filter(h => h.friendly); C.beams.length = 0;
@@ -706,7 +710,7 @@ const Game = {
 
   // ================= render =================
   background(act) {
-    const c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'), col = ACT_COL[Math.min(act, 2)];
+    const c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'), col = ACT_COL[(act % 3)];
     const aw = ARENA.x1 - ARENA.x0, ah = ARENA.y1 - ARENA.y0;
     g.fillStyle = '#05060f'; g.fillRect(0, 0, W, H);
     g.fillStyle = col[0]; g.fillRect(ARENA.x0, ARENA.y0, aw, ah);
@@ -730,7 +734,7 @@ const Game = {
   render() {
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false;
     if (this.mode !== 'fight' && this.mode !== 'clear' || !this.C) { this.renderIdle(); return; }
-    const C = this.C, P = this.P, run = this.run, p = C.p, clan = CLANS[run.clan], ac = ACT_COL[Math.min(run.act, 2)];
+    const C = this.C, P = this.P, run = this.run, p = C.p, clan = CLANS[run.clan], ac = ACT_COL[(run.act % 3)];
     const cx = snap(C.cam.x), cy = snap(C.cam.y);
     ctx.drawImage(C.floor, cx, cy, W, H, 0, 0, W, H);
     const sx = C.shake > 0.3 ? snap(rnd(-C.shake, C.shake)) : 0, sy = C.shake > 0.3 ? snap(rnd(-C.shake, C.shake)) : 0;
@@ -791,7 +795,7 @@ const Game = {
     if (this.fade) { const t = this.fade.t, a = t < 0.25 ? t / 0.25 : Math.max(0, (0.5 - t) / 0.25); ctx.fillStyle = 'rgba(0,0,0,' + clamp(a, 0, 1) + ')'; ctx.fillRect(0, 0, W, H); }
   },
   drawLight(C, p) {
-    const B = BIOME[Math.min(this.run.act, 2)];
+    const B = BIOME[(this.run.act % 3)];
     Light.begin(B.amb, B.tint, C.safe);
     Light.add(p.x, p.y, 250, 0.3);
     for (const b of C.pb) Light.add(b.x, b.y, 46, 0.25);
@@ -815,7 +819,7 @@ const Game = {
     for (const e of C.en) if (e.boss) glow(e.x, e.y, 120, '255,60,40', 0.04);
     ctx.globalCompositeOperation = 'source-over';
     // drifting dust / embers / spores
-    ctx.fillStyle = ['#b0a890', '#ff9a4a', '#c070ff'][Math.min(this.run.act, 2)];
+    ctx.fillStyle = ['#b0a890', '#ff9a4a', '#c070ff'][(this.run.act % 3)];
     ctx.globalAlpha = 0.35; for (const d of C.dust) ctx.fillRect(snap(d.x), snap(d.y), 2, 2); ctx.globalAlpha = 1;
   },
   drawWorldObjs(C) {
@@ -868,7 +872,7 @@ const Game = {
     if (e.type === 'boss') {
       const fa = e.pat === 'charge' && e.pt > 0.9 ? e.ang : ang;
       if (e.pat === 'charge' && e.pt < 0.9) { ctx.globalAlpha = 0.3 + 0.3 * Math.sin(C.t * 30); pxLine(e.x, e.y, e.x + Math.cos(e.ang) * 900, e.y + Math.sin(e.ang) * 900, Math.round(e.r / 2) * 2, '#ff3a3a'); ctx.globalAlpha = 1; }
-      this.sprite('b:' + Math.min(this.run.act, 2), e.x, e.y, fa, 2, fl);
+      this.sprite('b:' + (this.run.act % 3), e.x, e.y, fa, 2, fl);
     } else {
       let fa = ang;
       if (e.type === 'dasher' && e.state !== 'move') fa = e.ang;
@@ -894,8 +898,8 @@ const Game = {
     pxBar(14, 32, 110, 10, dk, dk >= 1 ? '#3de8ff' : '#2a6a80'); pxBar(134, 32, 110, 10, ak, ak >= 1 ? clan.color : '#555');
     ctx.font = '9px Silk, monospace'; ctx.fillStyle = '#000'; ctx.fillStyle = '#fff'; ctx.fillText('DASH', 20, 41); ctx.fillText(w.ability.name.toUpperCase().slice(0, 12), 140, 41);
     // center info
-    ctx.textAlign = 'center'; ctx.font = '12px Silk, monospace'; ctx.fillStyle = '#9fc'; ctx.fillText('ACT ' + (run.act + 1) + '  ' + ACT_NAMES[Math.min(run.act, 2)].toUpperCase() + '  ARENAS ' + run.cleared + '/' + this.world.need + (run.heat ? '  HEAT ' + run.heat : ''), W / 2, 18);
-    ctx.fillStyle = '#fff'; ctx.fillText(HEROES[run.hero].name.toUpperCase() + ' / ' + clan.name.toUpperCase(), W / 2, 36);
+    ctx.textAlign = 'center'; ctx.font = '12px Silk, monospace'; ctx.fillStyle = '#9fc'; ctx.fillText((run.act >= 3 ? 'LOOP ' + Math.floor(run.act / 3) + '  ' : '') + 'ACT ' + (run.act % 3 + 1) + '  ' + ACT_NAMES[(run.act % 3)].toUpperCase() + '  ARENAS ' + run.cleared + '/' + this.world.need + (run.heat ? '  HEAT ' + run.heat : ''), W / 2, 18);
+    ctx.fillStyle = '#fff'; ctx.fillText(HEROES[run.hero].name.toUpperCase() + ' / ' + w.weapon.name.toUpperCase(), W / 2, 36);
     ctx.textAlign = 'right'; ctx.font = '14px Silk, monospace'; ctx.fillStyle = '#ffd91f'; ctx.fillText('GOLD ' + run.gold, W - 14, 20);
     ctx.fillStyle = '#3de8ff'; ctx.font = '11px Silk, monospace'; ctx.fillText('CORES ' + run.cores + ' (AT RISK)', W - 14, 38);
     // tags
@@ -931,7 +935,8 @@ const Game = {
   frame(now) {
     const dt = Math.min(0.033, (now - this.last) / 1000 || 0.016); this.last = now;
     if (this.fade) { const f = this.fade; f.t += dt; if (f.t >= 0.25 && !f.done) { f.done = true; f.fn(); } if (f.t >= 0.5) this.fade = null; }
-    if (this.mode === 'fight' && this.C && !this.paused && !this.frozen) this.update(dt);
+    if (this.C && this.C.hitstop > 0) this.C.hitstop -= dt;
+    else if (this.mode === 'fight' && this.C && !this.paused && !this.frozen) this.update(dt);
     this.render();
     requestAnimationFrame(t => this.frame(t));
   },

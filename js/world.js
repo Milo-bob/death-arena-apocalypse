@@ -71,7 +71,7 @@ Object.assign(Game, {
     const sc = W.cells[W.startId]; sc.state.visited = true;
     const P = this.P = buildStats(run, Save.data);
     const C = this.C = { world: W, t: 0, en: [], eb: [], pb: [], haz: [], zones: [], gold: [], parts: [], fl: [], turrets: [], beams: [], markers: [], fx: [], pillars: W.pillars,
-      waves: [], waveIdx: 0, waveCd: 0, shake: 0, boss: null, bladeAng: 0, intro: 0, banner: 2.6, bannerText: ACT_NAMES[Math.min(act, 2)].toUpperCase(), enc: null, curCell: sc, cam: { x: sc.x0, y: sc.y0 }, mx: 0, my: 0,
+      waves: [], waveIdx: 0, waveCd: 0, shake: 0, boss: null, bladeAng: 0, intro: 0, banner: 2.6, bannerText: ACT_NAMES[(act % 3)].toUpperCase(), enc: null, wdrops: [], hitstop: 0, curCell: sc, cam: { x: sc.x0, y: sc.y0 }, mx: 0, my: 0,
       noHit: true, hpS: 1, dmgS: 1, spdS: 1, curse: {}, clearMsg: 0, near: null,
       p: { x: sc.x0 + 480, y: sc.y0 + 430, lx: sc.x0 + 480, ly: sc.y0 + 430, r: 12, aim: -Math.PI / 2, fireT: 0.3, dashT: 0, dashCd: 0, dashDir: 0, dashHit: [], inv: 0.5, abT: 2, flash: 0, over: 0, overRate: 1, shield: 0, still: 0, trailT: 0, regenAcc: 0 },
       dust: Array.from({ length: 36 }, () => ({ x: rnd(0, W_), y: rnd(60, H), vx: rnd(-6, 6), vy: act === 1 ? rnd(-22, -8) : rnd(-4, 6) })) };
@@ -146,7 +146,7 @@ Object.assign(Game, {
     C.dmgS = (1 + 0.3 * act) * (1 + 0.12 * run.heat) * ((curse && curse.dmg) || 1);
     C.spdS = (curse && curse.speed) || 1;
     if (boss) {
-      const b = BOSSES[Math.min(act, 2)], hp = b.hp * (1 + 0.2 * run.heat) * P.enemyHp, x = cell.x0 + 480, y = cell.y0 + 190;
+      const b = BOSSES[(act % 3)], hp = b.hp * (1 + 0.2 * run.heat) * (1 + 0.5 * Math.floor(act / 3)) * P.enemyHp, x = cell.x0 + 480, y = cell.y0 + 190;
       C.boss = { type: 'boss', boss: true, x, y, lx: x, ly: y, r: b.r, hp, maxhp: hp, sh: 0, flash: 0, phase: 1, pat: null, pt: 0, cd: 2, n: 0, sa: 0, atk: 0, col: b.col, name: b.name, vx: 0, vy: 0, slow: 0, slowT: 0, poison: 0, poisonT: 0, burn: 0, burnT: 0, spawnT: 0, bladeCd: 0, ang: 0, stage: 0 };
       C.en.push(C.boss); C.bannerText = b.name.toUpperCase();
     } else {
@@ -175,6 +175,7 @@ Object.assign(Game, {
     this.P = buildStats(run, Save.data); run.hp = Math.min(run.hp, this.P.maxhp);
     if (this.P.clearHeal) this.heal(this.P.clearHeal);
     this.floatText(p.x, p.y - 34, '+' + got + ' CORES', '#3de8ff', 1.1);
+    if (n === 'elite' || (n === 'fight' && Math.random() < 0.3)) this.spawnWeapon(cell.x0 + 480, cell.y0 + 400);
     const kind = cell.rewardKind;
     if (n === 'curse' || kind === 'epic') cell.state.reward = { kind: 'perk', min: 'epic', cores: got };
     else if (n === 'boss' || n === 'elite') cell.state.reward = { kind: 'perk', min: 'rare', cores: got };
@@ -189,7 +190,8 @@ Object.assign(Game, {
   },
   orbPos(cell) { return { x: cell.x0 + 480, y: cell.y0 + (cell.type === 'boss' ? 340 : 300) }; },
   worldUpdate() {
-    const C = this.C, p = C.p, W = this.world, run = this.run; C.near = null;
+    const C = this.C, p = C.p, W = this.world, run = this.run; C.near = null; C.nearW = null;
+    for (const d of C.wdrops) if (dist(d, p) < 36) C.nearW = d;
     const cc = this.cellAt(p.x, p.y);
     if (cc && cc !== C.curCell) this.discover(cc);
     if (C.clearMsg > 0) C.clearMsg -= 1 / 60;
@@ -201,8 +203,23 @@ Object.assign(Game, {
       if (c.obj && !s.used && dist(c.obj, p) < 52) C.near = c;
     }
   },
+  // ---------- weapons on the ground (swap with E) ----------
+  spawnWeapon(x, y) {
+    const C = this.C, cur = this.run.wpn || this.run.hero, ids = Object.keys(HEROES).filter(k => k !== cur && !C.wdrops.some(d => d.id === k));
+    if (!ids.length) return;
+    C.wdrops.push({ id: pick(ids), x, y }); this.floatText(x, y - 30, 'WEAPON DROP', '#ffd91f');
+  },
+  dropWeapon(e) { if (Math.random() < (e.boss ? 1 : e.elite ? 0.4 : 0.02)) this.spawnWeapon(e.x, e.y); },
+  pickWeapon(d) {
+    const C = this.C, run = this.run, old = run.wpn || run.hero;
+    C.wdrops = C.wdrops.filter(x => x !== d); run.wpn = d.id; C.bladePos = [];
+    if (old !== d.id) C.wdrops.push({ id: old, x: C.p.x, y: C.p.y + 48 });
+    Sfx.good(); this.floatText(C.p.x, C.p.y - 30, HEROES[d.id].weapon.name.toUpperCase(), CLANS[HEROES[d.id].clan].color, 1.2); this.persist();
+  },
   interact() {
-    const C = this.C; if (!C || !C.near || this.frozen || this.fade && this.fade.t < 0.5 && !this.fade.done || this.paused) return;
+    const C = this.C;
+    if (C && !C.near && C.nearW && !this.frozen && !this.paused) { this.pickWeapon(C.nearW); return; }
+    if (!C || !C.near || this.frozen || this.fade && this.fade.t < 0.5 && !this.fade.done || this.paused) return;
     const c = C.near, o = c.obj; C.nodeCell = c; C.node = c.state; C.pendingObj = true; C.pendingOrb = false; this.frozen = true; Input.keys = {}; Input.down = false;
     if (o.kind === 'shop') UI.shop(c.state); else if (o.kind === 'rest') UI.rest(c.state); else if (o.kind === 'event') UI.event(c.state); else if (o.kind === 'curse') UI.curse(c.state);
   },
@@ -217,7 +234,7 @@ Object.assign(Game, {
 
   // ---------- drawing ----------
   drawLight(C, p) {
-    const B = BIOME[Math.min(this.run.act, 2)], cam = C.cam, cx = Math.round(cam.x), cy = Math.round(cam.y), cur = this.cellAt(p.x, p.y);
+    const B = BIOME[(this.run.act % 3)], cam = C.cam, cx = Math.round(cam.x), cy = Math.round(cam.y), cur = this.cellAt(p.x, p.y);
     Light.begin(B.amb, B.tint, cur && cur.safe, cx, cy);
     Light.add(p.x, p.y, 250, 0.3);
     for (const b of C.pb) Light.add(b.x, b.y, 46, 0.25);
@@ -242,7 +259,7 @@ Object.assign(Game, {
     for (const g of glows) glow(...g);
     for (const e of C.en) if (e.boss) glow(e.x, e.y, 120, '255,60,40', 0.04);
     ctx.globalCompositeOperation = 'source-over';
-    ctx.fillStyle = ['#b0a890', '#ff9a4a', '#c070ff'][Math.min(this.run.act, 2)]; ctx.globalAlpha = 0.35;
+    ctx.fillStyle = ['#b0a890', '#ff9a4a', '#c070ff'][(this.run.act % 3)]; ctx.globalAlpha = 0.35;
     for (const d of C.dust) ctx.fillRect(snap(cx + d.x), snap(cy + d.y), 2, 2); ctx.globalAlpha = 1;
   },
   drawWorldObjs(C) {
@@ -273,6 +290,19 @@ Object.assign(Game, {
       }
       if (c.obj) this.drawObj(c, C.t);
     }
+    for (const c of this.world.cells) if (c.type === 'boss' && c.state.cleared) {
+      const x = c.x0 + 480, y = c.y0 + 190; if (x < vx0 || x > vx1 || y < vy0 || y > vy1) continue;
+      for (let k = 0; k < 3; k++) { ctx.strokeStyle = ['#ffffff', '#3de8ff', '#a06bff'][k]; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, 12 + k * 8 + Math.sin(C.t * 5 + k) * 3, 0, 6.283); ctx.stroke(); }
+      ctx.font = '10px Silk, monospace'; ctx.fillStyle = '#fff'; ctx.fillText(c.state.rewarded ? 'PORTAL' : 'TAKE THE ORB', x, y + 44);
+    }
+    for (const d of C.wdrops) {
+      if (d.x < vx0 || d.x > vx1 || d.y < vy0 || d.y > vy1) continue;
+      const h = HEROES[d.id], col = CLANS[h.clan].color, x = snap(d.x), y = snap(d.y + Math.sin(C.t * 4 + d.x) * 2);
+      ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.fillRect(x - 12, y + 12, 24, 6);
+      ctx.fillStyle = '#0a0b0e'; ctx.fillRect(x - 12, y - 12, 24, 24); ctx.fillStyle = col; ctx.fillRect(x - 12, y - 12, 24, 2); ctx.fillRect(x - 12, y + 10, 24, 2); ctx.fillRect(x - 12, y - 12, 2, 24); ctx.fillRect(x + 10, y - 12, 2, 24);
+      ctx.font = '12px Silk, monospace'; ctx.fillText({ shot: 'S', cone: 'C', blades: 'B', lance: 'L', mortar: 'M' }[h.weapon.type], x, y + 5);
+    }
+    if (C.nearW && !C.near) { const h = HEROES[C.nearW.id], t = '[E] ' + h.weapon.name.toUpperCase() + ' (' + h.weapon.type + ')', x = snap(C.nearW.x), y = snap(C.nearW.y); ctx.font = '12px Silk, monospace'; ctx.fillStyle = '#000'; ctx.fillText(t, x + 1, y - 23); ctx.fillStyle = '#ffd91f'; ctx.fillText(t, x, y - 24); }
     if (C.near) { const o = C.near.obj, txt = '[E] ' + { shop: 'TRADE', rest: 'REST', event: 'PRAY', curse: 'TOUCH THE STONE' }[o.kind]; ctx.font = '12px Silk, monospace'; ctx.fillStyle = '#000'; ctx.fillText(txt, snap(o.x) + 1, o.y - 51); ctx.fillStyle = '#ffd91f'; ctx.fillText(txt, snap(o.x), o.y - 52); }
     ctx.textAlign = 'left';
   },

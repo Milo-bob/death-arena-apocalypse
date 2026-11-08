@@ -59,7 +59,7 @@ function paintWalls(g, R, B, w, h) {
 
 // one big floor canvas for a whole act: regions = [{x,y,w,h,big}] of walkable ground
 function buildWorldFloor(act, seed, regions, WW, HH) {
-  const B = BIOME[Math.min(act, 2)], R = rng(seed), a = Math.min(act, 2), c = document.createElement('canvas'); c.width = WW; c.height = HH;
+  const B = BIOME[(act % 3)], R = rng(seed), a = (act % 3), c = document.createElement('canvas'); c.width = WW; c.height = HH;
   const g = c.getContext('2d');
   paintWalls(g, R, B, WW, HH);
   for (const r of regions) paintRegion(g, R, B, a, r.x, r.y, r.w, r.h, r.big);
@@ -69,7 +69,7 @@ function buildWorldFloor(act, seed, regions, WW, HH) {
 }
 
 function drawObstacle(g, q, act) {
-  const x = sn(q.x), y = sn(q.y), w = sn(q.w), h = sn(q.h), a = Math.min(act, 2), R = rng(x * 31 + y * 7), fh = 12;
+  const x = sn(q.x), y = sn(q.y), w = sn(q.w), h = sn(q.h), a = (act % 3), R = rng(x * 31 + y * 7), fh = 12;
   g.fillStyle = 'rgba(0,0,0,.4)'; g.fillRect(x + 6, y + 8, w, h);
   if (a === 0) {
     g.fillStyle = '#3a3834'; g.fillRect(x, y + h - fh, w, fh); g.fillStyle = '#2a2826'; for (let i = 6; i < w - 4; i += 12) g.fillRect(x + i, y + h - fh, 2, fh);
