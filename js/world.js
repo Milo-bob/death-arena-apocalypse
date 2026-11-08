@@ -1,6 +1,6 @@
 // World: one connected map per act (a big organic cave, no map shown to the player, Nuclear Throne style). No rooms: enemies lie scattered through the whole cave, kill enough of them and a portal opens.
 // Loaded after game.js; replaces the old door-room flow of Game.
-const TILE = 40, COLS = 110, ROWS = 70, WORLD_W = COLS * TILE, WORLD_H = ROWS * TILE, NEED_CLEAR = 6;
+const TILE = 40, COLS = 64, ROWS = 42, WORLD_W = COLS * TILE, WORLD_H = ROWS * TILE, NEED_CLEAR = 6;
 const CELL_COL = { fight: '#ff6a6a', elite: '#ff8a1f', shop: '#ffd91f', camp: '#39ff6e', event: '#b24bff', curse: '#ff3de8', boss: '#ff2d3d' };
 const CELL_NAME = { start: 'START', fight: 'ARENA', elite: 'ELITE ARENA', shop: 'BLACK MARKET', camp: 'CAMP', event: 'STRANGE ALTAR', curse: 'CURSED SHRINE', boss: 'BOSS LAIR' };
 const CELL_LET = { fight: 'F', elite: 'E', shop: '$', camp: 'C', event: 'A', curse: 'X', boss: 'B' };
@@ -16,9 +16,9 @@ function genWorld(act, seed) {
   const open = (px, py, rad) => { if (!floorAt(px, py)) return false; for (let a = 0; a < 6.3; a += 0.8) if (!floorAt(px + Math.cos(a) * rad, py + Math.sin(a) * rad)) return false; return true; };
   // 1) cavern centres, spread over the whole map (just caves, not rooms: nothing happens in them)
   const pts = [];
-  for (let tries = 0; pts.length < 17 && tries < 5000; tries++) {
-    const x = 9 + R() * (COLS - 18), y = 9 + R() * (ROWS - 18);
-    if (pts.every(q => Math.hypot(q[0] - x, q[1] - y) > 14)) pts.push([x, y]);
+  for (let tries = 0; pts.length < 10 && tries < 5000; tries++) {
+    const x = 7 + R() * (COLS - 14), y = 7 + R() * (ROWS - 14);
+    if (pts.every(q => Math.hypot(q[0] - x, q[1] - y) > 9)) pts.push([x, y]);
   }
   const n = pts.length, startId = Math.floor(R() * n);
   const dS = i => Math.hypot(pts[i][0] - pts[startId][0], pts[i][1] - pts[startId][1]);
@@ -26,10 +26,10 @@ function genWorld(act, seed) {
   const bossId = bossLevel ? far[Math.floor(R() * 2)] : -1;
   const rest = pts.map((_, i) => i).filter(i => i !== startId && i !== bossId).sort(() => R() - 0.5);
   const special = new Map();   // node -> type of the small thing standing in it
-  special.set(rest[0], 'camp'); special.set(rest[1], 'shop'); if (R() < 0.5) special.set(rest[2], 'shop'); special.set(rest[3], 'event');
+  if (rest[0] !== undefined) special.set(rest[0], 'camp'); if (rest[1] !== undefined) special.set(rest[1], 'shop'); if (rest[2] !== undefined && R() < 0.5) special.set(rest[2], 'shop'); if (rest[3] !== undefined) special.set(rest[3], 'event');
   // 2) carve each cavern as an irregular blob
   pts.forEach((q, id) => {
-    const rt = id === bossId ? 8 : id === startId ? 3.8 : special.has(id) ? 3.2 : 2.8 + R() * 2.6; q.push(rt);
+    const rt = id === bossId ? 6.5 : id === startId ? 3.4 : special.has(id) ? 3 : 2.6 + R() * 2.2; q.push(rt);
     carve(q[0], q[1], rt * 0.7);
     for (let k = 0; k < 7; k++) { const a = R() * 6.283, d = rt * (0.35 + R() * 0.5); carve(q[0] + Math.cos(a) * d, q[1] + Math.sin(a) * d, rt * (0.3 + R() * 0.3)); }
   });
@@ -49,15 +49,15 @@ function genWorld(act, seed) {
     for (const a of linked) for (let b = 0; b < n; b++) if (!linked.has(b)) { const d = Math.hypot(pts[a][0] - pts[b][0], pts[a][1] - pts[b][1]); if (!best || d < best[2]) best = [a, b, d]; }
     edges.push(best); linked.add(best[1]);
   }
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 3; i++) {
     const a = Math.floor(R() * n), near = pts.map((_, b) => b).filter(b => b !== a).sort((u, v) => Math.hypot(pts[u][0] - pts[a][0], pts[u][1] - pts[a][1]) - Math.hypot(pts[v][0] - pts[a][0], pts[v][1] - pts[a][1])).slice(0, 3);
     const b = near[Math.floor(R() * near.length)]; if (!has(a, b)) edges.push([a, b]);
   }
   for (const [a, b] of edges) tunnel(a, b);
   // 4) drunkard-walk side caves and dead ends
-  for (let w = 0; w < 8; w++) {
+  for (let w = 0; w < 5; w++) {
     let x = pts[Math.floor(R() * n)][0], y = pts[Math.floor(R() * n)][1], ang = R() * 6.283;
-    for (let s = 0; s < 110; s++) {
+    for (let s = 0; s < 80; s++) {
       if (R() < 0.15) ang += (R() - 0.5) * 2.4;
       x = clamp(x + Math.cos(ang), 6, COLS - 7); y = clamp(y + Math.sin(ang), 6, ROWS - 7); carve(x, y, 1.0 + R() * 0.8);
     }
@@ -76,7 +76,7 @@ function genWorld(act, seed) {
     const a = R() * 6.283, d = bossCell.r * (0.35 + R() * 0.45), w = 44 + Math.floor(R() * 30), h = 44 + Math.floor(R() * 30), x = bossCell.cx + Math.cos(a) * d, y = bossCell.cy + Math.sin(a) * d;
     if (open(x, y, 80)) { pillars.push({ x: x - w / 2, y: y - h / 2, w, h }); k--; }
   }
-  for (let i = 0; i < 50; i++) {   // loose rocks in the open caves
+  for (let i = 0; i < 24; i++) {   // loose rocks in the open caves
     const x = (4 + R() * (COLS - 8)) * TILE, y = (4 + R() * (ROWS - 8)) * TILE, w = 36 + Math.floor(R() * 30), h = 36 + Math.floor(R() * 30);
     if (open(x, y, 100) && cells.every(c => Math.hypot(c.cx - x, c.cy - y) > 130)) pillars.push({ x: x - w / 2, y: y - h / 2, w, h });
   }
@@ -88,8 +88,8 @@ Object.assign(Game, {
   startRun() {
     const s = Save.data, hero = HEROES[s.hero];
     const lo = (s.loadout && s.loadout[s.hero]) || {}, own = id => (id && s.heroes[id] && HEROES[id].clan === hero.clan ? id : s.hero);
-    this.run = { hero: s.hero, wpn: own(lo.w), abl: own(lo.a), clan: hero.clan, act: 0, seed: (Math.random() * 1e9) | 0, cstate: {}, cleared: 0, perks: [], drawbacks: [], hp: 100, gold: 20 + 25 * (s.meta.fort || 0), cores: 0,
-      heat: s.heat, kills: 0, rooms: 0, xp: 0, plv: 1, coreAcc: 0, ammo: startAmmo(), wpn2: null, bonus: { mut: 0 }, mutKills: 0, killAcc: 0, phoenixUsed: false, t0: Date.now() };
+    this.run = { hero: s.hero, wpn: hero.start || s.hero, abl: s.hero, clan: hero.clan, act: 0, seed: (Math.random() * 1e9) | 0, cstate: {}, cleared: 0, perks: [], drawbacks: [], hp: 100, gold: 20 + 25 * (s.meta.fort || 0), cores: 0,
+      heat: s.heat, kills: 0, rooms: 0, xp: 0, plv: 1, coreAcc: 0, ammo: startAmmo(), wpn2: hero.start2 || null, bonus: { mut: 0 }, mutKills: 0, killAcc: 0, phoenixUsed: false, t0: Date.now() };
     this.P = buildStats(this.run, s); this.run.hp = this.P.maxhp;
     this.enterAct();
   },
@@ -166,11 +166,11 @@ Object.assign(Game, {
   },
   spawnRoamers(Wd) {
     const C = this.C, run = this.run, act = run.act, R = rng(run.seed + 99), sc = Wd.cells[Wd.startId], boss = Wd.cells.find(c => c.type === 'boss');
-    C.hpS = (1 + 0.14 * act) * (1 + 0.15 * run.heat) * this.P.enemyHp * 0.9; C.dmgS = (1 + 0.08 * act) * (1 + 0.12 * run.heat); C.spdS = 1;
-    let budget = (120 + act * 12) * (boss ? 0.55 : 1);
+    C.hpS = (1 + 0.12 * act) * (1 + 0.15 * run.heat) * this.P.enemyHp * 0.9; C.dmgS = (1 + 0.03 * act) * (1 + 0.12 * run.heat); C.spdS = 1;
+    let budget = (52 + act * 6) * (boss ? 0.55 : 1);
     for (let guard = 0; budget > 0 && guard < 300; guard++) {
       const x = (3 + R() * (COLS - 6)) * TILE, y = (3 + R() * (ROWS - 6)) * TILE, cz = this.cellAt(x, y);
-      if (!this.fits(x, y, 24) || Math.hypot(x - sc.cx, y - sc.cy) < 650 || (cz && (cz.safe || cz.type === 'boss'))) continue;
+      if (!this.fits(x, y, 24) || Math.hypot(x - sc.cx, y - sc.cy) < 520 || (cz && (cz.safe || cz.type === 'boss'))) continue;
       const cost = 4 + Math.min(act, 6), list = R() < 0.16 && AREA_ENEMIES[areaOf(act)].includes('maggot') ? Array(5 + Math.floor(R() * 3)).fill('maggot') : this.compose(Math.min(budget, cost), act, Math.min(4, 1 + act)); budget -= cost;
       for (const t of list) {
         const ex = x + (R() - 0.5) * 90, ey = y + (R() - 0.5) * 90;
@@ -180,15 +180,15 @@ Object.assign(Game, {
       }
     }
     C.levelTotal = C.en.filter(e => e.free).length;
-    for (let i = 0, k = 14; i < 500 && k > 0; i++) {   // explosive barrels
+    for (let i = 0, k = 8; i < 500 && k > 0; i++) {   // explosive barrels
       const x = (4 + R() * (COLS - 8)) * TILE, y = (4 + R() * (ROWS - 8)) * TILE;
       if (this.fits(x, y, 22) && Math.hypot(x - sc.cx, y - sc.cy) > 250) { C.props.push({ x, y, r: 13, hp: 22, maxhp: 22, flash: 0 }); k--; }
     }
-    for (let i = 0, k = 7; i < 400 && k > 0; i++) {   // chests: ammo, weapons, health
+    for (let i = 0, k = 4; i < 400 && k > 0; i++) {   // chests: ammo, weapons, health
       const x = (4 + R() * (COLS - 8)) * TILE, y = (4 + R() * (ROWS - 8)) * TILE;
       if (this.fits(x, y, 20) && Math.hypot(x - sc.cx, y - sc.cy) > 350) { const q = R(); C.chests.push({ x, y, kind: q < 0.45 ? 'ammo' : q < 0.72 ? 'weapon' : 'heal', open: false }); k--; }
     }
-    for (let i = 0, k = 2; i < 200 && k > 0; i++) {   // and a couple of weapons on the floor
+    for (let i = 0, k = 1; i < 200 && k > 0; i++) {   // and a weapon on the floor
       const x = (4 + R() * (COLS - 8)) * TILE, y = (4 + R() * (ROWS - 8)) * TILE;
       if (this.fits(x, y, 20) && Math.hypot(x - sc.cx, y - sc.cy) > 500) { this.spawnWeapon(x, y, true); k--; }
     }
@@ -200,12 +200,24 @@ Object.assign(Game, {
     run.ammo = run.ammo || startAmmo();
     const want = this.ammoWanted(), low = run.ammo[want] / AMMO[want].max < 0.35;
     if (!e.boss && Math.random() < (low ? 0.34 : 0.17)) this.spawnItem(e.x, e.y, 'ammo', { type: want, amt: AMMO[want].amt });
-    if (!e.boss && !P.noHeal && Math.random() < (run.hp < P.maxhp * 0.5 ? 0.09 : 0.03)) this.spawnItem(e.x, e.y, 'heal', { amt: Math.round(P.maxhp * 0.12) });
+    if (!e.boss && !P.noHeal && Math.random() < (run.hp < P.maxhp * 0.5 ? 0.09 : 0.03)) this.spawnItem(e.x, e.y, 'heal', { amt: 10 });
     run.coreAcc = (run.coreAcc || 0) + (e.boss ? 0 : e.elite ? 3 : ENEMY[e.type].cost * 0.4) * (1 + 0.15 * run.act) * (1 + 0.2 * run.heat);
     if (run.coreAcc >= 1) { const g = Math.floor(run.coreAcc); run.coreAcc -= g; run.cores += g; }
     if (e.free) {
       C.lvlKills++;
       if (!C.portal && !isBossLevel(run.act) && C.lvlKills >= Math.ceil(C.levelTotal * 0.9)) { C.portal = { x: e.x, y: e.y }; this.floatText(e.x, e.y - 40, 'THE PORTAL OPENS', '#a06bff', 1.4); Sfx.good(); }
+    }
+  },
+  drawHearts(x, y, hp, max) {   // 1 heart = 10 HP, like the original's 8 starting hearts
+    const n = Math.ceil(max / 10), cell = n > 12 ? 1 : 2, step = cell * 7 + 4, ox = n > 12 ? 230 / n - step : 0;
+    const pat = ['.XX.XX.', 'XXXXXXX', 'XXXXXXX', '.XXXXX.', '..XXX..', '...X...'];
+    for (let i = 0; i < n; i++) {
+      const f = clamp((hp - i * 10) / 10, 0, 1), hx = x + i * (step + ox);
+      for (let r = 0; r < 6; r++) for (let c = 0; c < 7; c++) {
+        if (pat[r][c] !== 'X') continue;
+        ctx.fillStyle = c < f * 7 - 0.01 ? (r === 1 && c < 3 ? '#ff9aa6' : '#ff3a4a') : '#3a1018';
+        ctx.fillRect(hx + c * cell, y + r * cell, cell, cell);
+      }
     }
   },
   // ---------- props: explosive barrels ----------
@@ -239,8 +251,8 @@ Object.assign(Game, {
   // ---------- pickups: rads (xp), ammo, health; chests ----------
   spawnItem(x, y, kind, o) { const C = this.C; if (C.items.length > 220) return; C.items.push(Object.assign({ x, y, kind, vx: rnd(-110, 110), vy: rnd(-110, 110), t: 0 }, o || {})); },
   addXp(n) {
-    const run = this.run, C = this.C; run.plv = run.plv || 1; run.xp = (run.xp || 0) + n;
-    while (run.xp >= 10 + 6 * run.plv) { run.xp -= 10 + 6 * run.plv; run.plv++; C.levelUps++; run.bonus.hp = (run.bonus.hp || 0) + 4; }
+    const run = this.run, C = this.C; run.plv = run.plv || 1; run.xp = (run.xp || 0) + n * (this.P.xpMul || 1);
+    while (run.xp >= 10 + 6 * run.plv) { run.xp -= 10 + 6 * run.plv; run.plv++; C.levelUps++; }
   },
   addAmmo(type, amt) { const run = this.run; run.ammo = run.ammo || startAmmo(); run.ammo[type] = Math.min(AMMO[type].max, (run.ammo[type] || 0) + Math.round(amt * this.P.ammoMul)); },
   ammoWanted() {   // mostly the ammo your weapons use
@@ -273,12 +285,12 @@ Object.assign(Game, {
     const C = this.C; Sfx.good(); C.shake = Math.max(C.shake, 3);
     if (ch.kind === 'ammo') for (let i = 0; i < 4; i++) { const t = this.ammoWanted(); this.spawnItem(ch.x, ch.y, 'ammo', { type: t, amt: AMMO[t].amt }); }
     else if (ch.kind === 'weapon') this.spawnWeapon(ch.x, ch.y + 30, false, true);
-    else for (let i = 0; i < 3; i++) this.spawnItem(ch.x, ch.y, 'heal', { amt: Math.round(this.P.maxhp * 0.1) });
+    else for (let i = 0; i < 2; i++) this.spawnItem(ch.x, ch.y, 'heal', { amt: 10 });
   },
   useAmmo(w) {
     const t = ammoOf(w); if (!t) return true;
     const run = this.run; run.ammo = run.ammo || startAmmo();
-    const c = w.cost || 1; if (run.ammo[t] < c) return false;
+    const c = (w.cost || 1) * (this.P.ammoCost || 1); if (run.ammo[t] < c) return false;
     run.ammo[t] -= c; return true;
   },
   noAmmo() { const C = this.C; if (!C.noAmmoT || C.t - C.noAmmoT > 1) { this.floatText(C.p.x, C.p.y - 28, 'NO AMMO', '#ff6a6a', 1.1); C.noAmmoT = C.t; } },
@@ -310,8 +322,8 @@ Object.assign(Game, {
     curse = curse || null;
     if (curse && curse.halfhp) { P.maxhp = Math.round(P.maxhp / 2); run.hp = Math.min(run.hp, P.maxhp); }
     C.enc = cell; C.curse = curse || {}; C.cellEnc = cell; C.intro = 1.0; C.waves = []; C.waveIdx = 0; C.waveCd = 0; C.boss = null; C.elitesLeft = elite ? 2 : 0;
-    C.hpS = (1 + 0.14 * act) * (1 + 0.04 * row) * (1 + 0.15 * run.heat) * P.enemyHp * ((curse && curse.hp) || 1);
-    C.dmgS = (1 + 0.08 * act) * (1 + 0.12 * run.heat) * ((curse && curse.dmg) || 1);
+    C.hpS = (1 + 0.12 * act) * (1 + 0.04 * row) * (1 + 0.15 * run.heat) * P.enemyHp * ((curse && curse.hp) || 1);
+    C.dmgS = (1 + 0.03 * act) * (1 + 0.12 * run.heat) * ((curse && curse.dmg) || 1);
     C.spdS = (curse && curse.speed) || 1;
     if (boss) {
       const b = BOSSES[areaOf(act)], hp = b.hp * (1 + 0.2 * run.heat) * (1 + 0.5 * Math.floor(act / LOOP_LEVELS)) * P.enemyHp, x = cell.cx, y = cell.cy - 80;
@@ -387,8 +399,8 @@ Object.assign(Game, {
   // ---------- weapons on the ground (swap with E) ----------
   spawnWeapon(x, y, quiet, better) {
     const C = this.C, run = this.run, mine = [run.wpn || run.hero, run.wpn2], cap = 1 + Math.floor(run.act * 0.8) + (better ? 1 : 0);
-    let ids = Object.keys(HEROES).filter(k => !mine.includes(k) && !C.wdrops.some(d => d.id === k) && weaponTier(k) <= cap);
-    if (!ids.length) ids = Object.keys(HEROES).filter(k => !mine.includes(k));
+    let ids = Object.keys(HEROES).filter(k => HEROES[k].pool && !mine.includes(k) && !C.wdrops.some(d => d.id === k) && weaponTier(k) <= cap);
+    if (!ids.length) ids = Object.keys(HEROES).filter(k => HEROES[k].pool && !mine.includes(k));
     if (!ids.length) return;
     C.wdrops.push({ id: pick(ids), x, y }); if (!quiet) this.floatText(x, y - 30, 'WEAPON', '#ffd91f');
   },

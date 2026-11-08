@@ -84,10 +84,10 @@ const UI = {
     if (this.tab === 'run') {
       h += '<div class="row">';
       for (const id of PLAYABLE) {
-        const hero = HEROES[id];
+        const hero = HEROES[id], sw = HEROES[hero.start || id].weapon;
         const own = !!s.heroes[id], sel = s.hero === id;
         h += '<div class="card ' + (own ? '' : 'locked') + '" style="--c:' + (sel ? c.color : '#345') + ';width:132px;min-height:200px;padding:8px" onclick="UI.pickHero(\'' + id + '\')"><img src="' + Sprites.url(id) + '" style="float:right;width:40px;height:40px;image-rendering:pixelated"><h3>' + hero.name.toUpperCase() + (sel ? ' <span class="pro">*</span>' : '') + '</h3><p class="sm dim">' + hero.blurb + '</p>'
-          + '<p class="sm">Weapon: <b>' + hero.weapon.name + '</b> (' + (ammoOf(hero.weapon) || 'melee') + ')</p><p class="sm">Ability [Q]: <b>' + hero.ability.name + '</b> (' + hero.ability.cd + 's)</p>'
+          + '<p class="sm">Weapon: <b>' + sw.name + (hero.start2 ? ' x2' : '') + '</b> (' + (ammoOf(sw) || 'melee') + ')</p><p class="sm">Ability [Q]: <b>' + hero.ability.name + '</b> (' + hero.ability.cd + 's)</p>'
           + (own ? (sel ? '<p class="pro sm">Selected</p>' : '') : '<p style="text-align:center;margin-top:8px;clear:both"><span class="sm" style="color:#ffd91f">' + (UNLOCK[id] ? UNLOCK[id].d + ' (' + UNLOCK[id].prog(s) + ')' : 'Locked') + '</span></p>') + '</div>';
       }
       h += '</div><div class="row" style="margin-top:14px;align-items:center"><span class="sm">HEAT</span>';
@@ -172,7 +172,7 @@ const UI = {
   },
   status() {
     const run = Game.run, P = Game.P;
-    let h = '<div class="sm" style="width:100%;display:flex;justify-content:space-between;margin-bottom:6px"><span>HP ' + Math.ceil(run.hp) + '/' + P.maxhp + '</span><span style="color:#ffd91f">GOLD ' + run.gold + '</span><span style="color:#3de8ff">CORES AT RISK ' + run.cores + '</span></div>';
+    let h = '<div class="sm" style="width:100%;display:flex;justify-content:space-between;margin-bottom:6px"><span>HEARTS ' + Math.ceil(run.hp / 10) + '/' + Math.round(P.maxhp / 10) + '</span><span style="color:#ffd91f">GOLD ' + run.gold + '</span><span style="color:#3de8ff">CORES AT RISK ' + run.cores + '</span></div>';
     return h;
   },
   buildList() {
@@ -203,7 +203,7 @@ const UI = {
   take(id) { Game.takePerk(id); Game.nodeDone(); },
   takeUltra(i) { Game.run.ultra = i; Game.recalc(); Game.nodeDone(); },
   levelUp() {
-    const run = Game.run, hero = HEROES[run.hero]; Sfx.good(); Game.heal(0.1);
+    const run = Game.run, hero = HEROES[run.hero]; Sfx.good();
     if (run.plv >= 10 && run.ultra == null && hero.ultras) {
       this.show('<h2>ULTRA MUTATION</h2><p class="dim sm">Level ' + run.plv + ': choose your final form</p>' + this.status() + '<div class="row">' + hero.ultras.map((u, i) => '<div class="card rar-legendary" onclick="UI.takeUltra(' + i + ')"><span class="dim sm" style="position:absolute;right:8px;top:6px">[' + (i + 1) + ']</span><h3>' + u.name + '</h3><p>' + u.d + '</p></div>').join('') + '</div>');
       this.acts(() => this.takeUltra(0), () => this.takeUltra(1)); return;
@@ -240,11 +240,11 @@ const UI = {
     const P = Game.P, run = Game.run, healAmt = Math.round(P.maxhp * 0.45);
     this.show('<h2>CAMPFIRE</h2>' + this.status() + '<p class="dim">A quiet moment in a dead world.</p><div class="row" style="margin-top:20px">'
       + '<div class="card ' + (P.noHeal ? 'locked' : '') + '" onclick="UI.restHeal()"><h3>REST</h3><p>Heal ' + healAmt + ' HP.</p>' + (P.noHeal ? '<p class="con sm">Hexed: no healing.</p>' : '') + '</div>'
-      + '<div class="card" onclick="UI.restTrain()"><h3>TRAIN</h3><p>+12 max HP for the rest of the run, and heal 12.</p></div></div>');
+      + '<div class="card" onclick="UI.restTrain()"><h3>TRAIN</h3><p>+1 heart for the rest of the run.</p></div></div>');
     this.acts(() => this.restHeal(), () => this.restTrain());
   },
   restHeal() { Game.heal(0.45); Game.nodeDone(); },
-  restTrain() { Game.run.bonus.hp = (Game.run.bonus.hp || 0) + 12; Game.recalc(); Game.nodeDone(); },
+  restTrain() { Game.run.bonus.hp = (Game.run.bonus.hp || 0) + 10; Game.recalc(); Game.nodeDone(); },
 
   // ---------- altar / events ----------
   event(n) {

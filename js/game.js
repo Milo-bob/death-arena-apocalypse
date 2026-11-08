@@ -323,14 +323,14 @@ const Game = {
     if (e.elite === 'split' || ENEMY[e.type].splits) for (let i = 0; i < 2; i++) { const g = this.makeEnemy('grunt', e.x + rnd(-14, 14), e.y + rnd(-14, 14)); g.hp = g.maxhp *= 0.6; g.spawnT = 0; g.free = e.free; g.awake = true; }
     if (e.elite === 'volatile') C.haz.push({ x: e.x, y: e.y, r: 75, t: 0.9, max: 0.9, dmg: 22 * C.dmgS, friendly: false });
   },
-  healP(a) { if (this.run.hp < this.P.maxhp) { this.run.hp = Math.min(this.P.maxhp, this.run.hp + a); this.floatText(this.C.p.x, this.C.p.y - 20, '+' + Math.round(a), '#39ff6e'); } },
+  healP(a) { if (this.run.hp < this.P.maxhp) { this.run.hp = Math.min(this.P.maxhp, this.run.hp + a); this.floatText(this.C.p.x, this.C.p.y - 20, '+' + (Math.round(a) / 10), '#39ff6e'); } },
   hurt(dmg, src) {
     const C = this.C, p = C.p, P = this.P, run = this.run;
     if (!C || p.inv > 0 || p.dashT > 0) return false;
     if (p.shield > 0) { C.fx.push({ k: 'ring', x: p.x, y: p.y, r: 30, t: 0.2, max: 0.2, col: '#ffe94a' }); return false; }
     const d = dmg * P.taken;
     run.hp -= d; p.inv = 0.7; p.flash = 0.2; C.shake = Math.max(C.shake, 8); C.noHit = false; Sfx.hurt();
-    this.floatText(p.x, p.y - 20, '-' + Math.round(d), '#ff2d3d', 1.2);
+    this.floatText(p.x, p.y - 20, '-' + (Math.round(d) / 10), '#ff2d3d', 1.2);
     this.burst(p.x, p.y, '#ff2d3d', 12, 200);
     if (P.thorns && src && src.hp !== undefined && !src.dead) this.hitEnemy(src, P.thorns, { raw: true, noProc: true, noCrit: true });
     if (run.hp <= 0) {
@@ -375,7 +375,7 @@ const Game = {
     const w = kitOf(run).weapon;
     if (p.fireT > 0) p.fireT -= dt;
     if ((Input.down || Input.auto) && p.fireT <= 0 && w.type !== 'blades' && C.intro < 1.0) {
-      if (this.useAmmo(w)) { this.fire(w); p.fireT = 1 / (w.rate * P.rate * (p.over > 0 ? p.overRate : 1)); } else { p.fireT = 0.25; this.noAmmo(); }
+      if (this.useAmmo(w)) { this.fire(w); if (P.dual && run.wpn2) { const w2 = HEROES[run.wpn2].weapon; if (w2.type !== 'blades' && this.useAmmo(w2)) this.fire(w2); } p.fireT = 1 / (w.rate * P.rate * (p.over > 0 ? p.overRate : 1)); } else { p.fireT = 0.25; this.noAmmo(); }
     }
     this.updateBlades(w, dt);
     if (P.aura) for (const e of C.en) if (!e.dead && dist(e, p) < 105) this.dealDamage(e, P.aura * dt, false);
@@ -514,6 +514,8 @@ const Game = {
     const C = this.C, P = this.P, p = C.p, a = kitOf(this.run).ability, col = CLANS[this.run.clan].color;
     p.abT = a.cd * P.abCd; Sfx.ability();
     if (a.type === 'eat') { this.eatWeapon(); return; }
+    if (a.type === 'roll') { p.dashDir = p.aim; p.dashT = 0.2; p.dashHit = []; p.inv = Math.max(p.inv, 0.6); Sfx.dash(); return; }
+    if (a.type === 'strike') { C.haz.push({ x: C.mx, y: C.my, r: a.r * P.blastRad, t: 0.7, max: 0.7, dmg: a.dmg, friendly: true }); return; }
     if (a.type === 'nova') {
       C.fx.push({ k: 'ring', x: p.x, y: p.y, r: a.r, t: 0.35, max: 0.35, col });
       for (const e of C.en) if (!e.dead && dist(e, p) < a.r + e.r) { this.hitEnemy(e, a.dmg, { raw: false }); if (a.burn) { e.burn = Math.max(e.burn, a.burn); e.burnT = 3; } this.knock(e, Math.atan2(e.y - p.y, e.x - p.x), a.knock / 4); }
@@ -681,6 +683,7 @@ const Game = {
     for (const b of C.eb) {
       b.x += b.vx * dt; b.y += b.vy * dt; b.life -= dt;
       if (!this.walkable(b.x, b.y) || C.pillars.some(q => b.x > q.x && b.x < q.x + q.w && b.y > q.y && b.y < q.y + q.h)) b.life = 0;
+      if (b.life > 0 && p.shield > 0 && dist(b, p) < 64) { C.pb.push({ x: b.x, y: b.y, vx: -b.vx, vy: -b.vy, r: 5, dmg: b.dmg * 2.5, pierce: 0, life: 1.2, hit: [], homing: 0, col: '#ffe94a', boom: 0, boomDmg: 0, bounce: 0 }); b.life = 0; this.burst(b.x, b.y, '#ffe94a', 4, 120); continue; }
       if (b.life > 0 && dist(b, p) < b.r + p.r - 1 && this.hurt(b.dmg, null)) b.life = 0;
     }
     C.eb = C.eb.filter(b => b.life > 0);
@@ -933,8 +936,8 @@ const Game = {
     ctx.strokeStyle = '#1f7fc8'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, 50); ctx.lineTo(W, 50); ctx.stroke();
     // HP
     const hp = clamp(run.hp / P.maxhp, 0, 1);
-    pxBar(14, 8, 230, 20, hp, hp > 0.3 ? '#00b5ff' : '#ff2d3d');
-    ctx.font = '12px Silk, monospace'; ctx.textAlign = 'left'; ctx.fillStyle = '#fff'; ctx.fillText(Math.ceil(run.hp) + ' / ' + P.maxhp, 20, 23);
+    this.drawHearts(14, 7, run.hp, P.maxhp);
+    ctx.font = '12px Silk, monospace'; ctx.textAlign = 'left'; ctx.fillStyle = '#fff'; 
     // dash / ability pips
     const dk = p.dashCd > 0 ? 1 - p.dashCd / (1.3 * P.dashCd) : 1, ak = p.abT > 0 ? 1 - p.abT / (w.ability.cd * P.abCd) : 1;
     pxBar(14, 32, 110, 10, dk, dk >= 1 ? '#3de8ff' : '#2a6a80'); pxBar(134, 32, 110, 10, ak, ak >= 1 ? clan.color : '#555');
