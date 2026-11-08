@@ -216,7 +216,7 @@ const UI = {
     const pk = PERKS[id], P = Game.P, hints = [];
     for (const t of pk.tags) { const n = (P.tags[t] || 0), nn = n + 1; if (SYN[t]) hints.push(t.toUpperCase() + ' ' + Math.min(nn, SYN[t].n) + '/' + SYN[t].n + (nn === SYN[t].n ? ' = ' + SYN[t].name.toUpperCase() + '!' : '')); }
     if (pk.clan) { const cn = clanPerkCount(Game.run) + 1; hints.push(pk.clan.toUpperCase() + ' MASTERY ' + Math.min(cn, CLAN_SET[pk.clan].n) + '/' + CLAN_SET[pk.clan].n + (cn === CLAN_SET[pk.clan].n ? ' = ' + CLAN_SET[pk.clan].name.toUpperCase() + '!' : '')); }
-    return '<div class="card rar-' + pk.r + '" onclick="' + onclick + '">' + (key ? '<span class="dim sm" style="position:absolute;right:8px;top:6px">[' + key + ']</span>' : '') + '<h3>' + pk.name + '</h3>' + this.tags(pk.tags)
+    return '<div class="card rar-' + pk.r + '" onclick="' + onclick + '">' + (key ? '<span class="dim sm" style="position:absolute;right:8px;top:6px">[' + key + ']</span>' : '') + '<img class="mico" src="' + MutIcon.url(id) + '"><h3>' + pk.name + '</h3>' + this.tags(pk.tags)
       + '<p>' + pk.d + '</p><p class="sm dim">' + hints.join(' | ') + '</p>' + (extra || '') + '</div>';
   },
   status() {
@@ -259,7 +259,7 @@ const UI = {
     }
     const offers = Game.offerPerks(4 + (Game.P.choices || 0), 'common');
     if (!offers.length) { Game.nodeDone(); return; }
-    this.show('<div class="lvbig">LEVEL ' + run.plv + '</div><h2 class="lvh">CHOOSE A MUTATION</h2>' + this.status() + '<div class="row lvrow">' + offers.map((id, i) => this.perkCard(id, "UI.take('" + id + "')", '', i + 1).replace('<div class="card', '<div style="animation-delay:' + (i * 0.09) + 's" class="lvcard card').replace('<h3>', '<div class="lvico">' + PERKS[id].name[0] + '</div><h3>')).join('') + '</div>' + this.buildList());
+    this.show('<div class="lvbig">LEVEL ' + run.plv + '</div><h2 class="lvh">CHOOSE A MUTATION</h2>' + this.status() + '<div class="row lvrow">' + offers.map((id, i) => this.perkCard(id, "UI.take('" + id + "')", '', i + 1).replace('<div class="card', '<div style="animation-delay:' + (i * 0.09) + 's" class="lvcard card')).join('') + '</div>' + this.buildList());
     this.acts(...offers.map(id => () => this.take(id)));
   },
 

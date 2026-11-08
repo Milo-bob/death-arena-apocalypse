@@ -229,7 +229,7 @@ const Game = {
     while (budget > 0) {
       const o = avail.filter(t => ENEMY[t].cost <= budget);
       if (!o.length) break;
-      const t = wpick(o, x => x === 'grunt' ? 3 : x === 'tank' ? 0.8 : 1.4);
+      const t = wpick(o, x => x === 'grunt' ? 1.6 : x === 'tank' ? 0.8 : ['shooter', 'spitter', 'sniper', 'turret'].includes(x) ? 3 : 1.4);
       list.push(t); budget -= ENEMY[t].cost;
     }
     return list;
@@ -576,7 +576,7 @@ const Game = {
         let vx = -ty * sd * spd * 0.6, vy = tx * sd * spd * 0.6;
         if (d > 290) { vx = tx * spd; vy = ty * spd; } else if (d < 190) { vx = -tx * spd; vy = -ty * spd; }
         this.moveE(e, vx, vy, dt);
-        if (e.wind > 0) { e.wind -= dt; if (e.wind <= 0) { this.eShoot(e, ang, 250, e.dmg); e.fire = 2.4 * rnd(0.8, 1.2) * (e.elite === 'swift' ? 0.6 : 1); } }
+        if (e.wind > 0) { e.wind -= dt; if (e.wind <= 0) { this.eShoot(e, ang, 300, e.dmg); if (this.run.act >= 2) { this.eShoot(e, ang + 0.2, 300, e.dmg); this.eShoot(e, ang - 0.2, 300, e.dmg); } e.fire = 1.5 * rnd(0.8, 1.2) * (e.elite === 'swift' ? 0.6 : 1); } }
         else { e.fire -= dt; if (e.fire <= 0) e.wind = 0.45; }
         if (touch && e.atk <= 0 && this.hurt(e.dmg, e)) e.atk = 0.8; break;
       }
@@ -815,7 +815,7 @@ const Game = {
     // blades
     if (C.bladePos) for (const [bx, by, a] of C.bladePos) { ctx.save(); ctx.translate(snap(bx), snap(by)); ctx.rotate(a * 2); ctx.drawImage(Sprites.blade(clan.color), -11, -11, 22, 22); ctx.restore(); }
     C.bladePos = null;
-    this.drawPlayer(p, clan);
+    if (C.suck) { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(C.suck.t * 9); const k = Math.max(0.05, 1 - C.suck.t * 0.9); ctx.scale(k, k); ctx.translate(-p.x, -p.y); this.drawPlayer(p, clan); ctx.restore(); } else this.drawPlayer(p, clan);
     // fx
     for (const f of C.fx) {
       const k = f.t / (f.max || 0.2); ctx.globalAlpha = Math.max(0.2, k);
@@ -900,7 +900,7 @@ const Game = {
     if (p.inv > 0 && Math.floor(C.t * 20) % 2 === 0 && p.dashT <= 0) ctx.globalAlpha = 0.45;
     if (p.shield > 0) pxRing(p.x, p.y, 22, '#ffe94a', 2);
     if (p.over > 0) pxRing(p.x, p.y, 19, '#ffd91f', 2);
-    this.sprite(this.run.hero, p.x, p.y, p.aim, 2, p.flash > 0); if (kitOf(this.run).weapon.art) this.drawArtWeapon(p);
+    this.sprite(this.run.hero, p.x, p.y, p.aim, 2, p.flash > 0); if (WEAPON_ART[kitOf(this.run).weapon.art]) this.drawArtWeapon(p);
     ctx.globalAlpha = 1;
   },
   drawEnemy(e, p) {

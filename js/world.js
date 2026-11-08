@@ -29,7 +29,7 @@ function genWorld(act, seed) {
   if (rest[0] !== undefined) special.set(rest[0], 'camp'); if (rest[1] !== undefined) special.set(rest[1], 'shop'); if (rest[2] !== undefined && R() < 0.5) special.set(rest[2], 'shop'); if (rest[3] !== undefined) special.set(rest[3], 'event');
   // 2) carve each cavern as an irregular blob
   pts.forEach((q, id) => {
-    const rt = id === bossId ? 5.2 : id === startId ? 3 : special.has(id) ? 2.6 : 2.4 + R() * 1.8; q.push(rt);
+    const rt = id === bossId ? 5.2 : id === startId ? 3 : special.has(id) ? 3.2 : 3.4 + R() * 2.0; q.push(rt);
     carve(q[0], q[1], rt * 0.7);
     for (let k = 0; k < 7; k++) { const a = R() * 6.283, d = rt * (0.35 + R() * 0.5); carve(q[0] + Math.cos(a) * d, q[1] + Math.sin(a) * d, rt * (0.3 + R() * 0.3)); }
   });
@@ -39,9 +39,9 @@ function genWorld(act, seed) {
     const tx = pts[b][0], ty = pts[b][1];
     for (let s = 0; s < 500 && Math.hypot(tx - x, ty - y) > 2.5; s++) {
       let diff = Math.atan2(ty - y, tx - x) - ang; diff = Math.atan2(Math.sin(diff), Math.cos(diff));
-      ang += diff * 0.16 + (R() - 0.5) * 1.3; x += Math.cos(ang); y += Math.sin(ang); carve(x, y, 1.1 + R() * 0.6);
+      ang += diff * 0.16 + (R() - 0.5) * 1.3; x += Math.cos(ang); y += Math.sin(ang); carve(x, y, 1.9 + R() * 0.8);
     }
-    const len = Math.hypot(tx - x, ty - y); for (let t = 0; t <= len; t += 0.7) carve(x + (tx - x) * t / len, y + (ty - y) * t / len, 1.2);
+    const len = Math.hypot(tx - x, ty - y); for (let t = 0; t <= len; t += 0.7) carve(x + (tx - x) * t / len, y + (ty - y) * t / len, 1.9);
   };
   const edges = [], linked = new Set([startId]), has = (a, b) => edges.some(e => (e[0] === a && e[1] === b) || (e[0] === b && e[1] === a));
   while (linked.size < n) {
@@ -87,7 +87,7 @@ function genWorld(act, seed) {
     const a = R() * 6.283, d = bossCell.r * (0.35 + R() * 0.45), w = 44 + Math.floor(R() * 30), h = 44 + Math.floor(R() * 30), x = bossCell.cx + Math.cos(a) * d, y = bossCell.cy + Math.sin(a) * d;
     if (open(x, y, 80)) { pillars.push({ x: x - w / 2, y: y - h / 2, w, h }); k--; }
   }
-  for (let i = 0; i < 12; i++) {   // loose rocks in the open caves
+  for (let i = 0; i < 3; i++) {   // a few loose rocks in the open caves
     const x = (4 + R() * (COLS - 8)) * TILE, y = (4 + R() * (ROWS - 8)) * TILE, w = 36 + Math.floor(R() * 30), h = 36 + Math.floor(R() * 30);
     if (open(x, y, 100) && cells.every(c => Math.hypot(c.cx - x, c.cy - y) > 130)) pillars.push({ x: x - w / 2, y: y - h / 2, w, h });
   }
@@ -185,8 +185,8 @@ Object.assign(Game, {
   },
   spawnRoamers(Wd) {
     const C = this.C, run = this.run, act = run.act, R = rng(run.seed + 99), sc = Wd.cells[Wd.startId], boss = Wd.cells.find(c => c.type === 'boss');
-    C.hpS = (1 + 0.12 * act) * (1 + 0.15 * run.heat) * this.P.enemyHp * 0.9; C.dmgS = (1 + 0.03 * act) * (1 + 0.12 * run.heat); C.spdS = 1;
-    const budget = (26 + act * 3) * (boss ? 0.55 : 1), caves = Wd.nodes.filter(n => n.type === 'cave' && Math.hypot(n.x - sc.cx, n.y - sc.cy) > 520), tot = caves.reduce((s, n) => s + n.r, 0) || 1;
+    C.hpS = (1 + 0.14 * act) * (1 + 0.15 * run.heat) * this.P.enemyHp * 1.15; C.dmgS = (1 + 0.06 * act) * (1 + 0.12 * run.heat); C.spdS = 1;
+    const budget = (40 + act * 4) * (boss ? 0.55 : 1), caves = Wd.nodes.filter(n => n.type === 'cave' && Math.hypot(n.x - sc.cx, n.y - sc.cy) > 520), tot = caves.reduce((s, n) => s + n.r, 0) || 1;
     const maggots = AREA_ENEMIES[areaOf(act)].includes('maggot');
     // rule: enemy packs sit in the caverns (bigger cavern = more enemies), never within 520px of where you start
     for (const n of caves) {
@@ -275,7 +275,7 @@ Object.assign(Game, {
   drawHeldWeapon(p, x, y, face) {
     const w = kitOf(this.run).weapon, O = '#0c0c12', M = '#5a5e6a', L = '#9aa0ae';
     ctx.save(); ctx.translate(x, y); ctx.rotate(p.aim); if (face < 0) ctx.scale(1, -1);
-    if (w.art) { ctx.imageSmoothingEnabled = false; ctx.drawImage(Sprites.get('w:' + w.art), -4, -16, 32, 32); }
+    if (WEAPON_ART[w.art]) { ctx.imageSmoothingEnabled = false; ctx.drawImage(Sprites.get('w:' + w.art), -4, -16, 32, 32); }
     else if (w.type === 'cone') {
       ctx.fillStyle = O; ctx.fillRect(-2, -4, 12, 8); ctx.fillStyle = '#6a4a2a'; ctx.fillRect(-1, -3, 10, 6);
       ctx.fillStyle = O; ctx.fillRect(8, -5, 26, 10); ctx.fillStyle = L; ctx.fillRect(9, -4, 24, 8); ctx.fillStyle = '#eef2fa'; ctx.fillRect(9, -4, 24, 2);
@@ -527,7 +527,13 @@ Object.assign(Game, {
       C.left = left;
       if (!left) { const q = this.safeSpot((C.lastDeath || p).x, (C.lastDeath || p).y, 22); C.portal = { x: q.x, y: q.y }; this.floatText(q.x, q.y - 40, 'THE PORTAL OPENS', '#a06bff', 1.4); Sfx.portal(); this.impact(0.06, '#a06bff', 0.3); }
     }
-    if (C.portal && !C.dead && dist(C.portal, p) < 34) { run.rooms++; Input.keys = {}; this.descend(0.15); return; }
+    if (C.suck) {   // the portal pulls you in, spinning and shrinking, then the next level begins
+      const s = C.suck; s.t += 1 / 60; p.x += (s.x - p.x) * 0.12; p.y += (s.y - p.y) * 0.12; p.inv = 1; Input.keys = {}; Input.down = false; Input.rdown = false;
+      C.shake = Math.max(C.shake, 2 + s.t * 6); if (s.t > 0.35) this.impact(0.1, '#a06bff', Math.min(0.95, (s.t - 0.35) * 1.3));
+      if (s.t > 1.1) { run.rooms++; C.suck = null; this.descend(s.h); }
+      return;
+    }
+    if (C.portal && !C.dead && dist(C.portal, p) < 34) { C.suck = { x: C.portal.x, y: C.portal.y, t: 0, h: 0.15 }; Sfx.portal(); this.impact(0.08, '#a06bff', 0.4); return; }
     const cc = this.cellAt(p.x, p.y);
     if (cc && cc !== C.curCell) this.discover(cc);
     if (C.clearMsg > 0) C.clearMsg -= 1 / 60;
@@ -535,7 +541,7 @@ Object.assign(Game, {
     for (const c of W.cells) {
       const s = c.state;
       if (s.cleared && s.reward && !s.rewarded) { const o = this.orbPos(c); if (dist(o, p) < 30) { C.nodeCell = c; C.node = s; C.pendingOrb = true; C.pendingObj = false; this.frozen = true; Input.down = false; Input.keys = {}; UI.reward(s.reward, s.reward.cores); return; } }
-      if (c.type === 'boss' && s.cleared && s.rewarded && dist(this.portalPos(c), p) < 40) { this.frozen = true; Input.keys = {}; UI.actClear(); return; }
+      if (c.type === 'boss' && s.cleared && s.rewarded && dist(this.portalPos(c), p) < 40) { const q = this.portalPos(c); C.suck = { x: q.x, y: q.y, t: 0, h: 0.35 }; Sfx.portal(); this.impact(0.08, '#a06bff', 0.4); return; }
       if (c.obj && !s.used && dist(c.obj, p) < 52) C.near = c;
     }
   },
@@ -616,7 +622,7 @@ Object.assign(Game, {
       }
       if (c.type === 'boss' && s.cleared) {
         const q = this.portalPos(c), x = q.x, y = q.y; for (let i = 0; i < 3; i++) pxRing(x, y, 14 + i * 9 + Math.sin(C.t * 4 + i) * 2, ['#39ff6e', '#a0ffb0', '#39ff6e'][i], 2);
-        ctx.font = '10px Silk, monospace'; ctx.fillStyle = '#39ff6e'; ctx.fillText(s.rewarded ? 'EXIT / DESCEND' : 'TAKE THE REWARD FIRST', x, y - 40);
+        ctx.font = '10px Silk, monospace'; ctx.fillStyle = '#39ff6e'; ctx.fillText(s.rewarded ? 'PORTAL' : 'TAKE THE REWARD FIRST', x, y - 40);
       }
 
       if (c.obj) this.drawObj(c, C.t);
@@ -648,6 +654,7 @@ Object.assign(Game, {
       for (let k = 0; k < 3; k++) { ctx.strokeStyle = ['#ffffff', '#3de8ff', '#a06bff'][k]; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(q.x, q.y, 12 + k * 8 + Math.sin(C.t * 5 + k) * 3, 0, 6.283); ctx.stroke(); }
       ctx.font = '12px Silk, monospace'; ctx.fillStyle = '#fff'; ctx.fillText('PORTAL', q.x, q.y - 42);
     }
+    if (C.suck) { const s = C.suck; for (let i = 0; i < 36; i++) { const a = i * 0.37 + C.t * 7, r = (1 - ((i / 36 + C.t * 1.6) % 1)) * (50 + s.t * 150); ctx.fillStyle = i % 2 ? '#a06bff' : '#3de8ff'; ctx.fillRect(snap(s.x + Math.cos(a) * r) - 2, snap(s.y + Math.sin(a) * r) - 2, 4, 4); } }
     for (const d of C.wdrops) {
       if (d.x < vx0 || d.x > vx1 || d.y < vy0 || d.y > vy1) continue;
       const h = HEROES[d.id], col = CLANS[h.clan].color, x = snap(d.x), y = snap(d.y + Math.sin(C.t * 4 + d.x) * 2);
