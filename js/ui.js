@@ -213,7 +213,7 @@ const UI = {
     const pk = PERKS[id], P = Game.P, hints = [];
     for (const t of pk.tags) { const n = (P.tags[t] || 0), nn = n + 1; if (SYN[t]) hints.push(t.toUpperCase() + ' ' + Math.min(nn, SYN[t].n) + '/' + SYN[t].n + (nn === SYN[t].n ? ' = ' + SYN[t].name.toUpperCase() + '!' : '')); }
     if (pk.clan) { const cn = clanPerkCount(Game.run) + 1; hints.push(pk.clan.toUpperCase() + ' MASTERY ' + Math.min(cn, CLAN_SET[pk.clan].n) + '/' + CLAN_SET[pk.clan].n + (cn === CLAN_SET[pk.clan].n ? ' = ' + CLAN_SET[pk.clan].name.toUpperCase() + '!' : '')); }
-    return '<div class="card rar-' + pk.r + '" onclick="' + onclick + '">' + (key ? '<span class="dim sm" style="position:absolute;right:8px;top:6px">[' + key + ']</span>' : '') + '<h3>' + pk.name + '</h3><p class="sm" style="color:' + RARITY[pk.r].c + '">' + pk.r.toUpperCase() + (pk.clan ? ' - ' + CLANS[pk.clan].name.toUpperCase() : '') + '</p>' + this.tags(pk.tags)
+    return '<div class="card rar-' + pk.r + '" onclick="' + onclick + '">' + (key ? '<span class="dim sm" style="position:absolute;right:8px;top:6px">[' + key + ']</span>' : '') + '<h3>' + pk.name + '</h3>' + this.tags(pk.tags)
       + '<p>' + pk.d + '</p><p class="sm dim">' + hints.join(' | ') + '</p>' + (extra || '') + '</div>';
   },
   status() {
