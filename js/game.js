@@ -366,10 +366,10 @@ const Game = {
     this.collide(p, p.r);
     if (p.dashCd > 0) p.dashCd -= dt;
     if (p.inv > 0) p.inv -= dt; if (p.flash > 0) p.flash -= dt; if (p.over > 0) p.over -= dt; if (p.shield > 0) p.shield -= dt; if (p.abT > 0) p.abT -= dt;
-    if ((Input.keys[' '] || Input.keys.shift || Input.rdown) && p.dashCd <= 0 && p.dashT <= 0) {
+    if (Input.keys.shift && p.dashCd <= 0 && p.dashT <= 0) {
       p.dashDir = ml ? Math.atan2(my, mx) : p.aim; p.dashT = 0.17; p.dashCd = 1.3 * P.dashCd; p.dashHit = []; p.inv = Math.max(p.inv, 0.25); Sfx.dash();
     }
-    if (Input.keys.q && p.abT <= 0) this.useAbility();
+    if ((Input.keys.q || Input.rdown) && p.abT <= 0) this.useAbility();
     if (P.regen && run.hp < P.maxhp) run.hp = Math.min(P.maxhp, run.hp + P.regen * dt);
     // ---- attack ----
     const w = kitOf(run).weapon;
@@ -945,7 +945,7 @@ const Game = {
     // center info
     ctx.textAlign = 'center'; ctx.font = '12px Silk, monospace'; ctx.fillStyle = '#9fc'; ctx.fillText(this.levelLabel ? this.levelLabel() : '', W / 2, 18);
     ctx.fillStyle = '#fff'; ctx.fillText(HEROES[run.hero].name.toUpperCase() + ' / ' + w.weapon.name.toUpperCase(), W / 2, 36);
-    if (this.ammoLine) this.ammoLine(w);
+    if (this.drawWeaponHud) this.drawWeaponHud();
     ctx.textAlign = 'right'; ctx.font = '14px Silk, monospace'; ctx.fillStyle = '#ffd91f'; ctx.fillText('GOLD ' + run.gold, W - 14, 20);
     ctx.fillStyle = '#3de8ff'; ctx.font = '11px Silk, monospace'; ctx.fillText('CORES ' + run.cores + ' (AT RISK)', W - 14, 38);
     // tags
@@ -964,7 +964,7 @@ const Game = {
     if (C.dead) { ctx.fillStyle = 'rgba(80,0,0,.5)'; ctx.fillRect(0, 0, W, H); ctx.textAlign = 'center'; ctx.font = '40px Silk, monospace'; ctx.fillStyle = '#ff2d3d'; ctx.fillText('YOU DIED', W / 2, 270); }
     if (this.paused) { ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(0, 50, W, H); ctx.textAlign = 'center'; ctx.font = '30px Silk, monospace'; ctx.fillStyle = '#fff'; ctx.fillText('PAUSED  [P]', W / 2, 270); }
     ctx.textAlign = 'left';
-    ctx.font = '10px Silk, monospace'; ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.textAlign = 'right'; ctx.fillText('WASD MOVE  MOUSE AIM+HOLD  SPACE DASH  Q ABILITY  E INTERACT  F AUTOFIRE  P PAUSE  M MUSIC', W - 10, H - 8 - (C.curse && C.curse.name ? 12 : 0));
+    ctx.font = '10px Silk, monospace'; ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.textAlign = 'right'; if (C.t < 25) ctx.fillText('WASD MOVE  MOUSE SHOOT  SPACE SWAP WEAPON  RMB ABILITY  SHIFT DASH  E PICK UP', W - 10, H - 50);
     ctx.textAlign = 'left';
   },
   renderIdle() {
@@ -1004,7 +1004,8 @@ addEventListener('keydown', e => {
   if (k === 'f' && Game.mode === 'fight') Input.auto = !Input.auto;
   if (k === 'e') Game.interact();
   if (k === 'm') Music.toggle();
-  if (k === 'x' && Game.swapWeapons) Game.swapWeapons();
+  if ((k === 'x' || k === ' ') && !e.repeat && Game.swapWeapons) Game.swapWeapons();
+  if (Game.mode !== 'fight' && UI.nav) UI.nav(k);
   if (['1', '2', '3'].includes(k) && UI.hotkey) UI.hotkey(+k - 1);
 });
 addEventListener('keyup', e => { Input.keys[e.key.toLowerCase()] = false; });

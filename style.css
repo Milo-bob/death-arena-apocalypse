@@ -36,3 +36,34 @@ input{font-family:Pixelify;font-size:16px;background:#0b0c0f;color:var(--bone);b
 table{border-collapse:collapse}td{padding:2px 8px;font-size:13px}
 body.fight #cv{cursor:none}
 .screen.scene{background:radial-gradient(ellipse at center,rgba(6,5,7,.08) 0%,rgba(4,3,5,.62) 100%)}
+
+/* ---- title screen and character select ---- */
+.logo{text-align:center;margin-top:6px}
+.logo .l1{font-family:Silk;font-size:30px;letter-spacing:10px;color:#d8d2c0;text-shadow:3px 3px 0 #000}
+.logo .l2{font-family:Silk;font-size:58px;letter-spacing:6px;color:var(--blood);text-shadow:4px 4px 0 #000,0 0 22px rgba(192,48,30,.55);animation:flick 4s infinite}
+@keyframes flick{0%,90%,100%{opacity:1}92%{opacity:.75}94%{opacity:1}97%{opacity:.85}}
+.menu{display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:20px}
+.mbtn{font-family:Silk;font-size:22px;letter-spacing:3px;color:var(--bone);background:none;border:none;padding:6px 26px;cursor:pointer;text-shadow:3px 3px 0 #000}
+.mbtn:hover,.mbtn:focus{color:var(--amber);outline:none}
+.mbtn:hover::before,.mbtn:focus::before{content:'▶ ';font-size:15px}
+.lineup{position:absolute;left:0;right:0;bottom:14px;display:flex;justify-content:center;gap:22px;pointer-events:none}
+.lineup img{width:68px;height:68px;image-rendering:pixelated;animation:bob 2.4s ease-in-out infinite;filter:drop-shadow(0 6px 0 rgba(0,0,0,.5))}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.cs-main{display:flex;gap:18px;width:100%;margin-top:2px;align-items:center;justify-content:center}
+.cs-stage{position:relative;width:340px;height:196px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end}
+.cs-glow{position:absolute;bottom:40px;width:250px;height:64px;border-radius:50%;background:radial-gradient(ellipse,rgba(216,154,58,.38),transparent 70%)}
+.cs-big{width:144px;height:144px;image-rendering:pixelated;animation:bob 2.4s ease-in-out infinite;position:relative}
+.cs-name{font-family:Silk;font-size:26px;letter-spacing:3px;color:var(--acc);text-shadow:3px 3px 0 #000;margin-top:6px;position:relative}
+.cs-info{width:400px;min-height:196px;background:rgba(10,11,14,.85);border:3px solid var(--steel);padding:10px 14px;box-shadow:4px 4px 0 #000}
+.cs-lab{font-family:Silk;font-size:10px;letter-spacing:2px;color:var(--amber);margin-top:5px}
+.cs-info p{margin:1px 0;font-size:13px}
+.cs-hearts{display:flex;gap:3px;margin-bottom:2px;flex-wrap:wrap}
+.cs-row{display:flex;gap:8px;justify-content:center;margin-top:8px}
+.cs-tile{width:66px;height:66px;background:#101217;border:3px solid var(--steel);cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;box-shadow:3px 3px 0 #000}
+.cs-tile img{width:48px;height:48px;image-rendering:pixelated}
+.cs-tile:hover{border-color:var(--steel2)}
+.cs-tile.sel{border-color:var(--amber);background:#1d1a12;transform:translateY(-4px)}
+.cs-tile.locked img{filter:brightness(.25) saturate(0)}
+.cs-tile .lk{position:absolute;font-family:Silk;font-size:22px;color:#888;display:none}
+.cs-tile.locked .lk{display:block}
+.cs-actions{display:flex;gap:10px;justify-content:center;align-items:center;margin-top:4px;flex-wrap:wrap}

@@ -7,6 +7,8 @@ const SPAL = {
   solar: { b: '#ffe94a', m: '#b8a31a', d: '#3a3408', a: '#39ff6e', x: '#ff9a3a' },
   cyber: { b: '#ff3de8', m: '#a01a90', d: '#2a0826', a: '#3de8ff', x: '#ffffff' },
   void:  { b: '#a06bff', m: '#6a3ad0', d: '#1c0d3a', a: '#e0b0ff', x: '#ffffff' },
+  aqua:  { b: '#4fe0d0', m: '#2a8a86', d: '#0c3030', a: '#b0fff0', x: '#ff8a3a' },
+  iron:  { b: '#b4bcc8', m: '#5e6674', d: '#1c2028', a: '#ffd91f', x: '#ff8a3a' },
 };
 for (const k in SPAL) SPAL[k].c = '#3de8ff';
 const CY = '#3de8ff', ICE = '#e6fdff';
@@ -182,6 +184,39 @@ const HERO_ART = {
 };
 
 
+// ---------- Fish, Crystal, Plant, Robot: same top-down look as the other heroes (bright edge, dark fill, cyan weapon marker, facing right) ----------
+const sE = (cx, cy, rx, ry) => (x, y) => (Math.hypot((x - cx) / rx, (y - cy) / ry) - 1) * Math.min(rx, ry);
+const HERO_FRONT = {};   // no front-view heroes: everyone is drawn from above and turns towards the cursor
+HERO_ART.sun = P => [   // fish
+  part(sP([[0.5, 5], [8, 12], [0.5, 19], [3.2, 12]]), 'acc'),
+  part(sP([[7.5, 6.8], [12, 1.8], [14.5, 6.8]]), 'dark'), part(sP([[7.5, 17.2], [12, 22.2], [14.5, 17.2]]), 'dark'),
+  part(sE(12, 12, 9.4, 5.9), 'body'), part(sE(10, 12, 4.4, 2.8), 'dark'), dot(9, 11, P.a), dot(11, 13, P.a), dot(7, 12, P.a),
+  part(sC(16.5, 9.2, 1.7), 'acc'), part(sC(16.5, 14.8, 1.7), 'acc'), dot(17, 9, '#ffffff'), dot(17, 15, '#ffffff'),
+  part(sB(19.5, 12, 2.2, 1.5), 'dark'), part(sB(22.2, 12, 1.2, 0.9), 'cy'), dot(23, 12, CY),
+];
+HERO_ART.gunner = P => [   // crystal
+  part(sStar(11.5, 12, 6, 11, 6.4, 0.3), 'dark'),
+  part(sP([[3.5, 12], [8, 4.8], [15, 4.8], [19.5, 12], [15, 19.2], [8, 19.2]]), 'body'),
+  part(sLine(8, 4.8, 11.5, 12, 0.45), 'acc'), part(sLine(15, 4.8, 11.5, 12, 0.45), 'acc'), part(sLine(11.5, 12, 8, 19.2, 0.45), 'acc'), part(sLine(11.5, 12, 15, 19.2, 0.45), 'acc'),
+  part(sC(11.5, 12, 2.7), 'acc'), dot(10, 10, ICE), dot(11, 11, ICE),
+  part(sB(18.6, 12, 2.6, 1.5), 'dark'), part(sB(22, 12, 1.3, 1), 'cy'), dot(23, 12, CY),
+];
+HERO_ART.weaver = P => [   // plant: leaves around a bulb with a flytrap mouth
+  part(sP([[2.5, 3.5], [11.5, 8], [5, 11]]), 'dark'), part(sP([[2.5, 20.5], [11.5, 16], [5, 13]]), 'dark'),
+  part(sP([[0.8, 8.5], [8, 10.5], [3, 12]]), 'dark'), part(sP([[0.8, 15.5], [8, 13.5], [3, 12]]), 'dark'),
+  part(sC(10.5, 12, 6.2), 'body'), part(sC(10.5, 12, 2.6), 'dark'), dot(9, 11, P.x), dot(10, 13, P.x), dot(7, 12, P.a),
+  part(sP([[13, 5.6], [22.5, 9.2], [17, 11.2]]), 'acc'), part(sP([[13, 18.4], [22.5, 14.8], [17, 12.8]]), 'acc'),
+  dot(19, 10, P.a), dot(21, 10, P.a), dot(19, 14, P.a), dot(21, 14, P.a), part(sB(17.5, 12, 3.2, 0.7), 'cy'), dot(23, 12, CY),
+];
+HERO_ART.brute = P => [   // robot: boxy hull on treads
+  part(sB(11, 4.8, 8.6, 2.2, 0.6), 'dark'), part(sB(11, 19.2, 8.6, 2.2, 0.6), 'dark'),
+  dot(4, 4, P.a), dot(8, 4, P.a), dot(12, 4, P.a), dot(16, 4, P.a), dot(4, 20, P.a), dot(8, 20, P.a), dot(12, 20, P.a), dot(16, 20, P.a),
+  part(sB(11, 12, 7.8, 6.2, 1.6), 'body'),
+  part(sB(9.5, 12, 3.8, 3.5, 0.6), 'dark'), dot(8, 10, P.a), dot(8, 14, P.a), dot(10, 12, P.x),
+  part(sC(14.8, 12, 2.5), 'acc'), dot(15, 12, P.x),
+  part(sB(19.3, 12, 3.8, 1.8), 'dark'), part(sB(22.4, 12, 1.2, 1.2), 'cy'), dot(23, 12, CY),
+];
+
 // ---------- enemies (red team, yellow marker) and bosses ----------
 const EPAL = { b: '#ff2d3d', m: '#a01828', d: '#3a0810', a: '#ff9aa6', c: '#ffd91f', x: '#ff8a1f' };
 const BPAL = [
@@ -298,7 +333,8 @@ const Sprites = {
         const d = pt.d(x + 0.5, y + 0.5);
         if (d > 0) continue;
         let col;
-        if (pt.kind === 'cy') col = P.c;
+        if (pt.kind.startsWith('nt')) col = d > -1.1 ? '#0c0c12' : pt.kind === 'nta' ? P.a : pt.kind === 'ntx' ? P.x : pt.kind === 'ntc' ? P.c : pt.kind === 'ntd' ? P.d : (((x + 0.5 - n * 0.5) * 0.4 + (y + 0.5 - n * 0.5)) < -1.5 ? P.b : P.m);
+        else if (pt.kind === 'cy') col = P.c;
         else if (pt.kind === 'acc') col = d > -1 ? P.a : P.m;
         else if (d > -1) col = P.b;
         else if (pt.kind === 'body' && d > -2) col = P.m;
@@ -314,7 +350,7 @@ const Sprites = {
   get(key) {
     if (this.cache[key]) return this.cache[key];
     let c;
-    if (HEROES[key]) c = this.build(SPR, HERO_ART[key](SPAL[HEROES[key].clan]), SPAL[HEROES[key].clan]);
+    if (HEROES[key]) { const PP = HERO_FRONT[key] || SPAL[HEROES[key].clan]; c = this.build(SPR, HERO_ART[key](PP), PP); }
     else if (key[0] === 'o') { const [nm, used] = key.slice(2).split('_'), PP = used ? OPAL_USED : OPAL[nm]; c = this.build(32, OBJ_ART[nm](PP, !!used), PP); }
     else if (key[0] === 'e') { const a = ENEMY_ART[key.slice(2)], pal = a.pal || EPAL; c = this.build(a.n, a.f(pal), pal); }
     else { const k = +key.slice(2), a = BOSS_ART[BOSS_ART_OF[k]]; c = this.build(a.n, a.f(BPAL[k]), BPAL[k]); }

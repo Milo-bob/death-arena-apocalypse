@@ -220,6 +220,33 @@ Object.assign(Game, {
       }
     }
   },
+  // ---------- the hero: front view, flips left/right, the gun turns towards the cursor ----------
+  drawHero(p) {
+    const run = this.run, id = run.hero, C = this.C;
+    if (!HERO_FRONT[id]) { this.sprite(id, p.x, p.y, p.aim, 2, p.flash > 0); return; }
+    const face = Math.cos(p.aim) >= 0 ? 1 : -1, moving = Math.hypot(p.x - (p.dpx === undefined ? p.x : p.dpx), p.y - (p.dpy === undefined ? p.y : p.dpy)) > 0.4;
+    p.dpx = p.x; p.dpy = p.y;
+    const bob = moving ? -Math.abs(Math.sin(C.t * 14)) * 3 : -Math.sin(C.t * 2.6) * 1.2, sq = moving ? 1 + Math.sin(C.t * 28) * 0.04 : 1;
+    const spr = p.flash > 0 ? Sprites.white(id) : Sprites.get(id), fx = snap(p.x), fy = snap(p.y + 15);
+    ctx.save(); ctx.globalAlpha = 0.4; ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse(fx, fy, 15, 5, 0, 0, 6.283); ctx.fill(); ctx.restore();
+    ctx.imageSmoothingEnabled = false; ctx.save(); ctx.translate(fx, fy + snap(bob)); ctx.scale(face, sq); ctx.drawImage(spr, -24, -48, 48, 48); ctx.restore();
+    this.drawHeldWeapon(p, fx + face * 9, fy + snap(bob) - 20, face);
+  },
+  drawHeldWeapon(p, x, y, face) {
+    const w = kitOf(this.run).weapon, O = '#0c0c12', M = '#5a5e6a', L = '#9aa0ae';
+    ctx.save(); ctx.translate(x, y); ctx.rotate(p.aim); if (face < 0) ctx.scale(1, -1);
+    if (w.type === 'cone') {
+      ctx.fillStyle = O; ctx.fillRect(-2, -4, 12, 8); ctx.fillStyle = '#6a4a2a'; ctx.fillRect(-1, -3, 10, 6);
+      ctx.fillStyle = O; ctx.fillRect(8, -5, 26, 10); ctx.fillStyle = L; ctx.fillRect(9, -4, 24, 8); ctx.fillStyle = '#eef2fa'; ctx.fillRect(9, -4, 24, 2);
+    } else if (w.type === 'lance') {
+      ctx.fillStyle = O; ctx.fillRect(-4, -3, 40, 6); ctx.fillStyle = '#8a6a3a'; ctx.fillRect(-3, -2, 30, 4); ctx.fillStyle = L; ctx.fillRect(26, -3, 10, 6);
+    } else if (w.type !== 'blades') {
+      ctx.fillStyle = O; ctx.fillRect(-3, -4, 26, 8); ctx.fillStyle = M; ctx.fillRect(-2, -3, 24, 6); ctx.fillStyle = L; ctx.fillRect(-2, -3, 24, 2);
+      ctx.fillStyle = O; ctx.fillRect(0, 3, 7, 8); ctx.fillStyle = '#4a3220'; ctx.fillRect(1, 3, 5, 6);
+      ctx.fillStyle = O; ctx.fillRect(20, -3, 6, 6);
+    }
+    ctx.restore();
+  },
   // ---------- props: explosive barrels ----------
   damageProp(pr, dmg) {
     if (pr.dead) return;
@@ -306,10 +333,52 @@ Object.assign(Game, {
     const t = ammoOf(HEROES[best.id].weapon) || 'bullet'; this.addAmmo(t, AMMO[t].amt * 2); this.healP(8);
     this.floatText(p.x, p.y - 28, 'MUNCH +' + AMMO[t].name, AMMO[t].col, 1.1); C.shake = Math.max(C.shake, 4);
   },
-  ammoLine(w) {
-    const run = this.run, a = ammoOf(w.weapon); ctx.textAlign = 'center'; ctx.font = '10px Silk, monospace';
-    const txt = a ? AMMO[a].name + ' ' + Math.floor((run.ammo || {})[a] || 0) + '/' + AMMO[a].max : 'MELEE';
-    ctx.fillStyle = a ? AMMO[a].col : '#9fc'; ctx.fillText(txt + (run.wpn2 ? '   [X] ' + HEROES[run.wpn2].weapon.name.toUpperCase() : ''), W / 2, 47);
+  // two weapon slots and all five ammo types, like the original's HUD (the ammo of the weapon in your hands is lit up)
+  drawWeaponHud() {
+    const run = this.run, y0 = H - 42; run.ammo = run.ammo || startAmmo();
+    const cur = ammoOf(HEROES[run.wpn || run.hero].weapon);
+    const frame = (x, w, on, col) => {
+      ctx.fillStyle = on ? 'rgba(10,12,16,.92)' : 'rgba(10,12,16,.66)'; ctx.fillRect(x, y0, w, 36);
+      ctx.fillStyle = col; ctx.fillRect(x, y0, w, 2); ctx.fillRect(x, y0 + 34, w, 2); ctx.fillRect(x, y0, 2, 36); ctx.fillRect(x + w - 2, y0, 2, 36);
+    };
+    const slot = (x, id, on, key) => {
+      frame(x, 118, on, on ? '#ffd91f' : '#3a3e46');
+      ctx.textAlign = 'left'; ctx.font = '9px Silk, monospace';
+      if (!id) { ctx.fillStyle = '#555a64'; ctx.fillText('EMPTY', x + 44, y0 + 22); ctx.fillText(key, x + 6, y0 + 13); return; }
+      const w = HEROES[id].weapon, a = ammoOf(w);
+      ctx.save(); ctx.translate(x + 24, y0 + 19); ctx.globalAlpha = on ? 1 : 0.6; this.weaponIcon(w, a ? AMMO[a].col : '#c8ccd6'); ctx.restore();
+      ctx.fillStyle = on ? '#fff' : '#8a8e98'; ctx.fillText(w.name.toUpperCase().slice(0, 12), x + 44, y0 + 15);
+      ctx.fillStyle = a ? AMMO[a].col : '#9fc'; ctx.fillText(a ? AMMO[a].name.toLowerCase() : 'melee', x + 44, y0 + 28);
+      ctx.fillStyle = on ? '#ffd91f' : '#5a5e68'; ctx.fillText(key, x + 6, y0 + 13);
+    };
+    slot(8, run.wpn || run.hero, true, '1'); slot(130, run.wpn2, false, '2');
+    let x = 254;
+    for (const t of Object.keys(AMMO)) {
+      const A = AMMO[t], n = Math.floor(run.ammo[t] || 0), on = t === cur, f = clamp(n / A.max, 0, 1);
+      frame(x, 52, on, on ? A.col : '#2a2d34');
+      ctx.globalAlpha = on ? 1 : 0.7; this.ammoIcon(t, x + 13, y0 + 15); ctx.globalAlpha = 1;
+      ctx.font = '11px Silk, monospace'; ctx.textAlign = 'left'; ctx.fillStyle = n < 1 ? '#ff6a6a' : on ? '#fff' : '#9a9ea8'; ctx.fillText(String(n), x + 25, y0 + 19);
+      ctx.fillStyle = '#1a1c22'; ctx.fillRect(x + 6, y0 + 27, 40, 4); ctx.fillStyle = A.col; ctx.fillRect(x + 6, y0 + 27, Math.round(40 * f), 4);
+      x += 56;
+    }
+    ctx.textAlign = 'left';
+  },
+  weaponIcon(w, col) {
+    const O = '#0c0c12', M = '#9aa0ae';
+    if (w.type === 'cone') { ctx.fillStyle = O; ctx.fillRect(-16, -3, 9, 7); ctx.fillRect(-9, -5, 25, 10); ctx.fillStyle = '#6a4a2a'; ctx.fillRect(-15, -2, 7, 5); ctx.fillStyle = '#d8dce8'; ctx.fillRect(-8, -4, 23, 8); ctx.fillStyle = col; ctx.fillRect(-8, 1, 23, 2); }
+    else if (w.type === 'lance') { ctx.fillStyle = O; ctx.fillRect(-16, -2, 32, 5); ctx.fillStyle = '#8a6a3a'; ctx.fillRect(-15, -1, 22, 3); ctx.fillStyle = '#d8dce8'; ctx.fillRect(7, -1, 9, 3); }
+    else if (w.type === 'blades') { ctx.fillStyle = col; ctx.fillRect(-4, -4, 8, 8); ctx.fillStyle = O; ctx.fillRect(-2, -2, 4, 4); }
+    else if (w.type === 'mortar') { ctx.fillStyle = O; ctx.fillRect(-15, -6, 30, 11); ctx.fillStyle = M; ctx.fillRect(-14, -5, 28, 9); ctx.fillStyle = col; ctx.fillRect(-14, -1, 28, 3); ctx.fillStyle = O; ctx.fillRect(-9, 4, 6, 6); }
+    else { ctx.fillStyle = O; ctx.fillRect(-15, -5, 31, 9); ctx.fillStyle = M; ctx.fillRect(-14, -4, 29, 7); ctx.fillStyle = col; ctx.fillRect(-14, -1, 29, 2); ctx.fillStyle = O; ctx.fillRect(-11, 4, 6, 7); ctx.fillStyle = '#4a3220'; ctx.fillRect(-10, 4, 4, 5); }
+  },
+  ammoIcon(t, x, y) {
+    const A = AMMO[t], O = '#0c0c12';
+    ctx.fillStyle = O;
+    if (t === 'bullet') { for (const dx of [-5, -1, 3]) { ctx.fillRect(x + dx - 1, y - 6, 4, 13); } ctx.fillStyle = A.col; for (const dx of [-5, -1, 3]) { ctx.fillRect(x + dx, y - 4, 2, 10); ctx.fillStyle = '#fff3b0'; ctx.fillRect(x + dx, y - 5, 2, 2); ctx.fillStyle = A.col; } }
+    else if (t === 'shell') { ctx.fillRect(x - 6, y - 6, 12, 13); ctx.fillStyle = A.col; ctx.fillRect(x - 5, y - 5, 10, 8); ctx.fillStyle = '#c8a050'; ctx.fillRect(x - 5, y + 3, 10, 3); }
+    else if (t === 'bolt') { ctx.fillRect(x - 2, y - 7, 5, 15); ctx.fillRect(x - 6, y - 7, 13, 5); ctx.fillStyle = A.col; ctx.fillRect(x - 1, y - 5, 3, 12); ctx.fillRect(x - 5, y - 6, 11, 3); }
+    else if (t === 'explosive') { ctx.beginPath(); ctx.arc(x, y + 1, 7, 0, 6.283); ctx.fill(); ctx.fillStyle = A.col; ctx.beginPath(); ctx.arc(x, y + 1, 5.5, 0, 6.283); ctx.fill(); ctx.fillStyle = O; ctx.fillRect(x - 1, y - 8, 3, 4); ctx.fillStyle = '#fff3b0'; ctx.fillRect(x - 1, y - 9, 2, 2); }
+    else { ctx.beginPath(); ctx.moveTo(x, y - 8); ctx.lineTo(x + 6, y); ctx.lineTo(x, y + 8); ctx.lineTo(x - 6, y); ctx.fill(); ctx.fillStyle = A.col; ctx.beginPath(); ctx.moveTo(x, y - 6); ctx.lineTo(x + 4, y); ctx.lineTo(x, y + 6); ctx.lineTo(x - 4, y); ctx.fill(); ctx.fillStyle = '#e8ffff'; ctx.fillRect(x - 1, y - 2, 2, 4); }
   },
   levelLabel() {
     const run = this.run, C = this.C, a = areaOf(run.act), loop = Math.floor(run.act / LOOP_LEVELS);

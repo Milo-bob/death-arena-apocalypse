@@ -45,6 +45,9 @@ const CLAN_SET = {
   cyber: { n: 3, name: 'Neural Net', d: '-20% dash cooldown, +10% crit.', a: P => { P.dashCd *= 0.8; P.crit += 0.1; } },
   void: { n: 3, name: 'Event Horizon', d: 'Dash damage +30, explosions 20% wider.', a: P => { P.dashDmg += 30; P.blastRad *= 1.2; } },
 };
+CLANS.aqua = { name: 'Aqua', color: '#4fe0d0', dark: '#0c3030', blurb: '', pro: '', con: '', mod() {} };
+CLANS.iron = { name: 'Iron', color: '#b4bcc8', dark: '#1c2028', blurb: '', pro: '', con: '', mod() {} };
+CLAN_SET.aqua = CLAN_SET.iron = CLAN_SET.void;
 for (const k in CLANS) CLANS[k].mod = () => {};   // clans are gone, they only stay as colour palettes
 const clanPerkCount = run => run.perks.filter(id => PERKS[id].clan === run.clan).length;
 
@@ -136,33 +139,43 @@ const HEROES = {
 
 // ---------- Nuclear-Throne style: 8 playable characters, every other hero entry is just a weapon in the loot pool ----------
 // ---------- Nuclear-Throne style roster: 12 playable characters, loot weapons are separate entries (w_*) ----------
-const PLAYABLE = ['sun', 'gunner', 'runner', 'net', 'boiler', 'weaver', 'clock', 'brute', 'siege', 'hive', 'phantom', 'umbra'];
+const PLAYABLE = ['sun', 'gunner', 'net', 'boiler', 'weaver', 'runner', 'brute', 'hive'];   // Fish, Crystal, Eyes, Melting, Plant, Y.V., Robot, Chicken - all selectable from the start
 const NO_ABILITY = { type: 'overdrive', name: '-', cd: 99, dur: 0, rate: 1 };
-Object.assign(HEROES.sun, { name: 'Scrapper', cost: 0, start: 'w_revolver', blurb: 'Extra ammo from drops. Q: roll through danger.',
+Object.assign(HEROES.sun, { name: 'Fish', cost: 0, start: 'w_revolver', blurb: 'Extra ammo from drops. Q: roll through danger.',
   ability: { type: 'roll', name: 'Roll', cd: 3.5 }, mod(P) { P.ammoMul *= 1.35; } });
-Object.assign(HEROES.gunner, { name: 'Geode', cost: 0, start: 'w_revolver', blurb: 'Tough shell. Q: shield that reflects bullets.',
-  ability: { type: 'shield', name: 'Mirror Shield', cd: 9, dur: 2.5 }, mod(P) { P.maxhp -= 10; P.taken *= 0.95; } });
-Object.assign(HEROES.runner, { name: 'Vee', cost: 0, start: 'w_machinegun', blurb: 'Gun god: shoots faster, ammo goes further. Q: pop pop.',
+Object.assign(HEROES.gunner, { name: 'Crystal', cost: 0, start: 'w_revolver', blurb: 'Tough shell. Q: shield that reflects bullets.',
+  ability: { type: 'shield', name: 'Shield', cd: 9, dur: 2.5 }, mod(P) { P.maxhp -= 10; P.taken *= 0.95; } });
+Object.assign(HEROES.runner, { name: 'Y.V.', cost: 150, start: 'w_machinegun', blurb: 'Gun god: shoots faster, ammo goes further. Q: pop pop.',
   ability: { type: 'overdrive', name: 'Pop Pop', cd: 11, dur: 4, rate: 1.8 }, mod(P) { P.rate *= 1.12; P.crit += 0.05; P.ammoCost *= 0.7; } });
-Object.assign(HEROES.net, { name: 'Watcher', cost: 250, start: 'w_laserpistol', blurb: 'Loot flies to you. Q: telekinesis shove.',
+Object.assign(HEROES.net, { name: 'Eyes', cost: 250, start: 'w_laserpistol', blurb: 'Loot flies to you. Q: telekinesis shove.',
   ability: { type: 'nova', name: 'Telekinesis', cd: 6, r: 210, dmg: 6, knock: 430, burn: 0 }, mod(P) { P.magnet *= 2.5; P.xpMul *= 1.1; } });
-Object.assign(HEROES.boiler, { name: 'Slag', cost: 150, start: 'w_revolver', blurb: 'Fragile, but kills burst into flames. Q: rad burst.',
+Object.assign(HEROES.boiler, { name: 'Melting', cost: 150, start: 'w_revolver', blurb: 'Fragile, but kills burst into flames. Q: rad burst.',
   ability: { type: 'nova', name: 'Rad Burst', cd: 9, r: 170, dmg: 70, knock: 240, burn: 6 }, mod(P) { P.maxhp -= 40; P.killBlast += 18; P.burn += 2; } });
-Object.assign(HEROES.weaver, { name: 'Bloom', cost: 350, start: 'w_crossbow', blurb: 'Fast and regenerating. Q: snare (slows enemies).',
+Object.assign(HEROES.weaver, { name: 'Plant', cost: 350, start: 'w_crossbow', blurb: 'Fast and regenerating. Q: snare (slows enemies).',
   ability: { type: 'zone', name: 'Snare', cd: 10, r: 120, dur: 5, dps: 6, slow: 0.8, poison: 0 }, mod(P) { P.speed *= 1.12; P.regen += 0.6; } });
-Object.assign(HEROES.clock, { name: 'Brawler', cost: 450, start: 'w_revolver', start2: 'w_revolver', blurb: 'Dual wields: both guns fire together. Q: berserk.',
+Object.assign(HEROES.clock, { name: 'Steroids', cost: 450, start: 'w_revolver', start2: 'w_revolver', blurb: 'Dual wields: both guns fire together. Q: berserk.',
   ability: { type: 'overdrive', name: 'Berserk', cd: 13, dur: 5, rate: 1.5 }, mod(P) { P.dual = 1; P.ammoMul *= 1.2; } });
-Object.assign(HEROES.brute, { name: 'Bot', cost: 550, start: 'w_shotgun', blurb: 'Eats weapons for ammo and health with Q.',
+Object.assign(HEROES.brute, { name: 'Robot', cost: 550, start: 'w_shotgun', blurb: 'Eats weapons for ammo and health with Q.',
   ability: { type: 'eat', name: 'Eat Weapon', cd: 3 }, mod(P) { P.ammoMul *= 1.1; } });
 Object.assign(HEROES.siege, { name: 'Rebel', cost: 650, start: 'w_popgun', blurb: 'Brings a drone ally. Q: call another.',
   ability: { type: 'turret', name: 'Ally Drone', cd: 8, dur: 14, rate: 4, dmg: 8 }, mod(P) { P.maxhp -= 20; P.regen += 0.3; } });
-Object.assign(HEROES.hive, { name: 'Rooster', cost: 750, start: 'w_machete', blurb: 'Keeps going when it should be dead (revive). Q: flap dash.',
+Object.assign(HEROES.hive, { name: 'Chicken', cost: 750, start: 'w_machete', blurb: 'Keeps going when it should be dead (revive). Q: flap dash.',
   ability: { type: 'roll', name: 'Flap', cd: 3 }, mod(P) { P.phoenix = 1; P.maxhp -= 40; P.speed *= 1.1; } });
 Object.assign(HEROES.phantom, { name: 'Wraith', cost: 850, start: 'w_plasmagun', blurb: 'Feeds on radiation: more rads. Q: radiation pulse.',
   ability: { type: 'zone', name: 'Radiation', cd: 9, r: 140, dur: 3, dps: 45, slow: 0.2, poison: 0 }, mod(P) { P.xpMul *= 1.45; } });
 Object.assign(HEROES.umbra, { name: 'Outlaw', cost: 950, start: 'w_rifle', blurb: 'Crits and ambushes. Q: call down a strike at the cursor.',
   ability: { type: 'strike', name: 'Strike', cd: 7, dmg: 110, r: 110 }, mod(P) { P.crit += 0.12; P.critMul += 0.3; P.maxhp -= 20; } });
 
+Object.assign(HEROES.sun, { passive: 'More ammo from every pickup.', active: 'Roll: a quick dodge roll, you cannot be hit.' });
+Object.assign(HEROES.gunner, { passive: 'Takes less damage.', active: 'Shield: reflects enemy bullets back for a short time.' });
+Object.assign(HEROES.net, { passive: 'Loot is pulled to you from far away, a bit more rads.', active: 'Telekinesis: shoves enemies and bullets away.' });
+Object.assign(HEROES.boiler, { passive: 'Only 4 hearts, but kills explode.', active: 'Rad Burst: a big radiation explosion around you.' });
+Object.assign(HEROES.weaver, { passive: 'Walks faster and slowly regenerates.', active: 'Snare: slows every enemy in the area.' });
+Object.assign(HEROES.runner, { passive: 'Shoots faster and ammo lasts longer.', active: 'Pop Pop: rapid fire for a few seconds.' });
+Object.assign(HEROES.clock, { passive: 'Dual wield: both weapons fire at once.', active: 'Berserk: fire even faster for a few seconds.' });
+Object.assign(HEROES.hive, { passive: 'Keeps going once when it should be dead.', active: 'Flap: a quick roll, you cannot be hit.' });
+Object.assign(HEROES.brute, { passive: 'Starts with a shotgun and a bigger appetite.', active: 'Eat Weapon: turns a nearby weapon into ammo and health.' });
+HEROES.sun.clan = 'aqua'; HEROES.gunner.clan = 'void'; HEROES.weaver.clan = 'bio'; HEROES.brute.clan = 'iron';
 HEROES.sun.ultras = [
   { name: 'Gun Nut', d: '+60% ammo from pickups, +15% damage.', a: P => { P.ammoMul *= 1.6; P.dmg *= 1.15; } },
   { name: 'Quick Draw', d: '+25% attack speed, +10% crit chance.', a: P => { P.rate *= 1.25; P.crit += 0.1; } }];
@@ -202,15 +215,12 @@ HEROES.umbra.ultras = [
 
 // characters are unlocked by achievements (stats are banked at the end of a run)
 const UNLOCK = {
-  net: { d: 'Reach level 3 in a run', ok: s => s.stats.bestAct >= 3, prog: s => Math.min(3, s.stats.bestAct) + '/3' },
+  net: { d: 'Reach level 2 in a run', ok: s => s.stats.bestAct >= 2, prog: s => Math.min(2, s.stats.bestAct) + '/2' },
   boiler: { d: 'Kill 100 enemies in total', ok: s => s.stats.kills >= 100, prog: s => Math.min(100, s.stats.kills) + '/100' },
-  weaver: { d: 'Reach level 5 in a run', ok: s => s.stats.bestAct >= 5, prog: s => Math.min(5, s.stats.bestAct) + '/5' },
+  weaver: { d: 'Reach level 4 in a run', ok: s => s.stats.bestAct >= 4, prog: s => Math.min(4, s.stats.bestAct) + '/4' },
+  runner: { d: 'Reach level 5 in a run', ok: s => s.stats.bestAct >= 5, prog: s => Math.min(5, s.stats.bestAct) + '/5' },
   clock: { d: 'Reach player level 6 in a run', ok: s => (s.stats.bestPlv || 0) >= 6, prog: s => Math.min(6, s.stats.bestPlv || 0) + '/6' },
   brute: { d: 'Defeat a boss', ok: s => (s.stats.bosses || 0) >= 1, prog: s => Math.min(1, s.stats.bosses || 0) + '/1' },
-  siege: { d: 'Reach level 8 in a run', ok: s => s.stats.bestAct >= 8, prog: s => Math.min(8, s.stats.bestAct) + '/8' },
-  hive: { d: 'Kill 400 enemies in total', ok: s => s.stats.kills >= 400, prog: s => Math.min(400, s.stats.kills) + '/400' },
-  phantom: { d: 'Defeat 3 bosses in total', ok: s => (s.stats.bosses || 0) >= 3, prog: s => Math.min(3, s.stats.bosses || 0) + '/3' },
-  umbra: { d: 'Reach level 12 in a run', ok: s => s.stats.bestAct >= 12, prog: s => Math.min(12, s.stats.bestAct) + '/12' },
 };
 
 // ---------- loot weapons (names follow the classic arcade roguelite weapon list; dmg is normalised per tier by the balance pass) ----------

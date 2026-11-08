@@ -6,6 +6,7 @@ const UI = {
   keyActs: [],
   tab: 'run',
   show(html, cls) {
+    this.navMode = null;
     document.body.classList.remove('fight'); Music.play('menu');
     if (Save.data) this.el.style.setProperty('--acc', CLANS[Save.data.clan].color);
     else this.el.style.setProperty('--acc', '#d89a3a');
@@ -20,16 +21,37 @@ const UI = {
     Menu.set('title');
     Save.data = null; Save.slot = -1;
     const on = Account.on, conf = Account.configured;
-    let h = '<h1 style="margin-top:40px;font-size:46px;color:#d8d2c0">DEATH ARENA</h1><h1 style="color:#c0301e;margin-top:0;font-size:60px;letter-spacing:6px">APOCALYPSE</h1><p class="dim">The world burned. The arenas did not. Pick a clan and go down fighting.</p>';
-    if (on) {
-      h += '<p>Logged in as <b>' + esc(Account.meta.name) + '</b></p><div class="row"><button class="btn big" onclick="UI.slots()">CONTINUE</button></div><div class="row"><button class="btn" onclick="Account.signOut();UI.title()">LOG OUT</button></div>';
-    } else {
-      if (conf) h += '<input id="an" placeholder="Name" maxlength="20" autocomplete="username"><input id="ap" type="password" placeholder="Password" autocomplete="current-password"><div class="row"><button class="btn" onclick="UI.auth(false)">LOG IN</button><button class="btn" onclick="UI.auth(true)">CREATE ACCOUNT</button></div>';
-      else h += '<p class="dim sm" style="max-width:480px;text-align:center">Online accounts are not set up yet. You can play as a guest, saves stay in this browser.</p>';
-      h += '<div class="row"><button class="btn ' + (conf ? '' : 'big') + '" onclick="Account.guest=true;UI.slots()">PLAY AS GUEST</button></div>';
+    let h = '<div class="logo"><div class="l1">DEATH ARENA</div><div class="l2">APOCALYPSE</div><div class="dim sm" style="margin-top:8px">The world burned. The arenas did not.</div></div><div class="menu">';
+    if (on) h += '<button class="mbtn" data-nav onclick="UI.slots()">PLAY</button>';
+    else if (conf) h += '<div><input id="an" placeholder="Name" maxlength="20" autocomplete="username"><input id="ap" type="password" placeholder="Password" autocomplete="current-password"></div><div class="row"><button class="btn" onclick="UI.auth(false)">LOG IN</button><button class="btn" onclick="UI.auth(true)">CREATE ACCOUNT</button></div><button class="mbtn" data-nav onclick="Account.guest=true;UI.slots()">PLAY AS GUEST</button>';
+    else h += '<button class="mbtn" data-nav onclick="Account.guest=true;UI.slots()">PLAY</button>';
+    h += '<button class="mbtn" data-nav onclick="UI.controls()">CONTROLS</button>';
+    h += '<button class="mbtn" data-nav onclick="Music.toggle();UI.title()">MUSIC: ' + (Music.on ? 'ON' : 'OFF') + '</button>';
+    if (on) h += '<button class="mbtn" data-nav onclick="Account.signOut();UI.title()">LOG OUT (' + esc(Account.meta.name) + ')</button>';
+    h += '</div><div class="err" id="aerr">' + esc(msg || '') + '</div>';
+    h += '<div class="lineup">' + PLAYABLE.map((id, i) => '<img src="' + Sprites.url(id) + '" style="animation-delay:' + (i * 0.25) + 's">').join('') + '</div>';
+    this.show(h); this.navMode = 'menu'; this.focusFirst();
+  },
+  controls() {
+    Menu.set('title');
+    const rows = [['WASD', 'Move'], ['Mouse', 'Aim, hold to shoot'], ['Space / X', 'Swap weapon'], ['Right mouse / Q', 'Character ability'], ['Shift', 'Dash'], ['E', 'Pick up weapon / use'], ['F', 'Auto-fire'], ['P / Backspace', 'Pause'], ['M', 'Music']];
+    this.show('<div class="logo"><div class="l1" style="font-size:26px">CONTROLS</div></div><table style="font-size:16px;margin-top:14px">' + rows.map(r => '<tr><td style="color:var(--amber);font-family:Silk;text-align:right;padding-right:18px">' + r[0] + '</td><td>' + r[1] + '</td></tr>').join('') + '</table><div class="menu"><button class="mbtn" data-nav onclick="UI.title()">BACK</button></div>');
+    this.navMode = 'menu'; this.focusFirst();
+  },
+  focusFirst() { const b = this.el.querySelector('[data-nav]'); if (b) b.focus(); },
+  nav(k) {
+    if (this.navMode === 'select') {
+      const i = PLAYABLE.indexOf(this.selId);
+      if (k === 'arrowright' || k === 'd') this.selectChar(PLAYABLE[(i + 1) % PLAYABLE.length]);
+      else if (k === 'arrowleft' || k === 'a') this.selectChar(PLAYABLE[(i + PLAYABLE.length - 1) % PLAYABLE.length]);
+      else if (k === 'enter') this.startFromSelect();
+      return;
     }
-    h += '<div class="err" id="aerr">' + esc(msg || '') + '</div>';
-    this.show(h);
+    if (this.navMode !== 'menu') return;
+    const items = [...this.el.querySelectorAll('[data-nav]')]; if (!items.length) return;
+    let i = items.indexOf(document.activeElement);
+    if (k === 'arrowdown' || k === 's') i = (i + 1) % items.length; else if (k === 'arrowup' || k === 'w') i = (i - 1 + items.length) % items.length; else return;
+    items[i].focus();
   },
   async auth(create) {
     const n = document.getElementById('an').value.trim(), p = document.getElementById('ap').value, e = document.getElementById('aerr');
@@ -51,7 +73,7 @@ const UI = {
       if (!d) h += '<div class="card slot" onclick="UI.clanSelect(' + i + ')" style="--c:#345"><h3>SLOT ' + (i + 1) + '</h3><p class="dim">Empty</p><p style="margin-top:50px;text-align:center"><span class="btn">NEW GAME</span></p></div>';
       else {
         const c = CLANS[d.clan];
-        h += '<div class="card slot" style="--c:' + c.color + '" onclick="UI.openSlot(' + i + ')"><h3 style="color:' + c.color + '">' + c.name.toUpperCase() + '</h3><p class="sm dim">Slot ' + (i + 1) + '</p><table>'
+        h += '<div class="card slot" style="--c:' + c.color + '" onclick="UI.openSlot(' + i + ')"><h3 style="color:' + c.color + '">WASTELAND</h3><p class="sm dim">Slot ' + (i + 1) + '</p><table>'
           + '<tr><td>Cores</td><td>' + d.cores + '</td></tr><tr><td>Runs</td><td>' + d.stats.runs + ' (' + d.stats.wins + ' won)</td></tr><tr><td>Best act</td><td>' + (d.stats.bestAct || '-') + '</td></tr><tr><td>Max heat</td><td>' + d.heatMax + '</td></tr></table>'
           + (d.run ? '<p class="pro sm">Run in progress</p>' : '') + '<p style="text-align:center;margin-top:10px"><span class="btn">PLAY</span> <span class="btn red" onclick="event.stopPropagation();UI.delSlot(' + i + ')">DELETE</span></p></div>';
       }
@@ -77,23 +99,12 @@ const UI = {
   hub(tab) {
     if (tab) this.tab = tab;
     const s = Save.data, c = CLANS[s.clan];
-    for (const id of PLAYABLE) if (!s.heroes[id] && UNLOCK[id] && UNLOCK[id].ok(s)) { s.heroes[id] = 1; Save.write(true); } Menu.set('hub', s.clan, s.hero);
+    for (const id of PLAYABLE) if (!s.heroes[id]) { s.heroes[id] = 1; Save.write(true); }   // every hero is selectable from the start Menu.set('hub', s.clan, s.hero);
     let h = '<div class="row" style="justify-content:space-between;align-items:center"><div><h1 style="margin:0;font-size:26px">WASTELAND CAMP</h1><span class="sm dim">Slot ' + (Save.slot + 1) + '</span></div>'
       + '<div style="text-align:right"><div style="font-family:Silk;color:#3de8ff">CORES ' + s.cores + '</div><button class="btn" onclick="UI.slots()">SAVE SLOTS</button></div></div>';
-    h += '<div class="tabs">' + [['run', 'RUN'], ['armory', 'MUTATIONS'], ['upgrades', 'UPGRADES'], ['players', 'PLAYERS']].map(t => '<button class="btn ' + (this.tab === t[0] ? 'sel' : '') + '" onclick="UI.hub(\'' + t[0] + '\')">' + t[1] + '</button>').join('') + '</div>';
+    h += '<div class="tabs">' + [['run', 'CHARACTERS'], ['armory', 'MUTATIONS'], ['upgrades', 'UPGRADES']].map(t => '<button class="btn ' + (this.tab === t[0] ? 'sel' : '') + '" onclick="UI.hub(\'' + t[0] + '\')">' + t[1] + '</button>').join('') + '</div>';
     if (this.tab === 'run') {
-      h += '<div class="row">';
-      for (const id of PLAYABLE) {
-        const hero = HEROES[id], sw = HEROES[hero.start || id].weapon;
-        const own = !!s.heroes[id], sel = s.hero === id;
-        h += '<div class="card ' + (own ? '' : 'locked') + '" style="--c:' + (sel ? c.color : '#345') + ';width:132px;min-height:200px;padding:8px" onclick="UI.pickHero(\'' + id + '\')"><img src="' + Sprites.url(id) + '" style="float:right;width:40px;height:40px;image-rendering:pixelated"><h3>' + hero.name.toUpperCase() + (sel ? ' <span class="pro">*</span>' : '') + '</h3><p class="sm dim">' + hero.blurb + '</p>'
-          + '<p class="sm">Weapon: <b>' + sw.name + (hero.start2 ? ' x2' : '') + '</b> (' + (ammoOf(sw) || 'melee') + ')</p><p class="sm">Ability [Q]: <b>' + hero.ability.name + '</b> (' + hero.ability.cd + 's)</p>'
-          + (own ? (sel ? '<p class="pro sm">Selected</p>' : '') : '<p style="text-align:center;margin-top:8px;clear:both"><span class="sm" style="color:#ffd91f">' + (UNLOCK[id] ? UNLOCK[id].d + ' (' + UNLOCK[id].prog(s) + ')' : 'Locked') + '</span></p>') + '</div>';
-      }
-      h += '</div><div class="row" style="margin-top:14px;align-items:center"><span class="sm">HEAT</span>';
-      for (let i = 0; i <= 5; i++) h += '<button class="btn ' + (s.heat === i ? 'sel' : '') + '" ' + (i > s.heatMax ? 'disabled' : '') + ' onclick="Save.data.heat=' + i + ';UI.hub()">' + i + '</button>';
-      h += '</div><p class="sm dim" style="text-align:center">Heat: each level gives enemies +15% HP, +12% damage, and +20% cores. Beat the game at your top heat to unlock the next.</p>';
-      h += '<div class="row" style="margin-top:8px">' + (s.run ? '<button class="btn big" onclick="Game.resume()">RESUME RUN</button><button class="btn red" onclick="if(confirm(\'Abandon the current run? You keep 25% of its cores.\')){UI.summary(Game.abandonSaved())}">ABANDON</button>' : '<button class="btn big" onclick="Game.startRun()">START RUN</button>') + '</div>';
+      h += this.selectHtml(s);
     } else if (this.tab === 'hero') {
       h += this.heroTab(s, c);
     } else if (this.tab === 'armory') {
@@ -114,8 +125,43 @@ const UI = {
     } else {
       h += '<p style="margin-top:30px;text-align:center">The shared hub is coming:<br>see other players between runs, leaderboards and clan progress.</p><p class="dim sm">Needs the Supabase project (presence + leaderboard tables).</p>';
     }
-    this.show(h);
+    this.show(h); if (this.tab === 'run') this.selectInit();
   },
+  // ---------- character select ----------
+  heartSvg(on) {
+    const pat = ['.XX.XX.', 'XXXXXXX', 'XXXXXXX', '.XXXXX.', '..XXX..', '...X...'];
+    let r = ''; pat.forEach((row, y) => [...row].forEach((c, x) => { if (c === 'X') r += '<rect x="' + x + '" y="' + y + '" width="1" height="1"/>'; }));
+    return '<svg width="21" height="18" viewBox="0 0 7 6" shape-rendering="crispEdges" fill="' + (on ? '#ff3a4a' : '#3a1018') + '">' + r + '</svg>';
+  },
+  charHearts(id) { const s = Save.data, run = { hero: id, clan: HEROES[id].clan, perks: [], drawbacks: [], bonus: {} }; return Math.round(buildStats(run, s).maxhp / 10); },
+  selectHtml(s) {
+    if (!s.heroes[s.hero]) s.hero = PLAYABLE.find(id => s.heroes[id]) || PLAYABLE[0];
+    let h = '<div class="cs-main"><div class="cs-stage" id="csStage"></div><div class="cs-info" id="csInfo"></div></div><div class="cs-row">';
+    for (const id of PLAYABLE) h += '<div class="cs-tile" id="tile_' + id + '" data-id="' + id + '" onclick="UI.selectChar(this.dataset.id)"><img src="' + Sprites.url(id) + '"><span class="lk">?</span></div>';
+    return h + '</div><div class="cs-actions" id="csActions"></div>';
+  },
+  selectInit() { this.navMode = 'select'; this.selectChar(Save.data.hero); },
+  selectChar(id) {
+    const s = Save.data, hero = HEROES[id], own = !!s.heroes[id], sw = HEROES[hero.start || id].weapon, a = ammoOf(sw), n = this.charHearts(id), u = UNLOCK[id];
+    this.selId = id;
+    if (own) { s.hero = id; Save.write(); Menu.set('hub', s.clan, id); }
+    for (const t of PLAYABLE) { const el = document.getElementById('tile_' + t); if (el) { el.classList.toggle('sel', t === id); el.classList.toggle('locked', !s.heroes[t]); } }
+    document.getElementById('csStage').innerHTML = '<div class="cs-glow"></div><img class="cs-big" src="' + Sprites.url(id) + '" style="' + (own ? '' : 'filter:brightness(0) opacity(.55)') + '"><div class="cs-name">' + esc(hero.name.toUpperCase()) + '</div>';
+    let hearts = ''; for (let i = 0; i < n; i++) hearts += this.heartSvg(true);
+    document.getElementById('csInfo').innerHTML = '<div class="cs-hearts">' + hearts + '</div>'
+      + '<div class="cs-lab">PASSIVE</div><p>' + esc(hero.passive || '') + '</p>'
+      + '<div class="cs-lab">ACTIVE [Q] ' + esc(hero.ability.name.toUpperCase()) + '</div><p>' + esc(hero.active || '') + '</p>'
+      + '<div class="cs-lab">WEAPON</div><p>' + esc(sw.name) + (hero.start2 ? ' x2' : '') + ' <span style="color:' + (a ? AMMO[a].col : '#9fc') + '">(' + (a ? AMMO[a].name.toLowerCase() : 'melee') + ')</span></p>'
+      + (own ? '' : '<div class="cs-lab" style="color:#ff6a6a">LOCKED</div><p>' + esc(u ? u.d + ' (' + u.prog(s) + ')' : '') + '</p>');
+    let act = '';
+    if (!own) act = '<button class="btn big" disabled>LOCKED</button>';
+    else if (s.run) act = '<button class="btn big" onclick="Game.resume()">RESUME RUN</button><button class="btn red" onclick="if(confirm(\'Abandon the current run? You keep 25% of its cores.\')){UI.summary(Game.abandonSaved())}">ABANDON</button>';
+    else act = '<button class="btn big" onclick="Game.startRun()">START</button>';
+    act += '<span class="sm" style="margin-left:14px">HEAT</span>';
+    for (let i = 0; i <= 5; i++) act += '<button class="btn ' + (s.heat === i ? 'sel' : '') + '" style="padding:5px 10px" ' + (i > s.heatMax ? 'disabled' : '') + ' onclick="Save.data.heat=' + i + ';UI.selectChar(UI.selId)">' + i + '</button>';
+    document.getElementById('csActions').innerHTML = act;
+  },
+  startFromSelect() { const s = Save.data; if (!s || !s.heroes[this.selId]) return; if (s.run) Game.resume(); else Game.startRun(); },
   heroTab(s, c) {
     s.loadout = s.loadout || {}; s.tree = s.tree || {};
     const hero = HEROES[s.hero], lo = s.loadout[s.hero] || {}, wId = this.kitId(s, lo.w), aId = this.kitId(s, lo.a), tr = s.tree[s.hero] || {}, rank = treeRank(tr);
