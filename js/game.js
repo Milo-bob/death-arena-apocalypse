@@ -215,7 +215,7 @@ const Game = {
     this.mode = 'fight'; this.paused = false; this.frozen = false; this.fade = this.fade && !this.fade.done ? this.fade : null; document.body.classList.add('fight'); UI.hide();
   },
   compose(budget, act, row) {
-    const avail = ['grunt'];
+    let avail = ['grunt'];
     if (row >= 1 || act > 0) avail.push('shooter');
     if (row >= 2 || act > 0) avail.push('bomber', 'dasher');
     if (act >= 1 || row >= 4) avail.push('tank');
@@ -224,6 +224,7 @@ const Game = {
     if (act >= 2 || row >= 5) avail.push('sniper');
     if (act >= 1 || row >= 2) avail.push('turret');
     if (row >= 2) avail.push('rat');
+    const cast = AREA_ENEMIES[areaOf(act)].filter(t => avail.includes(t)); if (cast.length) avail = cast;
     const list = [];
     while (budget > 0) {
       const o = avail.filter(t => ENEMY[t].cost <= budget);
@@ -453,7 +454,7 @@ const Game = {
     const C = this.C, P = this.P, p = C.p, hero = HEROES[this.run.hero], col = CLANS[hero.clan].color, a0 = p.aim;
     C.shake = Math.max(C.shake, w.dmg >= 25 || w.type === 'mortar' ? 3 : 1);
     if (w.type === 'shot') {
-      const n = w.n + P.extra; Sfx.shoot();
+      const n = w.n + P.extra; Sfx.shoot(ammoOf(w), w.rate >= 7);
       if (w.burst > 1 && !noq) { C.burstQ = C.burstQ || []; for (let i = 1; i < w.burst; i++) C.burstQ.push({ t: 0.07 * i, w }); }
       const rc = clamp(30 + w.dmg * n * 0.8, 30, 170); p.kvx = (p.kvx || 0) - Math.cos(a0) * rc; p.kvy = (p.kvy || 0) - Math.sin(a0) * rc;
       this.burst(p.x + Math.cos(a0) * 18, p.y + Math.sin(a0) * 18, '#fff3b0', 2, 130);
@@ -471,6 +472,7 @@ const Game = {
         let da = Math.abs(Math.atan2(e.y - p.y, e.x - p.x) - a0); da = Math.min(da, 6.283 - da);
         if (da < arc / 2 + e.r / Math.max(d, 1)) { this.hitEnemy(e, w.dmg); this.knock(e, a0, 160); }
       }
+      for (const pr of C.props) if (!pr.dead) { const d = dist(pr, p); if (d > range + pr.r) continue; let da = Math.abs(Math.atan2(pr.y - p.y, pr.x - p.x) - a0); da = Math.min(da, 6.283 - da); if (da < arc / 2 + 0.3) this.damageProp(pr, w.dmg); }
       C.eb = C.eb.filter(b => { const d = dist(b, p); if (d > range) return true; let da = Math.abs(Math.atan2(b.y - p.y, b.x - p.x) - a0); da = Math.min(da, 6.283 - da); if (da < arc / 2) { this.burst(b.x, b.y, '#fff', 3, 80); return false; } return true; });
     } else if (w.type === 'lance') {
       Sfx.slash();
@@ -479,6 +481,7 @@ const Game = {
         const a = a0 + (n > 1 ? (i - (n - 1) / 2) * 0.4 : 0), x2 = p.x + Math.cos(a) * reach, y2 = p.y + Math.sin(a) * reach;
         C.fx.push({ k: 'lance', x1: p.x, y1: p.y, x2, y2, w: wd, t: 0.13, max: 0.13, col });
         for (const e of C.en) if (!e.dead && segDist(e.x, e.y, p.x, p.y, x2, y2) < wd / 2 + e.r) { this.hitEnemy(e, w.dmg); this.knock(e, a, 90); }
+        for (const pr of C.props) if (!pr.dead && segDist(pr.x, pr.y, p.x, p.y, x2, y2) < wd / 2 + pr.r) this.damageProp(pr, w.dmg);
       }
     } else if (w.type === 'mortar') {
       Sfx.shoot();
@@ -635,7 +638,7 @@ const Game = {
         case 'spiral':
           if (t < 2.6) { b.sa = (b.sa || 0) + 0.42; if (Math.floor(t / 0.07) !== b.n) { b.n = Math.floor(t / 0.07); this.eShoot(b, b.sa, 160, 9 * C.dmgS, 4); if (n >= 3) this.eShoot(b, b.sa + 3.14, 160, 9 * C.dmgS, 4); } } else this.endPat(b); break;
         case 'summon':
-          if (t > 0.4 && b.n < 1) { b.n = 1; for (let i = 0; i < 2 + n; i++) { const [x, y] = this.spawnPos(); C.markers.push({ type: pick(['grunt', 'bomber', 'shooter']), x, y, t: 0.9, max: 0.9 }); } }
+          if (t > 0.4 && b.n < 1) { b.n = 1; for (let i = 0; i < 2 + n; i++) { const [x, y] = this.spawnPos(); C.markers.push({ type: pick(AREA_ENEMIES[areaOf(this.run.act)].filter(t => ENEMY[t].cost <= 3)), x, y, t: 0.9, max: 0.9 }); } }
           if (t > 1.2) this.endPat(b); break;
         case 'slam':
           if (b.n < 1) { b.n = 1; const k = n >= 2 ? 2 : 1; for (let i = 0; i < k; i++) C.haz.push({ x: clamp(p.x + (i ? rnd(-140, 140) : 0), this.arena().x0 + 40, this.arena().x1 - 40), y: clamp(p.y + (i ? rnd(-100, 100) : 0), this.arena().y0 + 40, this.arena().y1 - 40), r: 105, t: 1.0 + i * 0.35, max: 1.0 + i * 0.35, dmg: 24 * C.dmgS, friendly: false, ring: n >= 3 ? 10 : 0, col: b.col }); }
@@ -672,6 +675,7 @@ const Game = {
         b.hit.push(e); this.hitEnemy(e, b.dmg); this.knock(e, Math.atan2(b.vy, b.vx), clamp(b.dmg * 1.2, 12, 60)); this.burst(b.x, b.y, b.col, 3, 90);
         if (b.pierce-- <= 0) { b.life = 0; this.boomAt(b); break; }
       }
+      if (b.life > 0) for (const pr of C.props) if (!pr.dead && dist(pr, b) < pr.r + b.r) { this.damageProp(pr, b.dmg); if (b.pierce-- <= 0) { b.life = 0; this.boomAt(b); break; } }
     }
     C.pb = C.pb.filter(b => b.life > 0);
     for (const b of C.eb) {
@@ -689,7 +693,7 @@ const Game = {
       h.done = true;
       C.fx.push({ k: 'ring', x: h.x, y: h.y, r: h.r, t: 0.22, max: 0.22, col: h.friendly ? '#ff8a1f' : '#ff4a4a' });
       if (!h.quick) { this.burst(h.x, h.y, h.friendly ? '#ff8a1f' : '#ff4a4a', 10, 170); Sfx.boom(); C.shake = Math.max(C.shake, 5); }
-      if (h.friendly) { for (const e of C.en.slice()) if (!e.dead && dist(e, h) < h.r + e.r) this.hitEnemy(e, h.dmg, { raw: !!h.quick, noProc: !!h.quick, noCrit: !!h.quick }); }
+      if (h.friendly) { for (const e of C.en.slice()) if (!e.dead && dist(e, h) < h.r + e.r) this.hitEnemy(e, h.dmg, { raw: !!h.quick, noProc: !!h.quick, noCrit: !!h.quick }); for (const pr of C.props) if (!pr.dead && dist(pr, h) < h.r + pr.r) this.damageProp(pr, h.dmg * 1.5 + 10); }
       else {
         if (dist(h, p) < h.r + p.r) this.hurt(h.dmg, h.owner);
         if (h.ring) for (let i = 0; i < h.ring; i++) this.eShoot({ x: h.x, y: h.y, col: h.col || '#ff4a4a' }, i / h.ring * 6.283, 200, 8 * C.dmgS, 5);

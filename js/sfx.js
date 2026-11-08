@@ -10,7 +10,15 @@ const Sfx = {
     g.gain.setValueAtTime(v || 0.06, n); g.gain.exponentialRampToValueAtTime(0.0001, n + d);
     o.connect(g); g.connect(c.destination); o.start(n); o.stop(n + d);
   },
-  shoot() { this.t(520, 0.07, 'square', 0.035, 0.5); },
+  shoot(kind, soft) {
+    const v = soft ? 0.018 : 0.04;
+    if (kind === 'shell') this.t(150, 0.15, 'sawtooth', v * 1.8, 0.35);
+    else if (kind === 'bolt') this.t(760, 0.1, 'triangle', v * 1.3, 0.35);
+    else if (kind === 'explosive') this.t(105, 0.25, 'square', v * 1.9, 0.4);
+    else if (kind === 'energy') this.t(980, 0.13, 'sine', v * 1.2, 0.3);
+    else this.t(520, soft ? 0.05 : 0.07, 'square', v, 0.5);
+  },
+  tick() { this.t(900 + Math.random() * 400, 0.04, 'triangle', 0.025); },
   slash() { this.t(260, 0.09, 'sawtooth', 0.04, 0.4); },
   hit() { this.t(180, 0.05, 'square', 0.035, 0.6); },
   kill() { this.t(120, 0.14, 'sawtooth', 0.06, 0.4); },

@@ -104,7 +104,7 @@ Object.assign(Game, {
     const sc = W.cells[W.startId]; sc.state.visited = true;
     const P = this.P = buildStats(run, Save.data);
     const C = this.C = { world: W, t: 0, en: [], eb: [], pb: [], haz: [], zones: [], gold: [], parts: [], fl: [], turrets: [], beams: [], markers: [], fx: [], pillars: W.pillars,
-      waves: [], waveIdx: 0, waveCd: 0, shake: 0, boss: null, bladeAng: 0, intro: 0, banner: 2.6, bannerText: ACT_NAMES[areaOf(act)].toUpperCase() + ' ' + (areaOf(act) + 1) + '-' + (act % 3 + 1), enc: null, burstQ: [], items: [], chests: [], lvlKills: 0, levelTotal: 0, portal: null, levelUps: 0, wdrops: [], hitstop: 0, curCell: sc, cam: { x: clamp(sc.cx - W_ / 2, 0, W.w - W_), y: clamp(sc.cy + 70 - H / 2, 0, W.h - H) }, mx: 0, my: 0,
+      waves: [], waveIdx: 0, waveCd: 0, shake: 0, boss: null, bladeAng: 0, intro: 0, banner: 2.6, bannerText: ACT_NAMES[areaOf(act)].toUpperCase() + ' ' + (areaOf(act) + 1) + '-' + (act % 3 + 1), enc: null, props: [], burstQ: [], items: [], chests: [], lvlKills: 0, levelTotal: 0, portal: null, levelUps: 0, wdrops: [], hitstop: 0, curCell: sc, cam: { x: clamp(sc.cx - W_ / 2, 0, W.w - W_), y: clamp(sc.cy + 70 - H / 2, 0, W.h - H) }, mx: 0, my: 0,
       noHit: true, hpS: 1, dmgS: 1, spdS: 1, curse: {}, clearMsg: 0, near: null,
       p: { x: sc.cx, y: sc.cy + 70, lx: sc.cx, ly: sc.cy + 70, r: 12, aim: -Math.PI / 2, fireT: 0.3, dashT: 0, dashCd: 0, dashDir: 0, dashHit: [], inv: 0.5, abT: 2, flash: 0, over: 0, overRate: 1, shield: 0, still: 0, trailT: 0, regenAcc: 0 },
       dust: Array.from({ length: 36 }, () => ({ x: rnd(0, W_), y: rnd(60, H), vx: rnd(-6, 6), vy: areaOf(act) === 1 ? rnd(-22, -8) : rnd(-4, 6) })) };
@@ -166,12 +166,12 @@ Object.assign(Game, {
   },
   spawnRoamers(Wd) {
     const C = this.C, run = this.run, act = run.act, R = rng(run.seed + 99), sc = Wd.cells[Wd.startId], boss = Wd.cells.find(c => c.type === 'boss');
-    C.hpS = (1 + 0.16 * act) * (1 + 0.15 * run.heat) * this.P.enemyHp * 0.9; C.dmgS = (1 + 0.12 * act) * (1 + 0.12 * run.heat); C.spdS = 1;
+    C.hpS = (1 + 0.14 * act) * (1 + 0.15 * run.heat) * this.P.enemyHp * 0.9; C.dmgS = (1 + 0.08 * act) * (1 + 0.12 * run.heat); C.spdS = 1;
     let budget = (120 + act * 12) * (boss ? 0.55 : 1);
     for (let guard = 0; budget > 0 && guard < 300; guard++) {
       const x = (3 + R() * (COLS - 6)) * TILE, y = (3 + R() * (ROWS - 6)) * TILE, cz = this.cellAt(x, y);
       if (!this.fits(x, y, 24) || Math.hypot(x - sc.cx, y - sc.cy) < 650 || (cz && (cz.safe || cz.type === 'boss'))) continue;
-      const cost = 4 + Math.min(act, 6), list = R() < 0.16 ? Array(5 + Math.floor(R() * 3)).fill('maggot') : this.compose(Math.min(budget, cost), act, Math.min(4, 1 + act)); budget -= cost;
+      const cost = 4 + Math.min(act, 6), list = R() < 0.16 && AREA_ENEMIES[areaOf(act)].includes('maggot') ? Array(5 + Math.floor(R() * 3)).fill('maggot') : this.compose(Math.min(budget, cost), act, Math.min(4, 1 + act)); budget -= cost;
       for (const t of list) {
         const ex = x + (R() - 0.5) * 90, ey = y + (R() - 0.5) * 90;
         if (!this.fits(ex, ey, 20)) continue;
@@ -180,6 +180,10 @@ Object.assign(Game, {
       }
     }
     C.levelTotal = C.en.filter(e => e.free).length;
+    for (let i = 0, k = 14; i < 500 && k > 0; i++) {   // explosive barrels
+      const x = (4 + R() * (COLS - 8)) * TILE, y = (4 + R() * (ROWS - 8)) * TILE;
+      if (this.fits(x, y, 22) && Math.hypot(x - sc.cx, y - sc.cy) > 250) { C.props.push({ x, y, r: 13, hp: 22, maxhp: 22, flash: 0 }); k--; }
+    }
     for (let i = 0, k = 7; i < 400 && k > 0; i++) {   // chests: ammo, weapons, health
       const x = (4 + R() * (COLS - 8)) * TILE, y = (4 + R() * (ROWS - 8)) * TILE;
       if (this.fits(x, y, 20) && Math.hypot(x - sc.cx, y - sc.cy) > 350) { const q = R(); C.chests.push({ x, y, kind: q < 0.45 ? 'ammo' : q < 0.72 ? 'weapon' : 'heal', open: false }); k--; }
@@ -204,6 +208,17 @@ Object.assign(Game, {
       if (!C.portal && !isBossLevel(run.act) && C.lvlKills >= Math.ceil(C.levelTotal * 0.9)) { C.portal = { x: e.x, y: e.y }; this.floatText(e.x, e.y - 40, 'THE PORTAL OPENS', '#a06bff', 1.4); Sfx.good(); }
     }
   },
+  // ---------- props: explosive barrels ----------
+  damageProp(pr, dmg) {
+    if (pr.dead) return;
+    pr.hp -= dmg; pr.flash = 0.1; Sfx.hit();
+    if (pr.hp > 0) return;
+    pr.dead = true; const C = this.C;
+    C.haz.push({ x: pr.x, y: pr.y, r: 92, t: 0.05, max: 0.05, dmg: 44, friendly: true });
+    C.haz.push({ x: pr.x, y: pr.y, r: 92, t: 0.05, max: 0.05, dmg: 22 * (C.dmgS || 1), friendly: false, owner: null });
+    C.shake = Math.max(C.shake, 8); C.hitstop = Math.max(C.hitstop || 0, 0.05);
+    if (C.floor) { const g = C.floorCtx || (C.floorCtx = C.floor.getContext('2d')); g.save(); g.globalAlpha = 0.5; g.fillStyle = '#0a0a0a'; for (let i = 0; i < 30; i++) { const a = rnd(0, 6.283), d = Math.abs(rnd(-1, 1)) * 44; g.fillRect(snap(pr.x + Math.cos(a) * d), snap(pr.y + Math.sin(a) * d), 2 * rndi(1, 3), 2 * rndi(1, 3)); } g.restore(); }
+  },
   // ---------- gore: bodies and blood stay on the floor ----------
   stain(e) {
     const C = this.C, run = this.run; if (!C.floor) return;
@@ -225,7 +240,7 @@ Object.assign(Game, {
   spawnItem(x, y, kind, o) { const C = this.C; if (C.items.length > 220) return; C.items.push(Object.assign({ x, y, kind, vx: rnd(-110, 110), vy: rnd(-110, 110), t: 0 }, o || {})); },
   addXp(n) {
     const run = this.run, C = this.C; run.plv = run.plv || 1; run.xp = (run.xp || 0) + n;
-    while (run.xp >= 10 + 6 * run.plv) { run.xp -= 10 + 6 * run.plv; run.plv++; C.levelUps++; }
+    while (run.xp >= 10 + 6 * run.plv) { run.xp -= 10 + 6 * run.plv; run.plv++; C.levelUps++; run.bonus.hp = (run.bonus.hp || 0) + 4; }
   },
   addAmmo(type, amt) { const run = this.run; run.ammo = run.ammo || startAmmo(); run.ammo[type] = Math.min(AMMO[type].max, (run.ammo[type] || 0) + Math.round(amt * this.P.ammoMul)); },
   ammoWanted() {   // mostly the ammo your weapons use
@@ -244,11 +259,13 @@ Object.assign(Game, {
       if (it.kind !== 'rad' && it.t > 45) it.dead = true;
     }
     C.items = C.items.filter(i => !i.dead);
+    for (const pr of C.props) if (pr.flash > 0) pr.flash -= dt;
+    if (C.props.some(q => q.dead)) C.props = C.props.filter(q => !q.dead);
     for (const ch of C.chests) if (!ch.open && dist(ch, p) < 30) { ch.open = true; this.openChest(ch); }
   },
   collectItem(it) {
     const p = this.C.p;
-    if (it.kind === 'rad') this.addXp(it.amt);
+    if (it.kind === 'rad') { this.addXp(it.amt); const C = this.C; if (!C.radSnd || C.t - C.radSnd > 0.06) { Sfx.tick(); C.radSnd = C.t; } }
     else if (it.kind === 'ammo') { this.addAmmo(it.type, it.amt); this.floatText(p.x, p.y - 22, '+' + AMMO[it.type].name, AMMO[it.type].col); Sfx.good(); }
     else if (it.kind === 'heal') { if (!this.P.noHeal) this.healP(it.amt); }
   },
@@ -293,8 +310,8 @@ Object.assign(Game, {
     curse = curse || null;
     if (curse && curse.halfhp) { P.maxhp = Math.round(P.maxhp / 2); run.hp = Math.min(run.hp, P.maxhp); }
     C.enc = cell; C.curse = curse || {}; C.cellEnc = cell; C.intro = 1.0; C.waves = []; C.waveIdx = 0; C.waveCd = 0; C.boss = null; C.elitesLeft = elite ? 2 : 0;
-    C.hpS = (1 + 0.16 * act) * (1 + 0.04 * row) * (1 + 0.15 * run.heat) * P.enemyHp * ((curse && curse.hp) || 1);
-    C.dmgS = (1 + 0.12 * act) * (1 + 0.12 * run.heat) * ((curse && curse.dmg) || 1);
+    C.hpS = (1 + 0.14 * act) * (1 + 0.04 * row) * (1 + 0.15 * run.heat) * P.enemyHp * ((curse && curse.hp) || 1);
+    C.dmgS = (1 + 0.08 * act) * (1 + 0.12 * run.heat) * ((curse && curse.dmg) || 1);
     C.spdS = (curse && curse.speed) || 1;
     if (boss) {
       const b = BOSSES[areaOf(act)], hp = b.hp * (1 + 0.2 * run.heat) * (1 + 0.5 * Math.floor(act / LOOP_LEVELS)) * P.enemyHp, x = cell.cx, y = cell.cy - 80;
@@ -448,6 +465,14 @@ Object.assign(Game, {
       }
 
       if (c.obj) this.drawObj(c, C.t);
+    }
+    for (const pr of C.props) {
+      if (pr.x < vx0 || pr.x > vx1 || pr.y < vy0 || pr.y > vy1) continue;
+      const x = snap(pr.x), y = snap(pr.y), f = pr.flash > 0;
+      ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.fillRect(x - 12, y + 10, 26, 6);
+      ctx.fillStyle = f ? '#fff' : '#a02a24'; ctx.fillRect(x - 10, y - 14, 20, 26); ctx.fillStyle = f ? '#fff' : '#c9382e'; ctx.fillRect(x - 10, y - 14, 20, 3);
+      ctx.fillStyle = f ? '#fff' : '#2a1210'; ctx.fillRect(x - 10, y - 6, 20, 3); ctx.fillRect(x - 10, y + 4, 20, 3);
+      ctx.fillStyle = f ? '#fff' : '#ffd91f'; ctx.fillRect(x - 3, y - 2, 6, 5);
     }
     for (const ch of C.chests) {
       if (ch.x < vx0 || ch.x > vx1 || ch.y < vy0 || ch.y > vy1) continue;

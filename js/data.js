@@ -197,31 +197,31 @@ const UNLOCK = {
 
 // ---------- the weapon pool: lots of weapons with their own behaviour (burst, bounce, explosive, piercing beams, melee) ----------
 const POOL_WEAPONS = {
-  pistol: ['Rusty Pistol', { type: 'shot', ammo: 'bullet', tier: 0, rate: 3.4, dmg: 8, speed: 520, n: 1, spread: 0.06, pierce: 0, life: 0.8, size: 3 }],
-  smg: ['Rattler', { type: 'shot', ammo: 'bullet', tier: 1, rate: 7, dmg: 5, speed: 560, n: 1, spread: 0.2, pierce: 0, life: 0.7, size: 3 }],
-  rifle: ['Ranger', { type: 'shot', ammo: 'bullet', tier: 2, rate: 5, dmg: 8, speed: 640, n: 1, spread: 0.05, pierce: 0, life: 0.9, size: 3 }],
-  mg: ['Chugger', { type: 'shot', ammo: 'bullet', tier: 2, rate: 9, dmg: 6, speed: 600, n: 1, spread: 0.24, pierce: 0, life: 0.8, size: 3 }],
-  minigun: ['Whirlwind', { type: 'shot', ammo: 'bullet', tier: 4, rate: 15, dmg: 4.5, speed: 620, n: 1, spread: 0.3, pierce: 0, life: 0.8, size: 3 }],
-  magnum: ['Hand Cannon', { type: 'shot', ammo: 'bullet', tier: 2, rate: 1.5, dmg: 36, speed: 640, n: 1, spread: 0.02, pierce: 1, life: 1, size: 5 }],
-  burst: ['Triple Tap', { type: 'shot', ammo: 'bullet', tier: 1, rate: 2.2, dmg: 9, speed: 600, n: 1, spread: 0.04, pierce: 0, life: 0.9, size: 3, burst: 3 }],
-  boomstick: ['Boomstick', { type: 'shot', ammo: 'shell', tier: 1, rate: 1.1, dmg: 5, speed: 520, n: 6, spread: 0.55, pierce: 0, life: 0.35, size: 3 }],
-  doublebarrel: ['Double Barrel', { type: 'shot', ammo: 'shell', tier: 2, rate: 1.4, dmg: 6, speed: 540, n: 8, spread: 0.7, pierce: 0, life: 0.3, size: 3 }],
-  autoshot: ['Auto Shotgun', { type: 'shot', ammo: 'shell', tier: 3, rate: 2.8, dmg: 5, speed: 540, n: 5, spread: 0.5, pierce: 0, life: 0.35, size: 3 }],
-  slugger: ['Slugger', { type: 'shot', ammo: 'shell', tier: 2, rate: 1.1, dmg: 44, speed: 700, n: 1, spread: 0.01, pierce: 2, life: 0.9, size: 6 }],
-  crossbow: ['Crossbow', { type: 'shot', ammo: 'bolt', tier: 2, rate: 1.4, dmg: 32, speed: 760, n: 1, spread: 0.01, pierce: 3, life: 1.2, size: 4 }],
-  ricochet: ['Ricochet Bow', { type: 'shot', ammo: 'bolt', tier: 2, rate: 2.6, dmg: 14, speed: 600, n: 1, spread: 0.05, pierce: 0, life: 2.4, size: 3, bounce: 4 }],
-  splinter: ['Splinter Gun', { type: 'shot', ammo: 'bolt', tier: 3, rate: 2.2, dmg: 11, speed: 640, n: 3, spread: 0.18, pierce: 2, life: 0.9, size: 3 }],
-  bazooka: ['Bazooka', { type: 'shot', ammo: 'explosive', tier: 3, rate: 0.9, dmg: 18, speed: 380, n: 1, spread: 0.02, pierce: 0, life: 1.6, size: 6, boom: 80, boomDmg: 55 }],
-  rocketspray: ['Rocket Spray', { type: 'shot', ammo: 'explosive', tier: 4, rate: 2.4, dmg: 8, speed: 420, n: 1, spread: 0.14, pierce: 0, life: 1.4, size: 5, boom: 46, boomDmg: 20 }],
-  grenadier: ['Grenadier', { type: 'mortar', ammo: 'explosive', tier: 2, rate: 1.2, dmg: 32, r: 70, delay: 0.6, reach: 380 }],
-  laser: ['Laser Pistol', { type: 'shot', ammo: 'energy', tier: 1, rate: 3.5, dmg: 9, speed: 900, n: 1, spread: 0.02, pierce: 99, life: 0.5, size: 2 }],
-  plasma: ['Plasma Rifle', { type: 'shot', ammo: 'energy', tier: 3, rate: 3, dmg: 16, speed: 440, n: 1, spread: 0.05, pierce: 0, life: 1, size: 6, boom: 36, boomDmg: 14 }],
-  ion: ['Ion Cannon', { type: 'shot', ammo: 'energy', tier: 5, rate: 0.8, dmg: 55, speed: 760, n: 1, spread: 0.01, pierce: 99, life: 0.8, size: 9, cost: 2 }],
-  wrench: ['Wrench', { type: 'cone', tier: 0, rate: 3, dmg: 22, range: 70, arc: 1.6 }],
-  machete: ['Machete', { type: 'cone', tier: 1, rate: 2.4, dmg: 30, range: 86, arc: 2 }],
-  sledge: ['Sledgehammer', { type: 'cone', tier: 3, rate: 1.0, dmg: 75, range: 92, arc: 2.4 }],
-  pike: ['Pike', { type: 'lance', tier: 2, rate: 2.0, dmg: 34, reach: 160, width: 18 }],
-  chainsaw: ['Chainsaw', { type: 'cone', tier: 3, rate: 12, dmg: 7, range: 60, arc: 1.5 }],
+  pistol: ['Rusty Pistol', { type: 'shot', ammo: 'bullet', tier: 0, rate: 3.4, dmg: 7.6, speed: 520, n: 1, spread: 0.06, pierce: 0, life: 0.8, size: 3 }],
+  smg: ['Rattler', { type: 'shot', ammo: 'bullet', tier: 1, rate: 7, dmg: 5.4, speed: 560, n: 1, spread: 0.2, pierce: 0, life: 0.7, size: 3 }],
+  rifle: ['Ranger', { type: 'shot', ammo: 'bullet', tier: 2, rate: 5, dmg: 10.4, speed: 640, n: 1, spread: 0.05, pierce: 0, life: 0.9, size: 3 }],
+  mg: ['Chugger', { type: 'shot', ammo: 'bullet', tier: 2, rate: 9, dmg: 5.8, speed: 600, n: 1, spread: 0.24, pierce: 0, life: 0.8, size: 3 }],
+  minigun: ['Whirlwind', { type: 'shot', ammo: 'bullet', tier: 4, rate: 15, dmg: 6.3, speed: 620, n: 1, spread: 0.3, pierce: 0, life: 0.8, size: 3 }],
+  magnum: ['Hand Cannon', { type: 'shot', ammo: 'bullet', tier: 2, rate: 1.5, dmg: 31, speed: 640, n: 1, spread: 0.02, pierce: 1, life: 1, size: 5 }],
+  burst: ['Triple Tap', { type: 'shot', ammo: 'bullet', tier: 1, rate: 2.2, dmg: 5.8, speed: 600, n: 1, spread: 0.04, pierce: 0, life: 0.9, size: 3, burst: 3 }],
+  boomstick: ['Boomstick', { type: 'shot', ammo: 'shell', tier: 1, rate: 1.1, dmg: 8.9, speed: 520, n: 6, spread: 0.55, pierce: 0, life: 0.35, size: 3 }],
+  doublebarrel: ['Double Barrel', { type: 'shot', ammo: 'shell', tier: 2, rate: 1.4, dmg: 7.1, speed: 540, n: 8, spread: 0.7, pierce: 0, life: 0.3, size: 3 }],
+  autoshot: ['Auto Shotgun', { type: 'shot', ammo: 'shell', tier: 3, rate: 2.8, dmg: 7.7, speed: 540, n: 5, spread: 0.5, pierce: 0, life: 0.35, size: 3 }],
+  slugger: ['Slugger', { type: 'shot', ammo: 'shell', tier: 2, rate: 1.1, dmg: 58.7, speed: 700, n: 1, spread: 0.01, pierce: 2, life: 0.9, size: 6 }],
+  crossbow: ['Crossbow', { type: 'shot', ammo: 'bolt', tier: 2, rate: 1.4, dmg: 27.3, speed: 760, n: 1, spread: 0.01, pierce: 3, life: 1.2, size: 4 }],
+  ricochet: ['Ricochet Bow', { type: 'shot', ammo: 'bolt', tier: 2, rate: 2.6, dmg: 20, speed: 600, n: 1, spread: 0.05, pierce: 0, life: 2.4, size: 3, bounce: 4 }],
+  splinter: ['Splinter Gun', { type: 'shot', ammo: 'bolt', tier: 3, rate: 2.2, dmg: 8.6, speed: 640, n: 3, spread: 0.18, pierce: 2, life: 0.9, size: 3 }],
+  bazooka: ['Bazooka', { type: 'shot', ammo: 'explosive', tier: 3, rate: 0.9, dmg: 22.6, speed: 380, n: 1, spread: 0.02, pierce: 0, life: 1.6, size: 6, boom: 80, boomDmg: 69 }],
+  rocketspray: ['Rocket Spray', { type: 'shot', ammo: 'explosive', tier: 4, rate: 2.4, dmg: 13.2, speed: 420, n: 1, spread: 0.14, pierce: 0, life: 1.4, size: 5, boom: 46, boomDmg: 33 }],
+  grenadier: ['Grenadier', { type: 'mortar', ammo: 'explosive', tier: 2, rate: 1.2, dmg: 43.3, r: 70, delay: 0.6, reach: 380 }],
+  laser: ['Laser Pistol', { type: 'shot', ammo: 'energy', tier: 1, rate: 3.5, dmg: 8, speed: 900, n: 1, spread: 0.02, pierce: 99, life: 0.5, size: 2 }],
+  plasma: ['Plasma Rifle', { type: 'shot', ammo: 'energy', tier: 3, rate: 3, dmg: 13.7, speed: 440, n: 1, spread: 0.05, pierce: 0, life: 1, size: 6, boom: 36, boomDmg: 12 }],
+  ion: ['Ion Cannon', { type: 'shot', ammo: 'energy', tier: 5, rate: 0.8, dmg: 119.5, speed: 760, n: 1, spread: 0.01, pierce: 99, life: 0.8, size: 9, cost: 2 }],
+  wrench: ['Wrench', { type: 'cone', tier: 0, rate: 3, dmg: 6.2, range: 70, arc: 1.6 }],
+  machete: ['Machete', { type: 'cone', tier: 1, rate: 2.4, dmg: 11.3, range: 86, arc: 2 }],
+  sledge: ['Sledgehammer', { type: 'cone', tier: 3, rate: 1.0, dmg: 50, range: 92, arc: 2.4 }],
+  pike: ['Pike', { type: 'lance', tier: 2, rate: 2.0, dmg: 18.6, reach: 160, width: 18 }],
+  chainsaw: ['Chainsaw', { type: 'cone', tier: 3, rate: 12, dmg: 4.2, range: 60, arc: 1.5 }],
 };
 for (const [id, [name, w]] of Object.entries(POOL_WEAPONS)) HEROES['w_' + id] = { clan: 'steam', name, cost: 99999, blurb: '', weapon: Object.assign({ name }, w), ability: HEROES.sun.ability, mod() {}, pool: true };
 
@@ -387,6 +387,15 @@ const ENEMY = {
   turret:  { name: 'Turret', hp: 60, speed: 0, r: 14, dmg: 8, cost: 3, col: '#a0a0b0', blood: '#555a66' },
 };
 Object.assign(ENEMY.spitter, { blood: '#3f7a1f' }); Object.assign(ENEMY.swarmer, { blood: '#a04a1a' }); Object.assign(ENEMY.blob, { blood: '#7a4a1f' }); Object.assign(ENEMY.sniper, { blood: '#6a1fa0' });
+// every area has its own cast (like the original), the boss summons from the same list
+const AREA_ENEMIES = [
+  ['grunt', 'shooter', 'rat', 'swarmer', 'maggot'],
+  ['swarmer', 'spitter', 'blob', 'grunt', 'maggot'],
+  ['tank', 'dasher', 'bomber', 'turret', 'shooter', 'grunt'],
+  ['sniper', 'shooter', 'rat', 'blob', 'dasher', 'tank'],
+  ['turret', 'sniper', 'spitter', 'swarmer', 'bomber', 'dasher'],
+  ['grunt', 'shooter', 'dasher', 'bomber', 'tank', 'swarmer', 'spitter', 'blob', 'sniper', 'turret', 'rat'],
+];
 const ELITE_MODS = {
   shield: { name: 'Shielded', col: '#3de8ff' },
   swift: { name: 'Swift', col: '#39ff6e' },
