@@ -4,6 +4,7 @@ const ARENA = { x0: 26, y0: 58, x1: 934, y1: 514 };
 
 // a run is a chain of levels (run.act counts them): 3 levels per area, the third is the boss level; after 3 areas the run loops
 const AREAS = 6, LOOP_LEVELS = AREAS * 3;
+const AIM_ASSIST = false;
 const areaOf = a => Math.floor(a / 3) % AREAS, isBossLevel = a => a % 3 === 2;
 
 const rnd = (a, b) => a + Math.random() * (b - a);
@@ -439,12 +440,12 @@ const ACT_NAMES = ['The Ruins', 'The Sewers', 'The Foundry', 'The Frozen Wastes'
 const ACT_COL = [['#0e1430', '#17407a'], ['#0e2a14', '#2a7a3a'], ['#2a1208', '#7a3a17'], ['#10202e', '#5aa0d0'], ['#0a2828', '#2ac0b0'], ['#1c0a2a', '#6a1fd0']];
 const DUST_COL = ['#b0a890', '#9aff7a', '#ff9a4a', '#e0f4ff', '#7affe0', '#c070ff'];
 const BOSSES = [
-  { name: 'The Warden', hp: 2300, r: 32, col: '#ff2d3d', phases: [['ring', 'aimed', 'charge'], ['ring', 'aimed', 'charge', 'spiral'], ['ring', 'aimed', 'charge', 'spiral', 'summon']] },
-  { name: 'Sludge Mother', hp: 3300, r: 36, col: '#7dff4a', phases: [['aimed', 'slam', 'summon'], ['aimed', 'slam', 'summon', 'spiral'], ['spiral', 'slam', 'summon', 'sweep']] },
-  { name: 'Hive Engine', hp: 4200, r: 36, col: '#ff8a1f', phases: [['aimed', 'slam', 'summon'], ['aimed', 'slam', 'summon', 'sweep'], ['spiral', 'slam', 'sweep', 'summon']] },
-  { name: 'Frost Colossus', hp: 5400, r: 38, col: '#8ae8ff', phases: [['ring', 'charge', 'aimed'], ['ring', 'charge', 'sweep', 'spiral'], ['ring', 'spiral', 'charge', 'sweep', 'slam']] },
-  { name: 'Glass Warden', hp: 6400, r: 36, col: '#3de8c8', phases: [['aimed', 'sweep', 'spiral'], ['aimed', 'sweep', 'spiral', 'summon'], ['spiral', 'sweep', 'summon', 'charge']] },
-  { name: 'Apocalypse Core', hp: 8000, r: 40, col: '#b24bff', phases: [['ring', 'slam', 'charge', 'sweep'], ['spiral', 'aimed', 'slam', 'sweep', 'summon'], ['ring', 'spiral', 'charge', 'sweep', 'slam', 'summon']] },
+  { name: 'Big Bandit', hp: 2300, r: 32, col: '#ff2d3d', phases: [['ring', 'aimed', 'charge'], ['ring', 'aimed', 'charge', 'spiral'], ['ring', 'aimed', 'charge', 'spiral', 'summon']] },
+  { name: 'Big Fish', hp: 3300, r: 36, col: '#7dff4a', phases: [['aimed', 'slam', 'summon'], ['aimed', 'slam', 'summon', 'spiral'], ['spiral', 'slam', 'summon', 'sweep']] },
+  { name: 'Big Dog', hp: 4200, r: 36, col: '#ff8a1f', phases: [['aimed', 'slam', 'summon'], ['aimed', 'slam', 'summon', 'sweep'], ['spiral', 'slam', 'sweep', 'summon']] },
+  { name: 'Lil Hunter', hp: 5400, r: 38, col: '#8ae8ff', phases: [['ring', 'charge', 'aimed'], ['ring', 'charge', 'sweep', 'spiral'], ['ring', 'spiral', 'charge', 'sweep', 'slam']] },
+  { name: 'Technomancer', hp: 6400, r: 36, col: '#3de8c8', phases: [['aimed', 'sweep', 'spiral'], ['aimed', 'sweep', 'spiral', 'summon'], ['spiral', 'sweep', 'summon', 'charge']] },
+  { name: 'Nuclear Throne', hp: 8000, r: 40, col: '#b24bff', phases: [['ring', 'slam', 'charge', 'sweep'], ['spiral', 'aimed', 'slam', 'sweep', 'summon'], ['ring', 'spiral', 'charge', 'sweep', 'slam', 'summon']] },
 ];
 
 // ---------- Stat sheet ----------

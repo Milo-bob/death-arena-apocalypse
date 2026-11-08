@@ -258,9 +258,10 @@ Object.assign(Game, {
     }
     ctx.restore();
   },
-  // ---------- light aim assist: when an enemy is close to your aim line the shot bends towards it ----------
+  // ---------- light aim assist (off by default, set AIM_ASSIST = true in data.js to bring it back): when an enemy is close to your aim line the shot bends towards it ----------
   assistAim(w) {
     const C = this.C, p = C.p, a = p.aim;
+    if (!AIM_ASSIST) return a;   // switched off: bigger bullets instead
     if (w.type === 'mortar' || w.type === 'blades') return a;
     const spd = (w.speed || 500) * 1.2, reach = w.type === 'cone' ? w.range * 1.5 : w.type === 'lance' ? w.reach * 1.4 : spd * (w.life || 1);
     let best = null, bs = 1;

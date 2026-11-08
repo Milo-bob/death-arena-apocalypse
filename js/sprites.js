@@ -255,39 +255,53 @@ const BPAL = [
   { b: '#3de8c8', m: '#1a8a78', d: '#08302a', a: '#b0fff0', c: '#ffd91f', x: '#ff3de8' },
   { b: '#b24bff', m: '#6a1fd0', d: '#1c0d4a', a: '#e0b0ff', c: '#ffd91f', x: '#3de8ff' },
 ];
+// ---------- enemies in the style of the original's wasteland creatures, seen from above like the heroes ----------
 const ENEMY_ART = {
-  grunt: { n: 16, f: P => [
-    ...[[5, 4.5, 2, 1.5], [5, 11.5, 2, 14.5], [10.5, 4.5, 12.5, 1.8], [10.5, 11.5, 12.5, 14.2]].map(l => part(sLine(l[0], l[1], l[2], l[3], 0.6), 'dark')),
-    part(sC(8, 8, 4.8), 'body'), dot(11, 6, P.c), dot(11, 10, P.c), dot(6, 8, P.a)] },
-  shooter: { n: 16, f: P => [
-    part(sP([[1.5, 8], [6, 2.5], [11, 4.5], [11, 11.5], [6, 13.5]]), 'body'), part(sB(13, 8, 2.6, 1.2), 'dark'), part(sB(15, 8, 0.9, 1), 'cy'),
-    part(sB(8.5, 8, 0.8, 2), 'cy'), dot(4, 8, P.a)] },
-  dasher: { n: 16, f: P => [
-    part(sP([[0.5, 2], [6, 5], [3, 7]]), 'dark'), part(sP([[0.5, 14], [6, 11], [3, 9]]), 'dark'),
-    part(sP([[1, 8], [5, 4.5], [10, 6], [13, 8], [10, 10], [5, 11.5]]), 'body'), part(sP([[10, 6.8], [15.6, 8], [10, 9.2]]), 'cy'), dot(5, 8, P.a)] },
-  bomber: { n: 16, f: P => [
-    part(sB(8, 1.6, 1.1, 1.1), 'dark'), part(sB(8, 14.4, 1.1, 1.1), 'dark'), part(sB(1.6, 8, 1.1, 1.1), 'dark'), part(sB(14.4, 8, 1.1, 1.1), 'dark'),
-    part(sC(8, 8, 6), 'body'), part(sRing(8, 8, 3.7, 0.5, 6), 'acc'), part(sC(8, 8, 1.8), 'cy')] },
-  tank: { n: 24, f: P => [
-    part(sB(10, 3.5, 7, 2.2, 0.8), 'dark'), part(sB(10, 20.5, 7, 2.2, 0.8), 'dark'),
-    part(sStar(12, 12, 6, 10.8, 9.2, 0), 'body'), part(sC(12, 12, 6), 'dark'), part(sRing(12, 12, 4, 0.5, 5), 'acc'),
-    part(sB(19.5, 12, 4, 2.2), 'dark'), part(sB(22, 12, 1.6, 2.4), 'cy'), dot(7, 12, P.a)] },
+  grunt: { n: 16, pal: { b: '#e8e0b0', m: '#a89870', d: '#3a3220', a: '#fff4c0', c: '#ff4a2a', x: '#c8a050' }, f: P => [   // maggot
+    part(sE(3.6, 8, 3, 2.6), 'body'), part(sE(7.4, 8, 3.4, 3.1), 'body'), part(sE(11.6, 8, 3.1, 2.8), 'body'),
+    part(sLine(5.6, 5.4, 5.6, 10.6, 0.3), 'dark'), part(sLine(9.4, 5.2, 9.4, 10.8, 0.3), 'dark'), dot(13, 7, P.c), dot(13, 9, P.c), dot(14, 8, P.x)] },
+  shooter: { n: 16, pal: { b: '#e0a050', m: '#9a6a28', d: '#3a2410', a: '#ffe0b0', c: '#ff3a3a', x: '#4a4a52' }, f: P => [   // bandit
+    part(sP([[1.5, 5], [5, 7], [5, 9], [1.5, 11]]), 'dark'),
+    part(sE(7, 8, 3.2, 4.8), 'body'), part(sC(7.8, 8, 2.6), 'acc'), part(sB(7.8, 8, 1, 2.8, 0.3), 'dark'), dot(9, 7, P.c), dot(9, 9, P.c),
+    part(sLine(8, 4.6, 12, 7.6, 0.55), 'acc'), part(sB(13, 8.8, 3.2, 0.9, 0.3), 'dark'), part(sB(15.2, 8.8, 0.8, 0.6), 'cy')] },
+  dasher: { n: 16, pal: { b: '#e8b050', m: '#a07020', d: '#3a2808', a: '#ffe8a0', c: '#ff3a3a', x: '#5a3a18' }, f: P => [   // scorpion
+    part(sLine(3, 8, 1, 5, 0.7), 'acc'), part(sLine(1, 5, 3.6, 2.4, 0.7), 'acc'), dot(4, 2, P.c),
+    part(sE(7, 8, 4.4, 3), 'body'),
+    part(sP([[10, 5.4], [14.8, 3.2], [13, 6.8]]), 'acc'), part(sP([[10, 10.6], [14.8, 12.8], [13, 9.2]]), 'acc'),
+    dot(4, 4, P.a), dot(7, 3, P.a), dot(10, 4, P.a), dot(4, 12, P.a), dot(7, 13, P.a), dot(10, 12, P.a), dot(11, 7, P.c), dot(11, 9, P.c)] },
+  bomber: { n: 16, pal: { b: '#ff7050', m: '#b83a20', d: '#4a1008', a: '#ffd0b0', c: '#ffd91f', x: '#2a2a30' }, f: P => [   // exploder
+    part(sStar(8, 8, 8, 7.6, 5, 0), 'dark'), part(sC(8, 8, 5), 'body'), part(sC(8, 8, 2.4), 'dark'), dot(7, 7, P.c), dot(8, 8, P.c), dot(11, 6, P.a), dot(11, 10, P.a)] },
+  tank: { n: 24, pal: { b: '#6fb050', m: '#3a7a28', d: '#12300c', a: '#d8f0b0', c: '#ffd91f', x: '#5a4a2a' }, f: P => [   // gator
+    part(sP([[0.5, 12], [6, 9.4], [6, 14.6]]), 'dark'),
+    part(sB(8.4, 5.4, 1.8, 1.4, 0.4), 'dark'), part(sB(14, 5.4, 1.8, 1.4, 0.4), 'dark'), part(sB(8.4, 18.6, 1.8, 1.4, 0.4), 'dark'), part(sB(14, 18.6, 1.8, 1.4, 0.4), 'dark'),
+    part(sE(10.5, 12, 8.4, 4.8), 'body'), part(sLine(5, 12, 15, 12, 0.5), 'dark'),
+    part(sP([[17, 9.2], [23.4, 10.8], [23.4, 13.2], [17, 14.8]]), 'body'), dot(20, 10, P.a), dot(22, 10, P.a), dot(20, 14, P.a), dot(22, 14, P.a),
+    part(sC(16.4, 8.2, 1.4), 'acc'), part(sC(16.4, 15.8, 1.4), 'acc'), dot(17, 8, P.c), dot(17, 16, P.c)] },
+  swarmer: { n: 12, pal: { b: '#8aa0b0', m: '#506070', d: '#182028', a: '#e8f4ff', c: '#ff4a2a', x: '#ffd91f' }, f: P => [   // fly
+    part(sE(4.2, 2.8, 2.6, 1.4), 'acc'), part(sE(4.2, 9.2, 2.6, 1.4), 'acc'),
+    part(sE(6, 6, 3.4, 2.4), 'body'), dot(8, 5, P.c), dot(8, 7, P.c)] },
+  spitter: { n: 16, pal: { b: '#a0d840', m: '#5a8a1a', d: '#1c3008', a: '#f0ff98', c: '#ffd91f', x: '#ff6a8a' }, f: P => [   // toxic frog
+    part(sP([[2.4, 2.4], [6.6, 5], [2, 6.6]]), 'dark'), part(sP([[2.4, 13.6], [6.6, 11], [2, 9.4]]), 'dark'),
+    part(sE(7.4, 8, 5.2, 4.8), 'body'), part(sE(7, 8, 2.4, 2.2), 'dark'), dot(6, 7, P.x), dot(8, 9, P.x),
+    part(sC(11.6, 4.8, 1.8), 'acc'), part(sC(11.6, 11.2, 1.8), 'acc'), dot(12, 4, P.c), dot(12, 11, P.c), part(sB(13.6, 8, 1.6, 0.8, 0.2), 'dark')] },
+  blob: { n: 20, pal: { b: '#e8e0b0', m: '#a89870', d: '#3a3220', a: '#fff4c0', c: '#ff4a2a', x: '#c8a050' }, f: P => [   // big maggot
+    part(sE(4.4, 10, 3.8, 4), 'body'), part(sE(9.4, 10, 4.6, 5), 'body'), part(sE(14.8, 10, 4.2, 4.4), 'body'),
+    part(sLine(6.8, 6, 6.8, 14, 0.3), 'dark'), part(sLine(12, 5.6, 12, 14.4, 0.3), 'dark'), part(sC(18, 10, 1.9), 'dark'), dot(17, 7, P.c), dot(17, 13, P.c), dot(18, 10, P.c)] },
+  sniper: { n: 16, pal: { b: '#a060e0', m: '#5a2a9a', d: '#1c0c36', a: '#f0d8ff', c: '#ffd91f', x: '#4a4a58' }, f: P => [   // hooded sniper
+    part(sP([[0.8, 5], [5, 6.4], [5, 9.6], [0.8, 11]]), 'dark'),
+    part(sE(6.6, 8, 3.6, 4.4), 'body'), part(sC(7.6, 8, 2.4), 'dark'), dot(9, 7, P.c),
+    part(sB(12.6, 9.4, 5.4, 0.7, 0.2), 'dark'), part(sB(15.4, 9.4, 1, 0.5), 'cy')] },
+  rat: { n: 14, pal: { b: '#b08a6a', m: '#6a4a2a', d: '#241810', a: '#f0d0b0', c: '#ffd91f', x: '#e0a0a0' }, f: P => [
+    part(sLine(2.4, 7, 0.4, 4.6, 0.35), 'acc'),
+    part(sE(6.4, 7, 4, 2.6), 'body'), part(sP([[9, 4.4], [13, 7], [9, 9.6]]), 'body'), part(sC(9.2, 4, 1), 'acc'), part(sC(9.2, 10, 1), 'acc'), dot(11, 6, P.c), dot(11, 8, P.c),
+    dot(5, 4, '#0c0c12'), dot(7, 4, '#0c0c12'), dot(5, 10, '#0c0c12'), dot(7, 10, '#0c0c12')] },
+  maggot: { n: 12, pal: { b: '#e8e0b0', m: '#a89870', d: '#3a3220', a: '#fff4c0', c: '#ff4a2a', x: '#c8a050' }, f: P => [
+    part(sE(3, 6, 2.4, 2.1), 'body'), part(sE(6.2, 6, 2.8, 2.5), 'body'), part(sE(9.4, 6, 2.2, 2), 'body'), dot(10, 5, P.c), dot(10, 7, P.c)] },
+  turret: { n: 20, pal: { b: '#a0a8b8', m: '#5a6272', d: '#1c2028', a: '#e0e4f0', c: '#ff3a3a', x: '#ffd91f' }, f: P => [
+    part(sC(10, 10, 6.8), 'body'), part(sRing(10, 10, 4.2, 0.6, 6), 'acc'), part(sC(10, 10, 2.4), 'dark'), dot(9, 9, P.c),
+    part(sB(15.6, 10, 4.2, 1.5, 0.4), 'dark'), part(sB(19, 10, 1, 1), 'cy')] },
 };
-ENEMY_ART.maggot = { n: 12, pal: { b: '#d8c070', m: '#8a7a2a', d: '#2a240a', a: '#fff0b0', c: '#ff4a2a', x: '#ff8a1f' }, f: P => [
-  part(sB(6, 6, 5, 3.2, 1.2), 'body'), dot(9, 5, P.c), dot(9, 7, P.c), dot(3, 6, P.a)] };
-ENEMY_ART.rat = { n: 14, pal: { b: '#b08a6a', m: '#6a4a2a', d: '#241810', a: '#f0d0b0', c: '#ffd91f', x: '#ff8a1f' }, f: P => [
-  part(sP([[1, 7], [5, 3], [10, 5], [13, 7], [10, 9], [5, 11]]), 'body'), part(sLine(1, 7, 0, 10, 0.5), 'dark'), dot(10, 6, P.c), dot(10, 8, P.c), dot(6, 7, P.a)] };
-ENEMY_ART.turret = { n: 20, pal: { b: '#a0a0b0', m: '#60606e', d: '#1c1c24', a: '#e0e0f0', c: '#ffd91f', x: '#ff8a1f' }, f: P => [
-  part(sB(10, 10, 7, 7, 1.5), 'body'), part(sC(10, 10, 3.5), 'dark'), dot(9, 9, P.a), part(sB(16, 10, 4.5, 1.6), 'dark'), part(sB(19.3, 10, 0.9, 2), 'cy')] };
 const BOSS_ART_OF = [0, 1, 1, 0, 2, 2];   // which of the 3 boss drawings each area's boss uses (colours differ per area)
-ENEMY_ART.swarmer = { n: 12, pal: { b: '#ff7a3a', m: '#a04a1a', d: '#3a1a08', a: '#ffd0a0', c: '#ffd91f', x: '#ff8a1f' }, f: P => [
-  part(sC(6, 6, 4.4), 'body'), dot(8, 5, P.c), dot(8, 7, P.c), dot(4, 6, P.a)] };
-ENEMY_ART.spitter = { n: 16, pal: { b: '#7dd04a', m: '#3f8a1f', d: '#122a0c', a: '#d0ff9a', c: '#ffd91f', x: '#ff8a1f' }, f: P => [
-  part(sC(7, 8, 5.6), 'body'), part(sC(7, 8, 2.6), 'dark'), part(sB(12.5, 8, 3, 2.6, 0.8), 'dark'), part(sB(14.6, 8, 0.9, 2.8), 'cy'), dot(5, 7, P.a)] };
-ENEMY_ART.blob = { n: 24, pal: { b: '#c0763a', m: '#7a4a1f', d: '#2a1a0a', a: '#f0c090', c: '#ffd91f', x: '#ff8a1f' }, f: P => [
-  part(sC(12, 12, 10), 'body'), part(sC(12, 12, 6), 'dark'), part(sRing(12, 12, 8, 0.6, 5), 'acc'), dot(17, 10, P.c), dot(17, 14, P.c), dot(7, 12, P.a)] };
-ENEMY_ART.sniper = { n: 16, pal: { b: '#c04aff', m: '#6a1fa0', d: '#200a38', a: '#e8b0ff', c: '#ffd91f', x: '#ff8a1f' }, f: P => [
-  part(sP([[1, 8], [5, 3], [9, 5], [9, 11], [5, 13]]), 'body'), part(sB(12, 8, 4.5, 0.9), 'dark'), part(sB(15.5, 8, 0.7, 1.1), 'cy'), dot(4, 8, P.a)] };
 const BOSS_ART = [
   { n: 40, f: P => [
     part(sP([[2, 8], [10, 4], [10, 12]]), 'dark'), part(sP([[2, 32], [10, 36], [10, 28]]), 'dark'),
