@@ -154,7 +154,7 @@ Object.assign(Game, {
   },
   camUpdate(dt) {
     const C = this.C, p = C.p, Wd = this.world, cam = C.cam;
-    const tx = clamp(p.x - W_ / 2 + (Input.mx - W_ / 2) * 0.28, 0, Wd.w - W_), ty = clamp(p.y - H / 2 + (Input.my - H / 2) * 0.28, 0, Wd.h - H), k = Math.min(1, dt * 7);
+    const tx = clamp(p.x - W_ / 2 + (Input.mx - W_ / 2) * 0.28, 0, Wd.w - W_), ty = clamp(p.y - H / 2 + (Input.my - H / 2) * 0.28, 0, Wd.h - H), k = Math.min(1, dt * 9);
     cam.x += (tx - cam.x) * k; cam.y += (ty - cam.y) * k;
   },
   portalPos(c) { return { x: c.cx, y: c.cy - 70 }; },

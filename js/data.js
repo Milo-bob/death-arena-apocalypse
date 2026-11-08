@@ -282,11 +282,11 @@ for (const [id, [name, w]] of Object.entries(POOL_WEAPONS)) HEROES['w_' + id] = 
 
 // ammo types (like the original: bullets, shells, bolts, explosives, energy); melee weapons need none
 const AMMO = {
-  bullet: { name: 'BULLETS', col: '#ffd91f', max: 200, amt: 40, L: 'B' },
-  shell: { name: 'SHELLS', col: '#ff6a6a', max: 60, amt: 8, L: 'S' },
-  bolt: { name: 'BOLTS', col: '#39ff6e', max: 60, amt: 8, L: 'T' },
-  explosive: { name: 'EXPLOSIVES', col: '#ff8a1f', max: 60, amt: 6, L: 'X' },
-  energy: { name: 'ENERGY', col: '#3de8ff', max: 90, amt: 12, L: 'E' },
+  bullet: { name: 'BULLETS', col: '#ffd91f', max: 200, amt: 50, L: 'B' },
+  shell: { name: 'SHELLS', col: '#ff6a6a', max: 60, amt: 10, L: 'S' },
+  bolt: { name: 'BOLTS', col: '#39ff6e', max: 60, amt: 10, L: 'T' },
+  explosive: { name: 'EXPLOSIVES', col: '#ff8a1f', max: 60, amt: 8, L: 'X' },
+  energy: { name: 'ENERGY', col: '#3de8ff', max: 90, amt: 15, L: 'E' },
 };
 const startAmmo = () => ({ bullet: 150, shell: 24, bolt: 24, explosive: 20, energy: 40 });
 function ammoOf(w) {
@@ -471,7 +471,7 @@ const BOSSES = [
 
 // ---------- Stat sheet ----------
 function newStats() {
-  return { dmg: 1, rate: 1, speed: 1, maxhp: 80, pierce: 0, extra: 0, crit: 0.05, critMul: 1.75, killHeal: 0, regen: 0, dashCd: 1, dashDmg: 0, range: 1,
+  return { dmg: 1, rate: 1.3, speed: 1, maxhp: 80, pierce: 0, extra: 0, crit: 0.05, critMul: 1.75, killHeal: 0, regen: 0, dashCd: 1, dashDmg: 0, range: 1,
     blades: 0, spin: 1, bladeDmg: 1, orbitR: 1, bladeKnock: 0, poison: 0, poisonMul: 1, poisonSlow: 0, poisonSpread: 0, poisonLeech: 0, burn: 0, killBlast: 0, blastRad: 1, blastMul: 1,
     chain: 0, thorns: 0, taken: 1, goldMul: 1, aura: 0, clearHeal: 0, enemyHp: 1, noHeal: 0, homing: 0, phoenix: 0, dashBlast: 0, critBlast: 0, berserk: 0, still: 0,
     mutagen: 0, trail: 0, execute: 0, abCd: 1, ammoMul: 1, magnet: 1, dual: 0, xpMul: 1, ammoCost: 1, dropMul: 1, lootTier: 0, tags: {} };

@@ -246,7 +246,7 @@ const Game = {
   },
   makeEnemy(type, x, y, elite) {
     const C = this.C, d = ENEMY[type];
-    const e = { type, x, y, lx: x, ly: y, r: d.r, hp: d.hp * C.hpS, maxhp: d.hp * C.hpS, sh: 0, dmg: d.dmg * C.dmgS, speed: d.speed * C.spdS, col: d.col, atk: 0, cd: rnd(0.5, 2), state: 'move', st: 0, flash: 0, vx: 0, vy: 0,
+    const e = { type, x, y, lx: x, ly: y, r: d.r, hp: d.hp * C.hpS, maxhp: d.hp * C.hpS, sh: 0, dmg: d.dmg * C.dmgS, speed: d.speed * C.spdS * 1.15, col: d.col, atk: 0, cd: rnd(0.5, 2), state: 'move', st: 0, flash: 0, vx: 0, vy: 0,
       slow: 0, slowT: 0, poison: 0, poisonT: 0, burn: 0, burnT: 0, bladeCd: 0, ang: 0, sd: Math.random() < 0.5 ? 1 : -1, wind: 0, fire: rnd(1, 2.2), spawnT: 0.4 };
     if (elite) {
       e.elite = elite; e.hp *= 2.2; e.maxhp = e.hp; e.dmg *= 1.2;
@@ -352,10 +352,10 @@ const Game = {
     const ml = Math.hypot(mx, my); if (ml) { mx /= ml; my /= ml; }
     p.aim = Math.atan2(C.my - p.y, C.mx - p.x);
     p.still = ml ? 0 : p.still + dt;
-    let sp = 190 * P.speed;
+    let sp = 265 * P.speed;
     for (const z of C.zones) if (z.slowP && dist(z, p) < z.r) sp *= 0.6;
     if (p.dashT > 0) {
-      p.dashT -= dt; sp = 650;
+      p.dashT -= dt; sp = 780;
       mx = Math.cos(p.dashDir); my = Math.sin(p.dashDir);
       if (P.dashDmg || P.trail) for (const e of C.en) if (!e.dead && !p.dashHit.includes(e) && dist(e, p) < e.r + 20) { p.dashHit.push(e); if (P.dashDmg) this.hitEnemy(e, P.dashDmg, { noCrit: true }); }
       if (P.trail) { p.trailT -= dt; if (p.trailT <= 0) { p.trailT = 0.04; C.zones.push({ x: p.x, y: p.y, r: 20, dur: 1.8, dps: 20, col: '#ff8a1f', max: 1.8 }); } }
@@ -367,7 +367,7 @@ const Game = {
     if (p.dashCd > 0) p.dashCd -= dt;
     if (p.inv > 0) p.inv -= dt; if (p.flash > 0) p.flash -= dt; if (p.over > 0) p.over -= dt; if (p.shield > 0) p.shield -= dt; if (p.abT > 0) p.abT -= dt;
     if (Input.keys.shift && p.dashCd <= 0 && p.dashT <= 0) {
-      p.dashDir = ml ? Math.atan2(my, mx) : p.aim; p.dashT = 0.17; p.dashCd = 1.3 * P.dashCd; p.dashHit = []; p.inv = Math.max(p.inv, 0.25); Sfx.dash();
+      p.dashDir = ml ? Math.atan2(my, mx) : p.aim; p.dashT = 0.17; p.dashCd = 1.0 * P.dashCd; p.dashHit = []; p.inv = Math.max(p.inv, 0.25); Sfx.dash();
     }
     if ((Input.keys.q || Input.rdown) && p.abT <= 0) this.useAbility();
     if (P.regen && run.hp < P.maxhp) run.hp = Math.min(P.maxhp, run.hp + P.regen * dt);
@@ -460,7 +460,7 @@ const Game = {
       this.burst(p.x + Math.cos(a0) * 18, p.y + Math.sin(a0) * 18, '#fff3b0', 2, 130);
       for (let i = 0; i < n; i++) {
         const a = a0 + (n > 1 ? (i - (n - 1) / 2) * w.spread : rnd(-w.spread, w.spread) / 2);
-        C.pb.push({ x: p.x + Math.cos(a) * 14, y: p.y + Math.sin(a) * 14, vx: Math.cos(a) * w.speed, vy: Math.sin(a) * w.speed, r: w.size, dmg: w.dmg, pierce: w.pierce + P.pierce, life: w.life * P.range, hit: [], homing: (w.homing || 0) + P.homing, col, boom: w.boom || 0, boomDmg: w.boomDmg || 0, bounce: w.bounce || 0 });
+        C.pb.push({ x: p.x + Math.cos(a) * 14, y: p.y + Math.sin(a) * 14, vx: Math.cos(a) * w.speed * 1.2, vy: Math.sin(a) * w.speed * 1.2, r: w.size, dmg: w.dmg, pierce: w.pierce + P.pierce, life: w.life * P.range, hit: [], homing: (w.homing || 0) + P.homing, col, boom: w.boom || 0, boomDmg: w.boomDmg || 0, bounce: w.bounce || 0 });
       }
     } else if (w.type === 'cone') {
       Sfx.slash(); p.kvx = (p.kvx || 0) + Math.cos(a0) * 150; p.kvy = (p.kvy || 0) + Math.sin(a0) * 150;
@@ -939,7 +939,7 @@ const Game = {
     this.drawHearts(14, 7, run.hp, P.maxhp);
     ctx.font = '12px Silk, monospace'; ctx.textAlign = 'left'; ctx.fillStyle = '#fff'; 
     // dash / ability pips
-    const dk = p.dashCd > 0 ? 1 - p.dashCd / (1.3 * P.dashCd) : 1, ak = p.abT > 0 ? 1 - p.abT / (w.ability.cd * P.abCd) : 1;
+    const dk = p.dashCd > 0 ? 1 - p.dashCd / (1.0 * P.dashCd) : 1, ak = p.abT > 0 ? 1 - p.abT / (w.ability.cd * P.abCd) : 1;
     pxBar(14, 32, 110, 10, dk, dk >= 1 ? '#3de8ff' : '#2a6a80'); pxBar(134, 32, 110, 10, ak, ak >= 1 ? clan.color : '#555');
     ctx.font = '9px Silk, monospace'; ctx.fillStyle = '#000'; ctx.fillStyle = '#fff'; ctx.fillText('DASH', 20, 41); ctx.fillText(w.ability.name.toUpperCase().slice(0, 12), 140, 41);
     // center info
