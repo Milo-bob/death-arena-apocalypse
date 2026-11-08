@@ -77,7 +77,7 @@ const UI = {
   hub(tab) {
     if (tab) this.tab = tab;
     const s = Save.data, c = CLANS[s.clan]; Menu.set('hub', s.clan, s.hero);
-    let h = '<div class="row" style="justify-content:space-between;align-items:center"><div><h1 style="margin:0;font-size:26px">' + c.name.toUpperCase() + ' HQ</h1><span class="sm dim">Slot ' + (Save.slot + 1) + '</span></div>'
+    let h = '<div class="row" style="justify-content:space-between;align-items:center"><div><h1 style="margin:0;font-size:26px">WASTELAND CAMP</h1><span class="sm dim">Slot ' + (Save.slot + 1) + '</span></div>'
       + '<div style="text-align:right"><div style="font-family:Silk;color:#3de8ff">CORES ' + s.cores + '</div><button class="btn" onclick="UI.slots()">SAVE SLOTS</button></div></div>';
     h += '<div class="tabs">' + [['run', 'RUN'], ['armory', 'MUTATIONS'], ['upgrades', 'UPGRADES'], ['players', 'PLAYERS']].map(t => '<button class="btn ' + (this.tab === t[0] ? 'sel' : '') + '" onclick="UI.hub(\'' + t[0] + '\')">' + t[1] + '</button>').join('') + '</div>';
     if (this.tab === 'run') {
