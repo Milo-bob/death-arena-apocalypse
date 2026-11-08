@@ -20,14 +20,42 @@ const Sfx = {
   },
   tick() { this.t(900 + Math.random() * 400, 0.04, 'triangle', 0.025); },
   slash() { this.t(260, 0.09, 'sawtooth', 0.04, 0.4); },
-  hit() { this.t(180, 0.05, 'square', 0.035, 0.6); },
-  kill() { this.t(120, 0.14, 'sawtooth', 0.06, 0.4); },
-  hurt() { this.t(90, 0.25, 'sawtooth', 0.1, 0.5); },
+  noise(d, v, hp) {
+    if (!this.on || !this.ctx) return;
+    const c = this.ctx, len = Math.floor(c.sampleRate * d), buf = c.createBuffer(1, len, c.sampleRate), q = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) q[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    const s = c.createBufferSource(), g = c.createGain(), f = c.createBiquadFilter(); s.buffer = buf; f.type = 'highpass'; f.frequency.value = hp || 800; g.gain.value = v;
+    s.connect(f); f.connect(g); g.connect(c.destination); s.start();
+  },
+  later(ms, fn) { setTimeout(() => { if (this.on && this.ctx) fn(); }, ms); },
+  hit(crit, big) { if (crit) { this.t(1100, 0.09, 'square', 0.05, 0.6); this.noise(0.05, 0.05, 3000); } else this.t(big ? 150 : 210, 0.06, 'square', 0.04, 0.6); },
+  kill(k) { this.t(k ? 90 : 130, k ? 0.3 : 0.16, 'sawtooth', k ? 0.1 : 0.06, 0.35); this.noise(k ? 0.35 : 0.14, k ? 0.12 : 0.06, 400); if (k === 2) this.later(120, () => this.boom(200)); },
+  hurt() { this.t(90, 0.28, 'sawtooth', 0.12, 0.45); this.noise(0.2, 0.1, 300); },
   dash() { this.t(300, 0.15, 'triangle', 0.06, 2.2); },
   pick() { this.t(660, 0.08, 'triangle', 0.05, 1.8); },
-  boom() { this.t(70, 0.3, 'sawtooth', 0.09, 0.3); },
-  good() { this.t(440, 0.12, 'triangle', 0.06, 1.5); setTimeout(() => this.t(660, 0.15, 'triangle', 0.06, 1.5), 90); },
-  ability() { this.t(200, 0.3, 'sawtooth', 0.07, 3); },
+  boom(r) { const big = (r || 80) > 100; this.t(big ? 55 : 80, big ? 0.55 : 0.35, 'sawtooth', big ? 0.14 : 0.1, 0.25); this.noise(big ? 0.6 : 0.35, big ? 0.16 : 0.1, 150); },
+  good() { this.t(440, 0.12, 'triangle', 0.06, 1.5); this.later(90, () => this.t(660, 0.15, 'triangle', 0.06, 1.5)); },
+  levelup() { [440, 554, 659, 880].forEach((f, i) => this.later(i * 70, () => this.t(f, 0.16, 'triangle', 0.06, 1.2))); },
+  chest(kind) { this.t(180, 0.12, 'square', 0.05, 1.8); this.later(90, () => this.t(kind === 'gold' ? 880 : 520, 0.2, 'triangle', 0.06, 1.5)); if (kind === 'gold') this.later(190, () => this.t(1175, 0.25, 'triangle', 0.06, 1.3)); },
+  clunk() { this.t(120, 0.1, 'square', 0.06, 0.6); this.noise(0.05, 0.05, 1500); },
+  swap() { this.t(300, 0.05, 'square', 0.04, 1.4); this.later(50, () => this.t(420, 0.05, 'square', 0.04, 1.2)); },
+  empty() { this.t(150, 0.04, 'square', 0.05, 0.8); },
+  ammo() { this.t(700, 0.05, 'square', 0.04, 1.4); this.noise(0.04, 0.03, 4000); },
+  heal() { this.t(520, 0.12, 'triangle', 0.05, 1.6); this.later(80, () => this.t(780, 0.14, 'triangle', 0.05, 1.4)); },
+  portal() { for (let i = 0; i < 6; i++) this.later(i * 60, () => this.t(300 + i * 90, 0.2, 'sine', 0.05, 1.5)); },
+  bossIntro() { this.t(60, 0.9, 'sawtooth', 0.12, 0.5); this.noise(0.8, 0.08, 120); },
+  heartbeat() { this.t(65, 0.12, 'sine', 0.12, 0.5); this.later(160, () => this.t(55, 0.14, 'sine', 0.1, 0.5)); },
+  ability(type) {
+    if (type === 'roll' || type === 'blink') { this.noise(0.18, 0.08, 1500); this.t(300, 0.15, 'triangle', 0.05, 2); }
+    else if (type === 'shield') { this.t(500, 0.35, 'sine', 0.06, 2.2); this.t(750, 0.35, 'sine', 0.04, 2); }
+    else if (type === 'nova') { this.t(90, 0.4, 'sawtooth', 0.1, 0.4); this.noise(0.3, 0.1, 300); }
+    else if (type === 'zone') { this.noise(0.5, 0.07, 1200); this.t(180, 0.4, 'sine', 0.05, 0.8); }
+    else if (type === 'overdrive') { this.t(180, 0.45, 'sawtooth', 0.07, 3.5); }
+    else if (type === 'eat') { this.noise(0.18, 0.12, 200); this.t(110, 0.2, 'square', 0.08, 0.5); }
+    else if (type === 'strike') { this.t(900, 0.5, 'sine', 0.06, 0.4); this.later(350, () => this.boom(150)); }
+    else if (type === 'turret') { this.t(420, 0.08, 'square', 0.05, 1.5); this.later(90, () => this.t(630, 0.1, 'square', 0.05, 1.3)); }
+    else this.t(200, 0.3, 'sawtooth', 0.07, 3);
+  },
 };
 
 // Procedural dark ambient music: drone + bass + bells, with drums for fights and bosses. M toggles.

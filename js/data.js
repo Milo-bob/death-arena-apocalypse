@@ -286,7 +286,7 @@ const POOL_WEAPONS = {
   energysword: ['Energy Sword', { type: 'cone', tier: 4, rate: 3, dmg: 22.6, range: 112, arc: 2.4 }],
   energyhammer: ['Energy Hammer', { type: 'cone', tier: 5, rate: 1.4, dmg: 66.3, range: 100, arc: 2.6 }],
 };
-for (const [id, [name, w]] of Object.entries(POOL_WEAPONS)) HEROES['w_' + id] = { clan: 'steam', name, cost: 99999, blurb: '', weapon: Object.assign({ name }, w), ability: NO_ABILITY, mod() {}, pool: true };
+for (const [id, [name, w]] of Object.entries(POOL_WEAPONS)) HEROES['w_' + id] = { clan: 'steam', name, cost: 99999, blurb: '', weapon: Object.assign({ name, art: id }, w), ability: NO_ABILITY, mod() {}, pool: true };
 
 // ammo types (like the original: bullets, shells, bolts, explosives, energy); melee weapons need none
 const AMMO = {

@@ -252,7 +252,7 @@ const UI = {
   take(id) { Game.takePerk(id); Game.nodeDone(); },
   takeUltra(i) { Game.run.ultra = i; Game.recalc(); Game.nodeDone(); },
   levelUp() {
-    const run = Game.run, hero = HEROES[run.hero]; Sfx.good();
+    const run = Game.run, hero = HEROES[run.hero]; Sfx.levelup(); Game.impact(0.08, '#ffffff', 0.3);
     if (run.plv >= 10 && run.ultra == null && hero.ultras) {
       this.show('<h2>ULTRA MUTATION</h2><p class="dim sm">Level ' + run.plv + ': choose your final form</p>' + this.status() + '<div class="row">' + hero.ultras.map((u, i) => '<div class="card rar-legendary" onclick="UI.takeUltra(' + i + ')"><span class="dim sm" style="position:absolute;right:8px;top:6px">[' + (i + 1) + ']</span><h3>' + u.name + '</h3><p>' + u.d + '</p></div>').join('') + '</div>');
       this.acts(() => this.takeUltra(0), () => this.takeUltra(1)); return;

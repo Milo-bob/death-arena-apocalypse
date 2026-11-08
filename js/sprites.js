@@ -245,6 +245,83 @@ const WEAPON_ART = {
   ] },
 };
 
+// ---------- weapon sprites: every weapon gets its own pixel drawing (32x16, pointing right, dark outline) ----------
+const WEAPON_SHAPE = {
+  revolver: 'revolver', popgun: 'pistol', machinegun: 'smg', rifle: 'rifle', smartgun: 'smart', heavyrevolver: 'bigrevolver', bouncersmg: 'smg', triplemg: 'smg3', heavymg: 'hmg', sniper: 'sniper', minigun: 'minigun',
+  shotgun: 'shotgun', sawedoff: 'sawed', doubleshotgun: 'double', slugger: 'slug', autoshotgun: 'drum', superslugger: 'bigslug', bouncershotgun: 'shotgun', flak: 'flak', eraser: 'eraser',
+  crossbow: 'crossbow', splinter: 'crossbow', autocrossbow: 'autocross', disc: 'disc', supersplinter: 'autocross', heavycrossbow: 'bigcross',
+  grenade: 'launcher', bazooka: 'tube', rocket: 'smalltube', seeker: 'seeker', heavygrenade: 'biglauncher', hyper: 'hyper', nuke: 'nuke',
+  laserpistol: 'laser', plasmagun: 'plasma', lightningpistol: 'lightning', laserrifle: 'laserrifle', plasmarifle: 'plasmarifle', lightningrifle: 'lightrifle', plasmacannon: 'cannon', lightningcannon: 'lightcannon',
+  wrench: 'wrench', shovel: 'shovel', bat: 'bat', machete: 'machete', screwdriver: 'screwdriver', axe: 'axe', sledge: 'hammer', chainsaw: 'chainsaw', katana: 'katana', energysword: 'ebl', energyhammer: 'ehammer',
+};
+function makeWeaponSprite(id) {
+  const w = (HEROES['w_' + id] || HEROES.w_revolver).weapon, shape = WEAPON_SHAPE[id] || 'pistol', am = ammoOf(w), A = am ? AMMO[am].col : '#c8ccd8';
+  const c = document.createElement('canvas'); c.width = 34; c.height = 18; const g = c.getContext('2d');
+  const M = '#8a909e', D = '#30323c', L = '#c8ccd8', W = '#8a5a2a', K = '#4a3220', G = '#e8ffff', S = '#d8dce8';
+  const r = (col, x, y, ww, hh) => { g.fillStyle = col; g.fillRect(x + 1, y + 1, ww, hh); };
+  const ring = (col, cx, cy, rad) => { g.fillStyle = col; g.beginPath(); g.arc(cx + 1, cy + 1, rad, 0, 6.283); g.fill(); };
+  const gun = (len, thick) => { r(D, 8, 6, len, thick); r(M, 8, 6, len, 1); };
+  switch (shape) {
+    case 'pistol': gun(13, 3); r(W, 9, 9, 4, 5); r(D, 20, 7, 3, 2); r(A, 12, 6, 3, 1); break;
+    case 'revolver': gun(20, 3); ring(D, 14, 7, 4); ring(M, 14, 7, 3); ring(D, 14, 7, 1.2); r(W, 8, 9, 4, 5); r(L, 28, 6, 2, 1); r(A, 22, 6, 4, 1); break;
+    case 'bigrevolver': gun(22, 4); ring(D, 15, 7, 5); ring(M, 15, 7, 4); ring(D, 15, 7, 1.6); r(W, 8, 10, 5, 5); r(A, 22, 6, 5, 1); break;
+    case 'smg': gun(16, 4); r(D, 13, 10, 3, 5); r(A, 13, 10, 3, 1); r(D, 3, 7, 6, 2); r(W, 8, 10, 3, 4); r(L, 24, 6, 3, 2); break;
+    case 'smg3': gun(15, 4); r(D, 23, 5, 5, 1); r(D, 23, 8, 5, 1); r(D, 13, 10, 3, 5); r(A, 13, 10, 3, 1); r(D, 3, 7, 6, 2); break;
+    case 'rifle': gun(22, 4); r(W, 0, 7, 9, 4); r(D, 14, 10, 3, 5); r(A, 14, 10, 3, 1); r(D, 11, 3, 8, 2); r(L, 28, 7, 3, 2); break;
+    case 'smart': gun(21, 4); r(W, 0, 7, 9, 4); r(D, 13, 3, 7, 3); r(A, 14, 4, 5, 1); r(D, 14, 10, 3, 5); r(L, 27, 7, 3, 2); break;
+    case 'hmg': gun(21, 5); r(D, 4, 7, 6, 3); r(D, 14, 11, 7, 4); r(A, 14, 11, 7, 1); r(L, 27, 7, 4, 3); r(M, 10, 4, 6, 2); break;
+    case 'sniper': gun(26, 3); r(W, 0, 7, 8, 4); r(D, 11, 2, 11, 3); r(L, 11, 2, 1, 3); r(L, 21, 2, 1, 3); r(D, 10, 9, 3, 5); r(D, 4, 11, 4, 2); r(L, 31, 6, 1, 3); break;
+    case 'minigun': r(D, 4, 4, 5, 8); r(M, 4, 4, 5, 1); r(D, 9, 5, 21, 2); r(D, 9, 8, 21, 2); r(M, 9, 5, 21, 1); r(M, 9, 8, 21, 1); r(L, 28, 4, 3, 7); r(A, 12, 11, 5, 2); break;
+    case 'shotgun': r(D, 12, 6, 19, 2); r(M, 12, 6, 19, 1); r(D, 12, 8, 14, 1); r(W, 15, 9, 8, 3); r(W, 1, 8, 12, 4); r(D, 11, 7, 3, 3); r(A, 28, 5, 3, 1); break;
+    case 'sawed': r(D, 10, 6, 15, 2); r(D, 10, 8, 15, 2); r(M, 10, 6, 15, 1); r(W, 5, 8, 7, 4); r(W, 2, 10, 4, 3); r(A, 24, 5, 2, 1); break;
+    case 'double': r(D, 8, 5, 22, 2); r(D, 8, 7, 22, 2); r(M, 8, 5, 22, 1); r(W, 12, 9, 9, 3); r(W, 0, 8, 10, 4); r(A, 28, 4, 3, 1); break;
+    case 'slug': r(D, 9, 5, 22, 4); r(M, 9, 5, 22, 1); r(W, 1, 8, 10, 4); r(W, 14, 9, 8, 3); r(A, 26, 4, 4, 1); r(L, 30, 5, 1, 4); break;
+    case 'bigslug': r(D, 8, 4, 23, 6); r(M, 8, 4, 23, 1); r(W, 0, 8, 10, 5); r(W, 14, 10, 9, 3); r(A, 24, 3, 6, 1); r(L, 30, 4, 1, 6); break;
+    case 'drum': r(D, 10, 6, 20, 3); r(M, 10, 6, 20, 1); ring(D, 17, 12, 4); ring(M, 17, 12, 3); ring(D, 17, 12, 1); r(W, 1, 8, 10, 4); r(A, 27, 5, 3, 1); break;
+    case 'flak': r(D, 8, 5, 18, 5); r(M, 8, 5, 18, 1); r(D, 26, 3, 5, 9); r(L, 26, 3, 5, 1); r(W, 1, 8, 8, 4); r(A, 12, 4, 6, 1); r(D, 12, 10, 4, 4); break;
+    case 'eraser': r(D, 6, 3, 22, 9); r(M, 6, 3, 22, 1); r(D, 28, 2, 3, 11); r(A, 8, 5, 18, 2); r(A, 8, 9, 18, 2); r(W, 0, 7, 6, 4); r(D, 12, 12, 4, 3); break;
+    case 'crossbow': r(W, 3, 7, 22, 3); r(M, 3, 7, 22, 1); r(D, 18, 1, 3, 14); r(M, 18, 1, 1, 14); r(L, 21, 3, 8, 1); r(L, 21, 12, 8, 1); r(A, 8, 5, 18, 1); r(D, 10, 10, 3, 4); break;
+    case 'autocross': r(W, 2, 7, 22, 3); r(M, 2, 7, 22, 1); r(D, 19, 1, 3, 14); r(L, 22, 3, 8, 1); r(L, 22, 12, 8, 1); r(D, 9, 3, 8, 4); r(A, 10, 4, 6, 1); r(A, 8, 5, 18, 1); break;
+    case 'bigcross': r(W, 2, 7, 26, 4); r(M, 2, 7, 26, 1); r(D, 20, 0, 4, 16); r(M, 20, 0, 1, 16); r(L, 24, 2, 8, 1); r(L, 24, 13, 8, 1); r(A, 6, 5, 24, 2); r(D, 9, 11, 3, 4); break;
+    case 'disc': r(D, 4, 6, 14, 4); r(M, 4, 6, 14, 1); r(W, 2, 9, 5, 4); ring(S, 24, 8, 6); ring(D, 24, 8, 3); ring(A, 24, 8, 1.6); r(S, 29, 7, 3, 2); break;
+    case 'launcher': r(D, 6, 5, 20, 6); r(M, 6, 5, 20, 1); ring(M, 14, 12, 4); ring(D, 14, 12, 2.4); r(W, 3, 8, 4, 6); r(L, 26, 4, 5, 8); r(A, 8, 6, 10, 1); break;
+    case 'biglauncher': r(D, 4, 3, 24, 9); r(M, 4, 3, 24, 1); ring(M, 12, 13, 4.5); ring(D, 12, 13, 2.6); r(W, 1, 8, 4, 6); r(L, 28, 2, 4, 11); r(A, 7, 5, 14, 2); break;
+    case 'tube': r(D, 0, 4, 30, 7); r(M, 0, 4, 30, 1); r(L, 28, 2, 4, 11); r(D, 10, 11, 3, 5); r(W, 9, 14, 5, 1); r(D, 12, 1, 8, 3); r(A, 3, 6, 10, 1); break;
+    case 'smalltube': r(D, 4, 5, 24, 5); r(M, 4, 5, 24, 1); r(L, 26, 4, 5, 7); r(D, 10, 10, 3, 5); r(A, 6, 6, 9, 1); r(D, 1, 6, 4, 3); break;
+    case 'seeker': r(D, 2, 5, 25, 6); r(M, 2, 5, 25, 1); r(L, 25, 3, 5, 10); ring(D, 12, 3, 3); ring(A, 12, 3, 1.6); r(D, 9, 11, 3, 4); r(A, 4, 7, 12, 1); break;
+    case 'hyper': r(D, 2, 3, 26, 3); r(D, 2, 7, 26, 3); r(D, 2, 11, 26, 3); r(M, 2, 3, 26, 1); r(M, 2, 7, 26, 1); r(M, 2, 11, 26, 1); r(L, 28, 3, 3, 11); r(A, 4, 5, 20, 1); break;
+    case 'nuke': r(D, 0, 3, 31, 10); r(M, 0, 3, 31, 1); r(A, 5, 4, 4, 8); r(A, 13, 4, 4, 8); r(A, 21, 4, 4, 8); r(L, 29, 1, 3, 14); r(D, 12, 13, 4, 3); ring(S, 6, 1, 2); break;
+    case 'laser': r(D, 8, 5, 16, 4); r(M, 8, 5, 16, 1); r(G, 24, 6, 6, 2); r(A, 22, 5, 2, 4); r(W, 8, 9, 4, 5); r(A, 12, 6, 6, 1); break;
+    case 'laserrifle': r(D, 4, 5, 24, 4); r(M, 4, 5, 24, 1); r(G, 28, 6, 4, 2); r(A, 25, 4, 3, 6); r(D, 0, 6, 5, 3); r(D, 12, 9, 3, 5); r(A, 8, 6, 12, 1); break;
+    case 'plasma': r(D, 8, 5, 14, 5); r(M, 8, 5, 14, 1); ring(A, 25, 8, 4); ring(G, 25, 8, 2); r(W, 8, 10, 4, 4); break;
+    case 'plasmarifle': r(D, 3, 5, 22, 5); r(M, 3, 5, 22, 1); ring(A, 27, 8, 4.5); ring(G, 27, 8, 2.2); r(D, 0, 6, 4, 3); r(D, 11, 10, 3, 5); r(A, 6, 7, 14, 1); break;
+    case 'lightning': r(D, 8, 6, 12, 4); r(M, 8, 6, 12, 1); r(A, 20, 4, 2, 8); r(A, 26, 4, 2, 8); r(G, 22, 7, 4, 2); r(A, 23, 3, 2, 2); r(A, 23, 11, 2, 2); r(W, 8, 10, 4, 4); break;
+    case 'lightrifle': r(D, 3, 6, 18, 4); r(M, 3, 6, 18, 1); r(A, 21, 3, 2, 10); r(A, 28, 3, 2, 10); r(G, 23, 7, 5, 2); r(A, 24, 1, 2, 2); r(A, 24, 13, 2, 2); r(D, 10, 10, 3, 5); r(D, 0, 7, 4, 3); break;
+    case 'cannon': r(D, 2, 3, 24, 10); r(M, 2, 3, 24, 1); ring(A, 29, 8, 5); ring(G, 29, 8, 2.6); r(D, 8, 13, 4, 3); r(A, 5, 5, 16, 2); break;
+    case 'lightcannon': r(D, 2, 4, 22, 8); r(M, 2, 4, 22, 1); r(A, 24, 1, 3, 14); r(A, 30, 1, 2, 14); r(G, 27, 7, 3, 2); r(D, 8, 12, 4, 4); r(A, 5, 6, 14, 2); break;
+    case 'wrench': r(D, 4, 7, 20, 3); r(S, 4, 7, 20, 1); r(M, 22, 3, 8, 11); r(D, 25, 6, 5, 5); r(S, 22, 3, 8, 1); break;
+    case 'shovel': r(W, 2, 7, 18, 3); r(D, 2, 7, 18, 1); r(M, 20, 3, 11, 11); r(S, 20, 3, 11, 1); r(D, 22, 7, 7, 1); break;
+    case 'bat': r(W, 2, 7, 18, 3); r(K, 2, 9, 18, 1); r(W, 18, 5, 12, 7); r(K, 18, 11, 12, 1); r(L, 18, 5, 12, 1); break;
+    case 'machete': r(K, 2, 7, 8, 3); r(D, 9, 5, 3, 7); r(S, 12, 5, 18, 5); r(L, 12, 5, 18, 1); r(M, 12, 9, 18, 1); break;
+    case 'katana': r(K, 2, 7, 8, 3); r(D, 9, 5, 3, 7); r(S, 12, 7, 20, 2); r(L, 12, 7, 20, 1); break;
+    case 'screwdriver': r(A, 2, 6, 10, 5); r(D, 2, 6, 10, 1); r(M, 12, 8, 17, 1); r(S, 12, 8, 17, 1); r(L, 29, 7, 3, 3); break;
+    case 'axe': r(W, 3, 7, 22, 3); r(K, 3, 9, 22, 1); r(M, 20, 2, 10, 12); r(S, 20, 2, 10, 1); r(D, 22, 5, 3, 6); break;
+    case 'hammer': r(W, 2, 7, 22, 3); r(K, 2, 9, 22, 1); r(M, 20, 2, 11, 12); r(S, 20, 2, 11, 1); r(D, 24, 4, 3, 8); break;
+    case 'chainsaw': r(D, 2, 4, 12, 9); r(A, 3, 5, 5, 3); r(M, 13, 6, 18, 5); r(S, 13, 6, 18, 1); r(D, 13, 11, 18, 1); for (let x = 14; x < 31; x += 3) r(L, x, 5, 1, 1); break;
+    case 'ebl': r(K, 2, 7, 7, 3); r(D, 8, 4, 3, 9); r(A, 11, 6, 20, 5); r(G, 11, 7, 20, 3); r(A, 11, 6, 20, 1); break;
+    case 'ehammer': r(K, 2, 7, 18, 3); r(A, 18, 1, 13, 14); r(G, 20, 3, 9, 10); r(D, 18, 1, 13, 1); break;
+    default: gun(14, 3); r(W, 9, 9, 4, 5);
+  }
+  // dark outline around everything that was drawn
+  const img = g.getImageData(0, 0, 34, 18), px = img.data, out = new Uint8ClampedArray(px);
+  for (let y = 0; y < 18; y++) for (let x = 0; x < 34; x++) {
+    if (px[(y * 34 + x) * 4 + 3]) continue;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < 34 && ny < 18 && px[(ny * 34 + nx) * 4 + 3]) { out.set([12, 12, 18, 255], (y * 34 + x) * 4); break; } }
+  }
+  g.putImageData(new ImageData(out, 34, 18), 0, 0);
+  return c;
+}
+
 // ---------- enemies (red team, yellow marker) and bosses ----------
 const EPAL = { b: '#ff2d3d', m: '#a01828', d: '#3a0810', a: '#ff9aa6', c: '#ffd91f', x: '#ff8a1f' };
 const BPAL = [
@@ -393,7 +470,7 @@ const Sprites = {
     if (this.cache[key]) return this.cache[key];
     let c;
     if (HEROES[key]) { const PP = HERO_FRONT[key] || SPAL[HEROES[key].clan]; c = this.build(SPR, HERO_ART[key](PP), PP); }
-    else if (key.startsWith('w:')) { const a = WEAPON_ART[key.slice(2)], PP = SPAL[a.clan]; c = this.build(SPR, a.f(PP), PP); }
+    else if (key.startsWith('w:')) { const a = WEAPON_ART[key.slice(2)]; if (a) { const PP = SPAL[a.clan]; c = this.build(SPR, a.f(PP), PP); } else c = makeWeaponSprite(key.slice(2)); }
     else if (key[0] === 'o') { const [nm, used] = key.slice(2).split('_'), PP = used ? OPAL_USED : OPAL[nm]; c = this.build(32, OBJ_ART[nm](PP, !!used), PP); }
     else if (key[0] === 'e') { const a = ENEMY_ART[key.slice(2)], pal = a.pal || EPAL; c = this.build(a.n, a.f(pal), pal); }
     else { const k = +key.slice(2), a = BOSS_ART[BOSS_ART_OF[k]]; c = this.build(a.n, a.f(BPAL[k]), BPAL[k]); }

@@ -273,7 +273,7 @@ const Game = {
     if (crit && P.execute && !e.boss && e.hp < e.maxhp * 0.3) d = e.hp + e.sh + 1;
     this.dealDamage(e, d, crit);
     C.hitstop = Math.max(C.hitstop || 0, crit ? 0.05 : 0.018); C.shake = Math.max(C.shake, crit ? 3 : 1); if (this.bleed) this.bleed(e);
-    Sfx.hit();
+    Sfx.hit(crit, d > 30);
     if (o.noProc) return;
     if (P.poison > 0) { e.poison = Math.max(e.poison, P.poison * P.poisonMul); e.poisonT = 3; if (P.poisonSlow) { e.slow = 0.35; e.slowT = 1.5; } }
     if (P.burn > 0) { e.burn = Math.max(e.burn, P.burn); e.burnT = 2; }
@@ -298,7 +298,7 @@ const Game = {
     const C = this.C, P = this.P;
     r *= P.blastRad; dmg *= P.blastMul;
     C.fx.push({ k: 'ring', x, y, r, t: 0.25, max: 0.25, col: '#ff8a1f' });
-    this.burst(x, y, '#ff8a1f', 8, 160); C.shake = Math.max(C.shake, 3); Sfx.boom();
+    this.burst(x, y, '#ff8a1f', 8, 160); C.shake = Math.max(C.shake, 3); Sfx.boom(r); this.impact(0.03, '#ffffff', 0.16);
     for (const e of C.en.slice()) if (!e.dead && dist(e, { x, y }) < r + e.r) this.hitEnemy(e, dmg, { raw: true, noProc: true, noCrit: true });
   },
   kill(e, quiet) {
@@ -306,7 +306,7 @@ const Game = {
     e.dead = true; if (e.free && this.C) this.C.lastDeath = { x: e.x, y: e.y };
     if (quiet) return;
     run.kills++; C.kills = (C.kills || 0) + 1;
-    this.burst(e.x, e.y, e.col, e.boss ? 40 : 10, e.boss ? 260 : 150); Sfx.kill();
+    this.burst(e.x, e.y, e.col, e.boss ? 40 : 10, e.boss ? 260 : 150); Sfx.kill(e.boss ? 2 : e.elite ? 1 : 0); if (e.boss) this.impact(0.2, '#ffffff', 0.55); else if (e.elite) this.impact(0.05, '#ffffff', 0.3);
     C.hitstop = Math.max(C.hitstop || 0, e.boss ? 0.2 : e.elite ? 0.07 : 0.03); C.shake = Math.max(C.shake, e.boss ? 14 : e.elite ? 7 : 2.5);
     if (this.stain) this.stain(e);
     if (this.dropWeapon) this.dropWeapon(e);
@@ -329,7 +329,7 @@ const Game = {
     if (!C || p.inv > 0 || p.dashT > 0) return false;
     if (p.shield > 0) { C.fx.push({ k: 'ring', x: p.x, y: p.y, r: 30, t: 0.2, max: 0.2, col: '#ffe94a' }); return false; }
     const d = dmg * P.taken;
-    run.hp -= d; p.inv = 0.7; p.flash = 0.2; C.shake = Math.max(C.shake, 8); C.noHit = false; Sfx.hurt();
+    run.hp -= d; p.inv = 0.7; p.flash = 0.2; C.shake = Math.max(C.shake, 8); C.noHit = false; Sfx.hurt(); this.impact(0.09, '#ff2a2a', 0.38); C.hitstop = Math.max(C.hitstop || 0, 0.08);
     this.floatText(p.x, p.y - 20, '-' + (Math.round(d) / 10), '#ff2d3d', 1.2);
     this.burst(p.x, p.y, '#ff2d3d', 12, 200);
     if (P.thorns && src && src.hp !== undefined && !src.dead) this.hitEnemy(src, P.thorns, { raw: true, noProc: true, noCrit: true });
@@ -509,7 +509,7 @@ const Game = {
   },
   useAbility() {
     const C = this.C, P = this.P, p = C.p, a = kitOf(this.run).ability, col = CLANS[this.run.clan].color;
-    p.abT = a.cd * P.abCd; Sfx.ability();
+    p.abT = a.cd * P.abCd; Sfx.ability(a.type);
     if (a.type === 'eat') { this.eatWeapon(); return; }
     if (a.type === 'roll') { p.dashDir = p.aim; p.dashT = 0.2; p.dashHit = []; p.inv = Math.max(p.inv, 0.6); Sfx.dash(); return; }
     if (a.type === 'strike') { C.haz.push({ x: C.mx, y: C.my, r: a.r * P.blastRad, t: 0.7, max: 0.7, dmg: a.dmg, friendly: true }); return; }
@@ -692,7 +692,7 @@ const Game = {
       if (h.t > 0) continue;
       h.done = true;
       C.fx.push({ k: 'ring', x: h.x, y: h.y, r: h.r, t: 0.22, max: 0.22, col: h.friendly ? '#ff8a1f' : '#ff4a4a' });
-      if (!h.quick) { this.burst(h.x, h.y, h.friendly ? '#ff8a1f' : '#ff4a4a', 10, 170); Sfx.boom(); C.shake = Math.max(C.shake, 5); }
+      if (!h.quick) { this.burst(h.x, h.y, h.friendly ? '#ff8a1f' : '#ff4a4a', 10, 170); Sfx.boom(h.r); C.shake = Math.max(C.shake, 5); if (h.friendly && h.r > 60) this.impact(0.04, '#ffffff', 0.2); }
       if (h.friendly) { for (const e of C.en.slice()) if (!e.dead && dist(e, h) < h.r + e.r) this.hitEnemy(e, h.dmg, { raw: !!h.quick, noProc: !!h.quick, noCrit: !!h.quick }); for (const pr of C.props) if (!pr.dead && dist(pr, h) < h.r + pr.r) this.damageProp(pr, h.dmg * 1.5 + 10); }
       else {
         if (dist(h, p) < h.r + p.r && !(this.P.blastImmune && !h.owner)) this.hurt(h.dmg, h.owner);
@@ -927,7 +927,9 @@ const Game = {
     ctx.globalAlpha = 1;
     if (!e.boss && e.hp < e.maxhp) { const x = snap(e.x) - 12, y = snap(e.y - e.r - 8); ctx.fillStyle = '#000'; ctx.fillRect(x - 2, y - 2, 28, 6); ctx.fillStyle = e.elite ? ELITE_MODS[e.elite].col : '#ff5a5a'; ctx.fillRect(x, y, 24 * clamp(e.hp / e.maxhp, 0, 1), 2); }
   },
+  impact(t, col, a) { const C = this.C; if (!C) return; const cur = C.flashT > 0 ? C.flashA * C.flashT / C.flashMax : 0; if (a < cur) return; C.flashT = t; C.flashMax = t; C.flashCol = col; C.flashA = a; },
   drawHud(clan) {
+    const FC = this.C; if (FC && FC.flashT > 0) { ctx.globalAlpha = FC.flashA * FC.flashT / FC.flashMax; ctx.fillStyle = FC.flashCol; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; FC.flashT -= 1 / 60; }
     const C = this.C, P = this.P, run = this.run, p = C.p, w = kitOf(run);
     ctx.fillStyle = '#05060f'; ctx.fillRect(0, 0, W, 50);
     ctx.strokeStyle = '#1f7fc8'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, 50); ctx.lineTo(W, 50); ctx.stroke();

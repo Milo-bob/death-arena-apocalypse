@@ -270,7 +270,7 @@ Object.assign(Game, {
   },
   drawArtWeapon(p) {   // the big late-game weapons are drawn in front of the hero
     const w = kitOf(this.run).weapon; ctx.save(); ctx.translate(snap(p.x + Math.cos(p.aim) * 15), snap(p.y + Math.sin(p.aim) * 15)); ctx.rotate(p.aim); ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(Sprites.get('w:' + w.art), -8, -18, 36, 36); ctx.restore();
+    const s = Sprites.get('w:' + w.art), k = 1.5; ctx.drawImage(s, -4, -s.height * k / 2, s.width * k, s.height * k); ctx.restore();
   },
   drawHeldWeapon(p, x, y, face) {
     const w = kitOf(this.run).weapon, O = '#0c0c12', M = '#5a5e6a', L = '#9aa0ae';
@@ -313,7 +313,7 @@ Object.assign(Game, {
   // ---------- props: explosive barrels ----------
   damageProp(pr, dmg) {
     if (pr.dead) return;
-    pr.hp -= dmg; pr.flash = 0.1; Sfx.hit();
+    pr.hp -= dmg; pr.flash = 0.1; Sfx.hit(false, true);
     if (pr.hp > 0) return;
     pr.dead = true; const C = this.C;
     C.haz.push({ x: pr.x, y: pr.y, r: 92, t: 0.05, max: 0.05, dmg: 44, friendly: true });
@@ -368,11 +368,11 @@ Object.assign(Game, {
   collectItem(it) {
     const p = this.C.p;
     if (it.kind === 'rad') { this.addXp(it.amt); const C = this.C; if (!C.radSnd || C.t - C.radSnd > 0.06) { Sfx.tick(); C.radSnd = C.t; } }
-    else if (it.kind === 'ammo') { this.addAmmo(it.type, it.amt); this.floatText(p.x, p.y - 22, '+' + AMMO[it.type].name, AMMO[it.type].col); Sfx.good(); }
-    else if (it.kind === 'heal') { if (!this.P.noHeal) this.healP(it.amt * this.P.healMul); }
+    else if (it.kind === 'ammo') { this.addAmmo(it.type, it.amt); this.floatText(p.x, p.y - 22, '+' + AMMO[it.type].name, AMMO[it.type].col); Sfx.ammo(); }
+    else if (it.kind === 'heal') { if (!this.P.noHeal) { this.healP(it.amt * this.P.healMul); Sfx.heal(); } }
   },
   openChest(ch) {
-    const C = this.C; Sfx.good(); C.shake = Math.max(C.shake, 3);
+    const C = this.C; Sfx.chest(ch.kind); C.shake = Math.max(C.shake, 3);
     if (ch.kind === 'ammo') for (let i = 0, k = Math.round(4 * this.P.dropMul); i < k; i++) { const t = this.ammoWanted(); this.spawnItem(ch.x, ch.y, 'ammo', { type: t, amt: AMMO[t].amt }); }
     else if (ch.kind === 'weapon') this.spawnWeapon(ch.x, ch.y + 30, false, true);
     else if (ch.kind === 'gold') { this.spawnWeapon(ch.x, ch.y + 30, false, true, 2); C.shake = 6; this.floatText(ch.x, ch.y - 30, 'GOLDEN CHEST', '#ffe94a', 1.3); }
@@ -386,10 +386,10 @@ Object.assign(Game, {
     const c = (w.cost || 1) * (this.P.ammoCost || 1); if (run.ammo[t] < c) return false;
     run.ammo[t] -= c; return true;
   },
-  noAmmo() { const C = this.C; if (!C.noAmmoT || C.t - C.noAmmoT > 1) { this.floatText(C.p.x, C.p.y - 28, 'NO AMMO', '#ff6a6a', 1.1); C.noAmmoT = C.t; } },
+  noAmmo() { const C = this.C; if (!C.noAmmoT || C.t - C.noAmmoT > 1) { this.floatText(C.p.x, C.p.y - 28, 'NO AMMO', '#ff6a6a', 1.1); C.noAmmoT = C.t; Sfx.empty(); } },
   swapWeapons() {
     const run = this.run, C = this.C; if (!run || !C || !run.wpn2 || this.frozen || this.paused) return;
-    const a = run.wpn || run.hero; run.wpn = run.wpn2; run.wpn2 = a; C.bladePos = []; Sfx.good(); this.floatText(C.p.x, C.p.y - 28, HEROES[run.wpn].weapon.name.toUpperCase(), '#fff'); this.persist();
+    const a = run.wpn || run.hero; run.wpn = run.wpn2; run.wpn2 = a; C.bladePos = []; Sfx.swap(); this.floatText(C.p.x, C.p.y - 28, HEROES[run.wpn].weapon.name.toUpperCase(), '#fff'); this.persist();
   },
   eatWeapon() {
     const C = this.C, p = C.p; let best = null, bd = 170;
@@ -431,7 +431,7 @@ Object.assign(Game, {
   },
   weaponIcon(w, col) {
     const O = '#0c0c12', M = '#9aa0ae';
-    if (w.art) { ctx.imageSmoothingEnabled = false; ctx.drawImage(Sprites.get('w:' + w.art), -14, -14, 28, 28); return; }
+    if (w.art) { const s = Sprites.get('w:' + w.art), k = s.width > 30 ? 1.05 : 1.15; ctx.imageSmoothingEnabled = false; ctx.drawImage(s, -s.width * k / 2, -s.height * k / 2, s.width * k, s.height * k); return; }
     if (w.type === 'cone') { ctx.fillStyle = O; ctx.fillRect(-16, -3, 9, 7); ctx.fillRect(-9, -5, 25, 10); ctx.fillStyle = '#6a4a2a'; ctx.fillRect(-15, -2, 7, 5); ctx.fillStyle = '#d8dce8'; ctx.fillRect(-8, -4, 23, 8); ctx.fillStyle = col; ctx.fillRect(-8, 1, 23, 2); }
     else if (w.type === 'lance') { ctx.fillStyle = O; ctx.fillRect(-16, -2, 32, 5); ctx.fillStyle = '#8a6a3a'; ctx.fillRect(-15, -1, 22, 3); ctx.fillStyle = '#d8dce8'; ctx.fillRect(7, -1, 9, 3); }
     else if (w.type === 'blades') { ctx.fillStyle = col; ctx.fillRect(-4, -4, 8, 8); ctx.fillStyle = O; ctx.fillRect(-2, -2, 4, 4); }
@@ -464,7 +464,7 @@ Object.assign(Game, {
     if (boss) {
       const b = BOSSES[areaOf(act)], hp = b.hp * (1 + 0.2 * run.heat) * (1 + 0.5 * Math.floor(act / LOOP_LEVELS)) * P.enemyHp, sp = this.safeSpot(cell.cx, cell.cy - 80, 34), x = sp.x, y = sp.y;
       C.boss = { type: 'boss', boss: true, x, y, lx: x, ly: y, r: b.r, hp, maxhp: hp, sh: 0, flash: 0, phase: 1, pat: null, pt: 0, cd: 2, n: 0, sa: 0, atk: 0, col: b.col, name: b.name, vx: 0, vy: 0, slow: 0, slowT: 0, poison: 0, poisonT: 0, burn: 0, burnT: 0, spawnT: 0, bladeCd: 0, ang: 0, stage: 0 };
-      C.en.push(C.boss); C.bannerText = b.name.toUpperCase();
+      C.en.push(C.boss); C.bannerText = b.name.toUpperCase(); Sfx.bossIntro();
     } else {
       let budget = 7 + row * 2.2 + act * 7;
       if (elite) budget *= 1.2;
@@ -520,11 +520,12 @@ Object.assign(Game, {
       C.bossAmmoT = (C.bossAmmoT || 0) + 1 / 60;
       if (C.bossAmmoT > 9) { C.bossAmmoT = 0; for (let i = 0; i < 2; i++) { const t = this.ammoWanted(), an = rnd(0, 6.28), x = p.x + Math.cos(an) * 140, y = p.y + Math.sin(an) * 140; if (this.walkable(x, y)) this.spawnItem(x, y, 'ammo', { type: t, amt: AMMO[t].amt }); } }
     }
+    if (run.hp <= 20 && !C.dead && C.t - (C.hbT || -9) > 0.9) { Sfx.heartbeat(); C.hbT = C.t; }   // two hearts left: you hear your own heartbeat
     if (C.levelUps > 0 && !this.frozen && !C.dead) { C.levelUps--; this.frozen = true; Input.down = false; Input.keys = {}; C.nodeCell = null; C.pendingOrb = C.pendingObj = false; UI.levelUp(); return; }
     if (!C.portal && !isBossLevel(run.act) && C.levelTotal > 0 && !C.dead) {   // the portal opens when every roaming enemy is dead
       let left = 0; for (const e of C.en) if (e.free && !e.dead) left++;
       C.left = left;
-      if (!left) { const q = this.safeSpot((C.lastDeath || p).x, (C.lastDeath || p).y, 22); C.portal = { x: q.x, y: q.y }; this.floatText(q.x, q.y - 40, 'THE PORTAL OPENS', '#a06bff', 1.4); Sfx.good(); }
+      if (!left) { const q = this.safeSpot((C.lastDeath || p).x, (C.lastDeath || p).y, 22); C.portal = { x: q.x, y: q.y }; this.floatText(q.x, q.y - 40, 'THE PORTAL OPENS', '#a06bff', 1.4); Sfx.portal(); this.impact(0.06, '#a06bff', 0.3); }
     }
     if (C.portal && !C.dead && dist(C.portal, p) < 34) { run.rooms++; Input.keys = {}; this.descend(0.15); return; }
     const cc = this.cellAt(p.x, p.y);
@@ -552,7 +553,7 @@ Object.assign(Game, {
     C.wdrops = C.wdrops.filter(x => x !== d);
     if (!run.wpn2) { run.wpn2 = d.id; this.floatText(C.p.x, C.p.y - 44, '[X] SWITCH WEAPON', '#ffd91f'); }
     else { C.wdrops.push({ id: cur, x: C.p.x, y: C.p.y + 48 }); run.wpn = d.id; }
-    C.bladePos = []; Sfx.good(); this.floatText(C.p.x, C.p.y - 30, HEROES[d.id].weapon.name.toUpperCase(), CLANS[HEROES[d.id].clan].color, 1.2); this.persist();
+    C.bladePos = []; Sfx.clunk(); this.floatText(C.p.x, C.p.y - 30, HEROES[d.id].weapon.name.toUpperCase(), CLANS[HEROES[d.id].clan].color, 1.2); this.persist();
   },
   interact() {
     const C = this.C;
@@ -651,7 +652,7 @@ Object.assign(Game, {
       if (d.x < vx0 || d.x > vx1 || d.y < vy0 || d.y > vy1) continue;
       const h = HEROES[d.id], col = CLANS[h.clan].color, x = snap(d.x), y = snap(d.y + Math.sin(C.t * 4 + d.x) * 2);
       ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.fillRect(x - 12, y + 12, 24, 6);
-      if (h.weapon.art) { ctx.imageSmoothingEnabled = false; ctx.drawImage(Sprites.get('w:' + h.weapon.art), x - 16, y - 16, 32, 32); } else {
+      if (h.weapon.art) { const s = Sprites.get('w:' + h.weapon.art); ctx.imageSmoothingEnabled = false; ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(x - 24, y - 15, 48, 30); ctx.fillStyle = col; ctx.fillRect(x - 24, y - 15, 48, 2); ctx.drawImage(s, x - s.width * 0.7, y - s.height * 0.7, s.width * 1.4, s.height * 1.4); } else {
       ctx.fillStyle = '#0a0b0e'; ctx.fillRect(x - 12, y - 12, 24, 24); ctx.fillStyle = col; ctx.fillRect(x - 12, y - 12, 24, 2); ctx.fillRect(x - 12, y + 10, 24, 2); ctx.fillRect(x - 12, y - 12, 2, 24); ctx.fillRect(x + 10, y - 12, 2, 24);
       ctx.font = '12px Silk, monospace'; ctx.fillText({ shot: 'S', cone: 'C', blades: 'B', lance: 'L', mortar: 'M' }[h.weapon.type], x, y + 5); }
     }
