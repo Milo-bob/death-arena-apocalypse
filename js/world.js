@@ -340,7 +340,7 @@ Object.assign(Game, {
   spawnItem(x, y, kind, o) { const C = this.C; if (C.items.length > 220) return; C.items.push(Object.assign({ x, y, kind, vx: rnd(-110, 110), vy: rnd(-110, 110), t: 0 }, o || {})); },
   addXp(n) {
     const run = this.run, C = this.C; run.plv = run.plv || 1; run.xp = (run.xp || 0) + n * (this.P.xpMul || 1);
-    while (run.xp >= 24 + 16 * run.plv) { run.xp -= 24 + 16 * run.plv; run.plv++; C.levelUps++; }
+    while (run.xp >= 24 + 16 * run.plv) { run.xp -= 24 + 16 * run.plv; run.plv++; run.pendLv = (run.pendLv || 0) + 1; }
   },
   addAmmo(type, amt) { const run = this.run; run.ammo = run.ammo || startAmmo(); run.ammo[type] = Math.min(Math.round(AMMO[type].max * this.P.ammoCap), (run.ammo[type] || 0) + Math.round(amt * this.P.ammoMul)); },
   ammoWanted() {   // mostly the ammo your weapons use
@@ -447,7 +447,7 @@ Object.assign(Game, {
   },
   levelLabel() {
     const run = this.run, C = this.C, a = areaOf(run.act), loop = Math.floor(run.act / LOOP_LEVELS);
-    return (loop ? 'LOOP ' + loop + '  ' : '') + ACT_NAMES[a].toUpperCase() + ' ' + (a + 1) + '-' + (run.act % 3 + 1) + (isBossLevel(run.act) ? '  BOSS' : C.portal ? '  PORTAL OPEN' : '  ENEMIES LEFT ' + (C.left === undefined ? C.levelTotal : C.left)) + '  LV ' + (run.plv || 1) + (run.heat ? '  HEAT ' + run.heat : '');
+    return (loop ? 'LOOP ' + loop + '  ' : '') + ACT_NAMES[a].toUpperCase() + ' ' + (a + 1) + '-' + (run.act % 3 + 1) + (isBossLevel(run.act) ? '  BOSS' : C.portal ? '  PORTAL OPEN' : '  ENEMIES LEFT ' + (C.left === undefined ? C.levelTotal : C.left)) + '  LV ' + (run.plv || 1) + (run.pendLv > 0 ? '  MUTATION READY' : '');
   },
 
   // ---------- encounters ----------
@@ -517,7 +517,8 @@ Object.assign(Game, {
       if (C.bossAmmoT > 9) { C.bossAmmoT = 0; for (let i = 0; i < 2; i++) { const t = this.ammoWanted(), an = rnd(0, 6.28), x = p.x + Math.cos(an) * 140, y = p.y + Math.sin(an) * 140; if (this.walkable(x, y)) this.spawnItem(x, y, 'ammo', { type: t, amt: AMMO[t].amt }); } }
     }
     if (run.hp <= 20 && !C.dead && C.t - (C.hbT || -9) > 0.9) { Sfx.heartbeat(); C.hbT = C.t; }   // two hearts left: you hear your own heartbeat
-    if (C.levelUps > 0 && !this.frozen && !C.dead && !C.en.some(e => e.hp > 0 && e.awake && Math.hypot(e.x - C.p.x, e.y - C.p.y) < 260)) { C.levelUps--; this.frozen = true; Input.down = false; Input.keys = {}; C.nodeCell = null; C.pendingOrb = C.pendingObj = false; UI.levelUp(); return; }
+    if (!C.lvDone && C.t > 0.5 && !this.frozen && !C.dead && !C.suck) { C.lvDone = true; if (!(run.pendLv > 0)) { /* nothing waiting */ } else { run.pendLv--;   // one mutation per level change, picked right as the new level begins
+      this.frozen = true; Input.down = false; Input.keys = {}; C.nodeCell = null; C.pendingOrb = C.pendingObj = false; UI.levelUp(); return; } }
     if (!C.portal && !isBossLevel(run.act) && C.levelTotal > 0 && !C.dead) {   // the portal opens when every roaming enemy is dead
       let left = 0; for (const e of C.en) if (e.free && !e.dead) left++;
       C.left = left;

@@ -97,3 +97,6 @@ Keine Cores (Sammeln, HUD, Run-Ende, Camp-Anzeige) und kein Heat-Regler mehr; Sc
 
 ## Schritt 21: Shops entfernt
 Keine Black-Market-Räume mehr, Gold-Anzeige weg (Gold hatte nur im Shop einen Zweck). Blutbrunnen gibt jetzt eine bessere Waffe statt Gold.
+
+## Schritt 22: Mutationen nur zwischen Levels
+Level-ups werden als `run.pendLv` gesammelt. Am Anfang jedes neuen Levels (0,5 s nach Start) gibt es genau eine Auswahl, weitere warten auf den nächsten Levelwechsel. HUD zeigt "MUTATION READY".
