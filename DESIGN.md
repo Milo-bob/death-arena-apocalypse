@@ -100,3 +100,9 @@ Keine Black-Market-Räume mehr, Gold-Anzeige weg (Gold hatte nur im Shop einen Z
 
 ## Schritt 22: Mutationen nur zwischen Levels
 Level-ups werden als `run.pendLv` gesammelt. Am Anfang jedes neuen Levels (0,5 s nach Start) gibt es genau eine Auswahl, weitere warten auf den nächsten Levelwechsel. HUD zeigt "MUTATION READY".
+
+## Schritt 23: härter, eigene Waffen-Sprites für die Starken, 9 neue Gegner, Gebiets-Regeln
+- Schwierigkeit näher an NT: Gegner-HP x1.5 (+20 %/Gebiet), Schaden +10 %/Gebiet, Budget 50+5*Akt, Gegner x1.3 schneller, Gunner schießt alle 1,2 s, weniger Heilung (1,5 %/5 % Drop), Unverwundbarkeit nach Treffer 0,5 s statt 0,7 s.
+- Maw Gun, Needle Storm, Egg Cannon, Boiler Cannon haben jetzt eigene Waffenzeichnungen (WEAPON_SHAPE) und keine Helden-Sprites mehr; sie hängen nicht mehr am Charakter (WEAPON_ART leer).
+- Neue Gegner: Raider (3er-Salven), Mud Crab, Frost Wolf, Ice Spire (Ring-Schüsse), Smelter, Drone, Laser Eye, Warden (Ring), Wraith. Pro Gebiet eigene Besetzung (AREA_ENEMIES).
+- Gebiets-Regeln: Sewers klebrige Giftpfützen (verlangsamen), Foundry viele Fässer, Frozen Wastes Eis (rutschen).

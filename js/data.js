@@ -270,10 +270,10 @@ const POOL_WEAPONS = {
   lightningrifle: ['Lightning Rifle', { type: 'shot', ammo: 'energy', tier: 3, rate: 3, dmg: 8.6, speed: 800, n: 2, spread: 0.4, pierce: 3, life: 0.4, size: 3, homing: 6 }],
   plasmacannon: ['Plasma Cannon', { type: 'shot', ammo: 'energy', tier: 4, rate: 1.1, dmg: 33.2, speed: 420, n: 1, spread: 0.02, pierce: 0, life: 1.2, size: 9, boom: 90, boomDmg: 66.4, cost: 2 }],
   lightningcannon: ['Lightning Cannon', { type: 'shot', ammo: 'energy', tier: 4, rate: 1.3, dmg: 53.7, speed: 800, n: 1, spread: 0.1, pierce: 5, life: 0.6, size: 6, homing: 8, cost: 2 }],
-  maw: ['Maw Gun', { type: 'shot', ammo: 'shell', tier: 5, art: 'maw', rate: 1.3, dmg: 10.4, speed: 540, n: 12, spread: 0.6, pierce: 2, life: 0.45, size: 4 }],
-  needle: ['Needle Storm', { type: 'shot', ammo: 'energy', tier: 5, art: 'needle', rate: 10, dmg: 4.8, speed: 1000, n: 2, spread: 0.2, pierce: 99, life: 0.5, size: 2, cost: 0.5 }],
-  eggcannon: ['Egg Cannon', { type: 'shot', ammo: 'explosive', tier: 5, art: 'egg', rate: 1.0, dmg: 38.2, speed: 340, n: 1, spread: 0.03, pierce: 0, life: 1.8, size: 7, bounce: 2, boom: 70, boomDmg: 114.6 }],
-  boilercannon: ['Boiler Cannon', { type: 'shot', ammo: 'explosive', tier: 5, art: 'boiler', rate: 0.7, dmg: 66.4, speed: 360, n: 1, spread: 0.02, pierce: 0, life: 1.6, size: 9, boom: 120, boomDmg: 149.4, cost: 2 }],
+  maw: ['Maw Gun', { type: 'shot', ammo: 'shell', tier: 5, rate: 1.3, dmg: 10.4, speed: 540, n: 12, spread: 0.6, pierce: 2, life: 0.45, size: 4 }],
+  needle: ['Needle Storm', { type: 'shot', ammo: 'energy', tier: 5, rate: 10, dmg: 4.8, speed: 1000, n: 2, spread: 0.2, pierce: 99, life: 0.5, size: 2, cost: 0.5 }],
+  eggcannon: ['Egg Cannon', { type: 'shot', ammo: 'explosive', tier: 5, rate: 1.0, dmg: 38.2, speed: 340, n: 1, spread: 0.03, pierce: 0, life: 1.8, size: 7, bounce: 2, boom: 70, boomDmg: 114.6 }],
+  boilercannon: ['Boiler Cannon', { type: 'shot', ammo: 'explosive', tier: 5, rate: 0.7, dmg: 66.4, speed: 360, n: 1, spread: 0.02, pierce: 0, life: 1.6, size: 9, boom: 120, boomDmg: 149.4, cost: 2 }],
   wrench: ['Wrench', { type: 'cone', tier: 0, rate: 3, dmg: 6.2, range: 70, arc: 1.6 }],
   shovel: ['Shovel', { type: 'cone', tier: 0, rate: 2.4, dmg: 7.7, range: 76, arc: 1.9 }],
   bat: ['Baseball Bat', { type: 'cone', tier: 1, rate: 2.2, dmg: 12.3, range: 80, arc: 1.8 }],
@@ -423,15 +423,26 @@ const ENEMY = {
   maggot:  { name: 'Maggot', hp: 9, speed: 48, r: 8, dmg: 10, cost: 1, col: '#d8c070', ai: 'grunt', blood: '#a08a2a' },
   turret:  { name: 'Turret', hp: 60, speed: 0, r: 14, dmg: 8, cost: 3, col: '#a0a0b0', blood: '#555a66' },
 };
+Object.assign(ENEMY, {
+  raider:    { name: 'Raider', hp: 30, speed: 75, r: 12, dmg: 10, cost: 3, col: '#e0804a', ai: 'burst', blood: '#7a2a1a' },
+  crab:      { name: 'Mud Crab', hp: 75, speed: 78, r: 14, dmg: 15, cost: 3, col: '#d06a4a', ai: 'grunt', blood: '#5a3a2a' },
+  frostwolf: { name: 'Frost Wolf', hp: 34, speed: 105, r: 12, dmg: 20, cost: 3, col: '#bfe6ff', ai: 'dasher', blood: '#6aa8d0' },
+  icetower:  { name: 'Ice Spire', hp: 70, speed: 0, r: 14, dmg: 8, cost: 4, col: '#8ae8ff', ai: 'ring', blood: '#6aa8d0' },
+  smelter:   { name: 'Smelter', hp: 150, speed: 50, r: 20, dmg: 25, cost: 5, col: '#ff8a1f', ai: 'tank', blood: '#a03a10' },
+  drone:     { name: 'Drone', hp: 18, speed: 120, r: 10, dmg: 8, cost: 2, col: '#3de8c8', ai: 'shooter', blood: '#1a8a78' },
+  laser:     { name: 'Laser Eye', hp: 34, speed: 55, r: 13, dmg: 20, cost: 5, col: '#ff3de8', ai: 'sniper', blood: '#8a1a78' },
+  warden:    { name: 'Warden', hp: 90, speed: 0, r: 16, dmg: 10, cost: 5, col: '#b24bff', ai: 'ring', blood: '#3a1a6a' },
+  wraith:    { name: 'Wraith', hp: 28, speed: 140, r: 11, dmg: 15, cost: 3, col: '#c0a0ff', ai: 'grunt', blood: '#5a3a9a' },
+});
 Object.assign(ENEMY.spitter, { blood: '#3f7a1f' }); Object.assign(ENEMY.swarmer, { blood: '#a04a1a' }); Object.assign(ENEMY.blob, { blood: '#7a4a1f' }); Object.assign(ENEMY.sniper, { blood: '#6a1fa0' });
 // every area has its own cast (like the original), the boss summons from the same list
 const AREA_ENEMIES = [
-  ['grunt', 'shooter', 'rat', 'swarmer', 'maggot'],
-  ['swarmer', 'spitter', 'blob', 'grunt', 'maggot'],
-  ['tank', 'dasher', 'bomber', 'turret', 'shooter', 'grunt'],
-  ['sniper', 'shooter', 'rat', 'blob', 'dasher', 'tank'],
-  ['turret', 'sniper', 'spitter', 'swarmer', 'bomber', 'dasher'],
-  ['grunt', 'shooter', 'dasher', 'bomber', 'tank', 'swarmer', 'spitter', 'blob', 'sniper', 'turret', 'rat'],
+  ['grunt', 'shooter', 'rat', 'swarmer', 'maggot', 'raider'],
+  ['swarmer', 'spitter', 'blob', 'grunt', 'maggot', 'crab', 'crab'],
+  ['tank', 'dasher', 'bomber', 'turret', 'shooter', 'grunt', 'smelter', 'raider'],
+  ['sniper', 'shooter', 'rat', 'blob', 'dasher', 'tank', 'frostwolf', 'frostwolf', 'icetower'],
+  ['turret', 'sniper', 'spitter', 'swarmer', 'bomber', 'dasher', 'drone', 'drone', 'laser'],
+  ['grunt', 'shooter', 'dasher', 'bomber', 'tank', 'spitter', 'blob', 'sniper', 'turret', 'raider', 'smelter', 'drone', 'laser', 'warden', 'wraith', 'wraith'],
 ];
 const ELITE_MODS = {
   shield: { name: 'Shielded', col: '#3de8ff' },

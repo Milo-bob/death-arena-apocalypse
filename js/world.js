@@ -126,7 +126,7 @@ Object.assign(Game, {
       if (c.type === 'camp') c.obj = { kind: 'rest', x: c.cx, y: c.cy };
       else if (c.type === 'shop' || c.type === 'event' || c.type === 'curse') c.obj = { kind: c.type, x: c.cx, y: c.cy };
     }
-    C.floor = buildCaveFloor(act, run.seed, W); this.spawnRoamers(W);
+    C.floor = buildCaveFloor(act, run.seed, W); this.spawnRoamers(W); this.areaHazards(W);
     this.mode = 'fight'; this.paused = false; this.frozen = false; this.fade = { t: 0.25, done: true, fn() {} }; document.body.classList.add('fight'); UI.hide();
     Music.play('menu'); this.persist();
   },
@@ -183,10 +183,16 @@ Object.assign(Game, {
     if (d < 430 || e.hp < e.maxhp) { e.awake = true; return true; }
     return false;
   },
+  areaHazards(Wd) {   // every area has its own rule of the ground
+    const C = this.C, run = this.run, a = areaOf(run.act), R = rng(run.seed + 7), sc = Wd.cells[Wd.startId];
+    const spots = (n, rad, minD, fn) => { for (let i = 0, g = 0; i < n && g < 400; g++) { const x = (3 + R() * (COLS - 6)) * TILE, y = (3 + R() * (ROWS - 6)) * TILE; if (this.openAt(x, y, rad) && Math.hypot(x - sc.cx, y - sc.cy) > minD) { fn(x, y); i++; } } };
+    if (a === 1) spots(9, 60, 200, (x, y) => C.zones.push({ x, y, r: 48 + R() * 28, dur: 1e9, max: 1e9, slow: 0.35, slowP: true, col: '#3f7a1f' }));   // sewers: sticky toxic puddles
+    if (a === 2) spots(16, 22, 260, (x, y) => C.props.push({ x, y, r: 13, hp: 22, maxhp: 22, flash: 0 }));   // foundry: barrels everywhere
+  },
   spawnRoamers(Wd) {
     const C = this.C, run = this.run, act = run.act, R = rng(run.seed + 99), sc = Wd.cells[Wd.startId], boss = Wd.cells.find(c => c.type === 'boss');
-    C.hpS = (1 + 0.14 * act) * this.P.enemyHp * 1.15; C.dmgS = (1 + 0.06 * act); C.spdS = 1;
-    const budget = (40 + act * 4) * (boss ? 0.55 : 1), caves = Wd.nodes.filter(n => n.type === 'cave' && Math.hypot(n.x - sc.cx, n.y - sc.cy) > 520), tot = caves.reduce((s, n) => s + n.r, 0) || 1;
+    C.hpS = (1 + 0.2 * act) * this.P.enemyHp * 1.5; C.dmgS = (1 + 0.1 * act); C.spdS = 1;
+    const budget = (50 + act * 5) * (boss ? 0.55 : 1), caves = Wd.nodes.filter(n => n.type === 'cave' && Math.hypot(n.x - sc.cx, n.y - sc.cy) > 520), tot = caves.reduce((s, n) => s + n.r, 0) || 1;
     const maggots = AREA_ENEMIES[areaOf(act)].includes('maggot');
     // rule: enemy packs sit in the caverns (bigger cavern = more enemies), never within 520px of where you start
     for (const n of caves) {
@@ -231,7 +237,7 @@ Object.assign(Game, {
     run.ammo = run.ammo || startAmmo();
     const want = this.ammoWanted(), low = run.ammo[want] / AMMO[want].max < 0.35;
     if (!e.boss && Math.random() < Math.min(0.85, (low ? 0.34 : 0.17) * P.dropMul)) this.spawnItem(e.x, e.y, 'ammo', { type: want, amt: AMMO[want].amt });
-    if (!e.boss && !P.noHeal && Math.random() < (run.hp < P.maxhp * 0.5 ? 0.09 : 0.03) * Math.min(P.dropMul, 1.8)) this.spawnItem(e.x, e.y, 'heal', { amt: 10 });
+    if (!e.boss && !P.noHeal && Math.random() < (run.hp < P.maxhp * 0.5 ? 0.05 : 0.015) * Math.min(P.dropMul, 1.8)) this.spawnItem(e.x, e.y, 'heal', { amt: 10 });
     if (P.bloodlust && !e.boss && !P.noHeal && Math.random() < P.bloodlust) this.healP(10);
     if (e.free) {
       C.lvlKills++;

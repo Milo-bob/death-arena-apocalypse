@@ -223,12 +223,13 @@ const Game = {
     if (act >= 2 || row >= 5) avail.push('sniper');
     if (act >= 1 || row >= 2) avail.push('turret');
     if (row >= 2) avail.push('rat');
+    if (row >= 1 || act > 0) avail.push('raider', 'crab', 'frostwolf', 'icetower', 'smelter', 'drone', 'laser', 'warden', 'wraith');
     const cast = AREA_ENEMIES[areaOf(act)].filter(t => avail.includes(t)); if (cast.length) avail = cast;
     const list = [];
     while (budget > 0) {
       const o = avail.filter(t => ENEMY[t].cost <= budget);
       if (!o.length) break;
-      const t = wpick(o, x => x === 'grunt' ? 1.6 : x === 'tank' ? 0.8 : ['shooter', 'spitter', 'sniper', 'turret'].includes(x) ? 3 : 1.4);
+      const t = wpick(o, x => x === 'grunt' ? 1.6 : x === 'tank' ? 0.8 : ['shooter', 'spitter', 'sniper', 'turret', 'raider', 'drone', 'laser', 'icetower', 'warden'].includes(x) ? 3 : 1.4);
       list.push(t); budget -= ENEMY[t].cost;
     }
     return list;
@@ -245,7 +246,7 @@ const Game = {
   },
   makeEnemy(type, x, y, elite) {
     const C = this.C, d = ENEMY[type];
-    const e = { type, x, y, lx: x, ly: y, r: d.r, hp: d.hp * C.hpS, maxhp: d.hp * C.hpS, sh: 0, dmg: d.dmg * C.dmgS, speed: d.speed * C.spdS * 1.15, col: d.col, atk: 0, cd: rnd(0.5, 2), state: 'move', st: 0, flash: 0, vx: 0, vy: 0,
+    const e = { type, x, y, lx: x, ly: y, r: d.r, hp: d.hp * C.hpS, maxhp: d.hp * C.hpS, sh: 0, dmg: d.dmg * C.dmgS, speed: d.speed * C.spdS * 1.3, col: d.col, atk: 0, cd: rnd(0.5, 2), state: 'move', st: 0, flash: 0, vx: 0, vy: 0,
       slow: 0, slowT: 0, poison: 0, poisonT: 0, burn: 0, burnT: 0, bladeCd: 0, ang: 0, sd: Math.random() < 0.5 ? 1 : -1, wind: 0, fire: rnd(1, 2.2), spawnT: 0.4 };
     if (elite) {
       e.elite = elite; e.hp *= 2.2; e.maxhp = e.hp; e.dmg *= 1.2;
@@ -328,7 +329,7 @@ const Game = {
     if (!C || p.inv > 0 || p.dashT > 0) return false;
     if (p.shield > 0) { C.fx.push({ k: 'ring', x: p.x, y: p.y, r: 30, t: 0.2, max: 0.2, col: '#ffe94a' }); return false; }
     const d = dmg * P.taken;
-    run.hp -= d; p.inv = 0.7; p.flash = 0.2; C.shake = Math.max(C.shake, 8); C.noHit = false; Sfx.hurt(); this.impact(0.09, '#ff2a2a', 0.38); C.hitstop = Math.max(C.hitstop || 0, 0.08);
+    run.hp -= d; p.inv = 0.5; p.flash = 0.2; C.shake = Math.max(C.shake, 8); C.noHit = false; Sfx.hurt(); this.impact(0.09, '#ff2a2a', 0.38); C.hitstop = Math.max(C.hitstop || 0, 0.08);
     this.floatText(p.x, p.y - 20, '-' + (Math.round(d) / 10), '#ff2d3d', 1.2);
     this.burst(p.x, p.y, '#ff2d3d', 12, 200);
     if (P.thorns && src && src.hp !== undefined && !src.dead) this.hitEnemy(src, P.thorns, { raw: true, noProc: true, noCrit: true });
@@ -361,7 +362,10 @@ const Game = {
       if (p.dashT <= 0 && P.dashBlast) this.blast(p.x, p.y, 72, 40, true);
       if (Math.random() < 0.6) C.parts.push({ x: p.x, y: p.y, vx: 0, vy: 0, t: 0.25, max: 0.25, col: CLANS[run.clan].color, s: 5 });
     } else if (ml && Math.random() < 0.0) { /* placeholder */ }
-    p.x += mx * sp * dt; p.y += my * sp * dt;
+    if (areaOf(run.act) === 3 && p.dashT <= 0) {   // frozen wastes: the ground is ice, you slide
+      p.ivx = (p.ivx || 0) + (mx * sp - (p.ivx || 0)) * Math.min(1, dt * 3.2); p.ivy = (p.ivy || 0) + (my * sp - (p.ivy || 0)) * Math.min(1, dt * 3.2);
+      p.x += p.ivx * dt; p.y += p.ivy * dt;
+    } else { p.ivx = mx * sp; p.ivy = my * sp; p.x += mx * sp * dt; p.y += my * sp * dt; }
     this.collide(p, p.r);
     if (p.dashCd > 0) p.dashCd -= dt;
     if (p.inv > 0) p.inv -= dt; if (p.flash > 0) p.flash -= dt; if (p.over > 0) p.over -= dt; if (p.shield > 0) p.shield -= dt; if (p.abT > 0) p.abT -= dt;
@@ -569,14 +573,27 @@ const Game = {
         else { e.fire -= dt; if (e.fire <= 0) e.wind = 0.9; }
         if (touch && e.atk <= 0 && this.hurt(e.dmg, e)) e.atk = 0.8; break;
       }
+      case 'burst': {   // fires quick three-round bursts
+        const tx = Math.cos(ang), ty = Math.sin(ang); let vx = -ty * e.sd * spd * 0.6, vy = tx * e.sd * spd * 0.6;
+        if (d > 300) { vx = tx * spd; vy = ty * spd; } else if (d < 190) { vx = -tx * spd; vy = -ty * spd; }
+        this.moveE(e, vx, vy, dt);
+        e.fire -= dt; if (e.fire <= 0 && d < 580) { e.burstN = 3; e.bcd = 0; e.fire = 2.1 * rnd(0.8, 1.2); }
+        if (e.burstN > 0) { e.bcd -= dt; if (e.bcd <= 0) { this.eShoot(e, ang + rnd(-0.07, 0.07), 330, e.dmg); e.burstN--; e.bcd = 0.11; } }
+        if (touch && e.atk <= 0 && this.hurt(e.dmg, e)) e.atk = 0.8; break;
+      }
+      case 'ring': {   // stationary: pulses a ring of bullets
+        e.vx = e.vy = 0; this.moveE(e, 0, 0, dt);
+        if (d < 620) { e.fire -= dt; if (e.fire <= 0) { const n = 10, off = rnd(0, 6.283); for (let i = 0; i < n; i++) this.eShoot(e, off + i * 6.283 / n, 190, e.dmg); e.fire = 3.2 * rnd(0.8, 1.2); } }
+        break;
+      }
       case 'grunt': this.moveE(e, Math.cos(ang) * spd, Math.sin(ang) * spd, dt); if (touch && e.atk <= 0) { if (this.hurt(e.dmg, e)) e.atk = 0.8; } break;
       case 'shooter': {
         const sd = e.sd, tx = Math.cos(ang), ty = Math.sin(ang);
         let vx = -ty * sd * spd * 0.6, vy = tx * sd * spd * 0.6;
         if (d > 290) { vx = tx * spd; vy = ty * spd; } else if (d < 190) { vx = -tx * spd; vy = -ty * spd; }
         this.moveE(e, vx, vy, dt);
-        if (e.wind > 0) { e.wind -= dt; if (e.wind <= 0) { this.eShoot(e, ang, 300, e.dmg); if (this.run.act >= 2) { this.eShoot(e, ang + 0.2, 300, e.dmg); this.eShoot(e, ang - 0.2, 300, e.dmg); } e.fire = 1.5 * rnd(0.8, 1.2) * (e.elite === 'swift' ? 0.6 : 1); } }
-        else { e.fire -= dt; if (e.fire <= 0) e.wind = 0.45; }
+        if (e.wind > 0) { e.wind -= dt; if (e.wind <= 0) { this.eShoot(e, ang, 330, e.dmg); if (this.run.act >= 2) { this.eShoot(e, ang + 0.2, 300, e.dmg); this.eShoot(e, ang - 0.2, 300, e.dmg); } e.fire = 1.2 * rnd(0.8, 1.2) * (e.elite === 'swift' ? 0.6 : 1); } }
+        else { e.fire -= dt; if (e.fire <= 0) e.wind = 0.35; }
         if (touch && e.atk <= 0 && this.hurt(e.dmg, e)) e.atk = 0.8; break;
       }
       case 'dasher':
@@ -916,9 +933,10 @@ const Game = {
       this.sprite('b:' + areaOf(this.run.act), e.x, e.y, fa, 2, fl);
     } else {
       let fa = ang;
-      if (e.type === 'dasher' && e.state !== 'move') fa = e.ang;
-      if (e.type === 'dasher' && e.state === 'aim') { ctx.globalAlpha = 0.3 + 0.3 * Math.sin(C.t * 30); pxLine(e.x, e.y, e.x + Math.cos(e.ang) * 330, e.y + Math.sin(e.ang) * 330, 12, '#ff8a1f'); ctx.globalAlpha = 1; }
-      if (e.type === 'shooter' && e.wind > 0) { ctx.globalAlpha = 0.5; pxLine(e.x, e.y, e.x + Math.cos(ang) * 400, e.y + Math.sin(ang) * 400, 2, '#ffd91f'); ctx.globalAlpha = 1; }
+      const eai = ENEMY[e.type].ai || e.type;
+      if (eai === 'dasher' && e.state !== 'move') fa = e.ang;
+      if (eai === 'dasher' && e.state === 'aim') { ctx.globalAlpha = 0.3 + 0.3 * Math.sin(C.t * 30); pxLine(e.x, e.y, e.x + Math.cos(e.ang) * 330, e.y + Math.sin(e.ang) * 330, 12, '#ff8a1f'); ctx.globalAlpha = 1; }
+      if (eai === 'shooter' && e.wind > 0) { ctx.globalAlpha = 0.5; pxLine(e.x, e.y, e.x + Math.cos(ang) * 400, e.y + Math.sin(ang) * 400, 2, '#ffd91f'); ctx.globalAlpha = 1; }
       if (e.type === 'bomber' && e.state === 'fuse') { pxRing(e.x, e.y, 76, 'rgba(255,100,120,.7)', 2); if (Math.floor(C.t * 14) % 2) fa += 0; }
       const sc = e.type === 'bomber' && e.state === 'fuse' ? 2 : 2;
       this.sprite('e:' + e.type, e.x, e.y, fa, sc, fl || (e.type === 'bomber' && e.state === 'fuse' && Math.floor(C.t * 14) % 2 === 0));

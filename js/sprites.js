@@ -217,33 +217,7 @@ HERO_ART.brute = P => [   // robot: four angular legs like leaves, a core, and a
   part(sB(16.4, 12, 2.2, 2.2, 0.6), 'dark'), dot(16, 12, P.x), dot(19, 10, P.a), dot(19, 14, P.a), part(sB(19.6, 12, 2, 0.7), 'cy'), dot(23, 12, CY),
 ];
 
-// ---------- weapon designs: the old top-down heroes live on as late-game weapons ----------
-const WEAPON_ART = {
-  maw: { clan: 'bio', f: P => [   // plant: leaves around a bulb with a flytrap mouth
-  part(sP([[2.5, 3.5], [11.5, 8], [5, 11]]), 'dark'), part(sP([[2.5, 20.5], [11.5, 16], [5, 13]]), 'dark'),
-  part(sP([[0.8, 8.5], [8, 10.5], [3, 12]]), 'dark'), part(sP([[0.8, 15.5], [8, 13.5], [3, 12]]), 'dark'),
-  part(sC(10.5, 12, 6.2), 'body'), part(sC(10.5, 12, 2.6), 'dark'), dot(9, 11, P.x), dot(10, 13, P.x), dot(7, 12, P.a),
-  part(sP([[13, 5.6], [22.5, 9.2], [17, 11.2]]), 'acc'), part(sP([[13, 18.4], [22.5, 14.8], [17, 12.8]]), 'acc'),
-  dot(19, 10, P.a), dot(21, 10, P.a), dot(19, 14, P.a), dot(21, 14, P.a), part(sB(17.5, 12, 3.2, 0.7), 'cy'), dot(23, 12, CY),
-  ] },
-  needle: { clan: 'cyber', f: P => [
-    part(sP([[2, 3.5], [9, 7], [4, 9.5]]), 'dark'), part(sP([[2, 20.5], [9, 17], [4, 14.5]]), 'dark'),
-    part(sP([[3.5, 12], [8, 6.5], [16, 8.2], [19.2, 12], [16, 15.8], [8, 17.5]]), 'body'),
-    part(sB(17.5, 12, 0.8, 3.4), 'acc'), part(sLine(18, 12, 23.2, 12, 0.7), 'cy'), dot(23, 12, ICE),
-    part(sC(11.5, 12, 3), 'dark'), part(sB(13, 12, 0.7, 2), 'cy'), dot(7, 9, P.a), dot(7, 15, P.a), dot(5, 12, P.a),
-  ] },
-  egg: { clan: 'bio', f: P => [
-    part(sC(5.5, 12, 4.2), 'dark'), part(sC(9.5, 7.5, 3.4), 'body'), part(sC(9.5, 16.5, 3.4), 'body'), dot(8, 7, P.x), dot(8, 17, P.x), dot(4, 12, P.x),
-    part(sC(13, 12, 5), 'body'), part(sC(13, 12, 2.2), 'dark'), dot(12, 11, P.a),
-    part(sB(19, 12, 3, 2.4, 0.8), 'dark'), part(sB(21.8, 12, 0.9, 3.2), 'cy'), dot(19, 10, P.a), dot(19, 14, P.a),
-  ] },
-  boiler: { clan: 'steam', f: P => [
-    part(sB(4.5, 7.5, 1.7, 2, 0.5), 'dark'), part(sB(4.5, 16.5, 1.7, 2, 0.5), 'dark'), dot(4, 6, P.a), dot(4, 15, P.a),
-    part(sC(10, 12, 7.6), 'body'), part(sRing(10, 12, 4.6, 0.5, 8), 'acc'), part(sC(10, 12, 2.4), 'dark'), dot(9, 11, P.x),
-    part(sB(18, 12, 5, 2.7, 0.5), 'dark'), part(sB(21.8, 12, 1.4, 3.2), 'acc'), part(sB(21.3, 12, 0.6, 1.2), 'cy'),
-    part(sC(13.5, 12, 2.6), 'body'), part(sB(14.8, 12, 0.6, 1.5), 'cy'),
-  ] },
-};
+const WEAPON_ART = {};   // (old hero-shaped weapon art removed: every weapon, also the late-game ones, has its own gun drawing below)
 
 // ---------- weapon sprites: every weapon gets its own pixel drawing (32x16, pointing right, dark outline) ----------
 const WEAPON_SHAPE = {
@@ -253,6 +227,7 @@ const WEAPON_SHAPE = {
   grenade: 'launcher', bazooka: 'tube', rocket: 'smalltube', seeker: 'seeker', heavygrenade: 'biglauncher', hyper: 'hyper', nuke: 'nuke',
   laserpistol: 'laser', plasmagun: 'plasma', lightningpistol: 'lightning', laserrifle: 'laserrifle', plasmarifle: 'plasmarifle', lightningrifle: 'lightrifle', plasmacannon: 'cannon', lightningcannon: 'lightcannon',
   wrench: 'wrench', shovel: 'shovel', bat: 'bat', machete: 'machete', screwdriver: 'screwdriver', axe: 'axe', sledge: 'hammer', chainsaw: 'chainsaw', katana: 'katana', energysword: 'ebl', energyhammer: 'ehammer',
+  maw: 'maw', needle: 'needle', eggcannon: 'eggcannon', boilercannon: 'boilercannon',
 };
 function makeWeaponSprite(id) {
   const w = (HEROES['w_' + id] || HEROES.w_revolver).weapon, shape = WEAPON_SHAPE[id] || 'pistol', am = ammoOf(w), A = am ? AMMO[am].col : '#c8ccd8';
@@ -310,6 +285,10 @@ function makeWeaponSprite(id) {
     case 'chainsaw': r(D, 2, 4, 12, 9); r(A, 3, 5, 5, 3); r(M, 13, 6, 18, 5); r(S, 13, 6, 18, 1); r(D, 13, 11, 18, 1); for (let x = 14; x < 31; x += 3) r(L, x, 5, 1, 1); break;
     case 'ebl': r(K, 2, 7, 7, 3); r(D, 8, 4, 3, 9); r(A, 11, 6, 20, 5); r(G, 11, 7, 20, 3); r(A, 11, 6, 20, 1); break;
     case 'ehammer': r(K, 2, 7, 18, 3); r(A, 18, 1, 13, 14); r(G, 20, 3, 9, 10); r(D, 18, 1, 13, 1); break;
+    case 'maw': r(D, 2, 5, 12, 7); r(W, 0, 7, 4, 4); ring('#3fa31f', 14, 8, 6); ring('#6cf03a', 14, 7, 4); ring(D, 14, 8, 2.4); r('#6cf03a', 18, 2, 13, 3); r('#6cf03a', 18, 11, 13, 3); r('#3fa31f', 18, 4, 13, 1); r('#3fa31f', 18, 10, 13, 1); for (let x = 20; x < 30; x += 3) { r(S, x, 5, 1, 2); r(S, x + 1, 8, 1, 2); } break;
+    case 'needle': r(D, 3, 5, 27, 2); r(D, 3, 8, 27, 2); r(D, 3, 11, 27, 2); r(M, 3, 5, 27, 1); r(A, 6, 6, 20, 1); r(A, 6, 9, 20, 1); r(A, 6, 12, 20, 1); r(L, 30, 5, 3, 1); r(L, 30, 8, 3, 1); r(L, 30, 11, 3, 1); r(D, 1, 4, 5, 10); r(W, 4, 13, 4, 4); break;
+    case 'eggcannon': ring(S, 11, 8, 7); ring('#c8a050', 11, 9, 4); ring(D, 11, 8, 2); r(D, 17, 5, 14, 6); r(M, 17, 5, 14, 1); r(L, 30, 4, 3, 8); r(A, 20, 7, 8, 1); r(W, 1, 10, 5, 4); break;
+    case 'boilercannon': ring('#b0603a', 10, 8, 8); ring('#e08a50', 10, 7, 5); ring(D, 10, 8, 2.6); r(D, 17, 4, 15, 8); r(M, 17, 4, 15, 1); r('#ff8a1f', 29, 2, 3, 12); r(A, 19, 7, 8, 2); r(D, 6, 15, 8, 2); r(L, 2, 6, 3, 4); break;
     default: gun(14, 3); r(W, 9, 9, 4, 5);
   }
   // dark outline around everything that was drawn
@@ -334,6 +313,29 @@ const BPAL = [
 ];
 // ---------- enemies in the style of the original's wasteland creatures, seen from above like the heroes ----------
 const ENEMY_ART = {
+  raider: { n: 16, pal: { b: '#c05a3a', m: '#7a2a1a', d: '#2a1008', a: '#ffd0b0', c: '#ffd91f', x: '#3a3a44' }, f: P => [
+    part(sLine(2.5, 5, 2.5, 11, 0.7), 'dark'), part(sE(6, 8, 3.4, 4.6), 'body'), part(sC(7.8, 8, 2.4), 'dark'), dot(9, 7, P.c), dot(9, 9, P.c),
+    part(sB(11.6, 8.8, 4.6, 0.9, 0.3), 'acc'), part(sB(14.8, 8.8, 1.2, 0.7), 'cy')] },
+  crab: { n: 18, pal: { b: '#d06a4a', m: '#8a3a28', d: '#2a1008', a: '#ffc0a0', c: '#ffd91f', x: '#6a3a2a' }, f: P => [
+    part(sLine(4, 4.4, 1.6, 2, 0.55), 'dark'), part(sLine(7, 3.6, 5.6, 1, 0.55), 'dark'), part(sLine(4, 13.6, 1.6, 16, 0.55), 'dark'), part(sLine(7, 14.4, 5.6, 17, 0.55), 'dark'),
+    part(sE(8, 9, 5.6, 5), 'body'), part(sE(8, 9, 3.2, 2.8), 'dark'), dot(6, 8, P.a), dot(9, 10, P.a),
+    part(sP([[11, 3], [17, 3.4], [15.4, 6.8], [11.6, 6]]), 'acc'), part(sP([[11, 15], [17, 14.6], [15.4, 11.2], [11.6, 12]]), 'acc'), dot(13, 8, P.c), dot(13, 10, P.c)] },
+  frostwolf: { n: 16, pal: { b: '#bfe6ff', m: '#6aa0cc', d: '#1a2c40', a: '#ffffff', c: '#ff4a4a', x: '#4a6a90' }, f: P => [
+    part(sLine(1.6, 8, 0.3, 5.6, 0.8), 'acc'), part(sE(6, 8, 5, 2.8), 'body'), part(sP([[9.6, 5.6], [15.4, 7.2], [15.4, 8.8], [9.6, 10.4]]), 'body'),
+    part(sP([[8.6, 5.4], [10, 2.8], [11.2, 5.6]]), 'dark'), part(sP([[8.6, 10.6], [10, 13.2], [11.2, 10.4]]), 'dark'), dot(12, 6.6, P.c), dot(12, 9.4, P.c), dot(15, 8, P.d)] },
+  icetower: { n: 18, pal: { b: '#8ae8ff', m: '#3a8ab0', d: '#0e2a3a', a: '#e6fdff', c: '#ffffff', x: '#ff2d3d' }, f: P => [
+    part(sStar(9, 9, 8.4, 5, 6, 0), 'body'), part(sStar(9, 9, 5.4, 3.2, 6, 0.5), 'acc'), part(sC(9, 9, 2.4), 'dark'), dot(9, 9, P.x)] },
+  smelter: { n: 26, pal: { b: '#e0762a', m: '#903a10', d: '#2a1008', a: '#ffd0a0', c: '#ffd91f', x: '#3a3a44' }, f: P => [
+    part(sE(11, 13, 9.4, 8), 'body'), part(sE(11, 13, 6, 5), 'dark'), part(sB(17, 5.6, 4, 2, 0.4), 'acc'), part(sB(17, 20.4, 4, 2, 0.4), 'acc'),
+    part(sC(20, 13, 3.4), 'dark'), dot(21, 12, P.c), dot(21, 14, P.c), part(sB(23.4, 13, 2.2, 0.9), 'cy'), dot(8, 9, P.a), dot(8, 17, P.a), dot(13, 13, P.a)] },
+  drone: { n: 14, pal: { b: '#3de8c8', m: '#1a8a78', d: '#08302a', a: '#b0fff0', c: '#ff3a3a', x: '#ffd91f' }, f: P => [
+    part(sB(3, 2.4, 2.4, 0.8, 0.3), 'acc'), part(sB(3, 11.6, 2.4, 0.8, 0.3), 'acc'), part(sC(7, 7, 3.6), 'body'), part(sC(7, 7, 1.8), 'dark'), dot(9, 7, P.c), part(sB(11, 7, 1.6, 0.5), 'cy')] },
+  laser: { n: 18, pal: { b: '#ff3de8', m: '#8a1a78', d: '#300a2a', a: '#ffc0f4', c: '#ffffff', x: '#3de8ff' }, f: P => [
+    part(sP([[2, 4], [6, 3.6], [6, 7]]), 'dark'), part(sP([[2, 14], [6, 14.4], [6, 11]]), 'dark'), part(sC(8, 9, 6), 'body'), part(sC(10, 9, 3.8), 'acc'), part(sC(11, 9, 2), 'dark'), dot(11, 9, P.x), part(sB(15.4, 9, 2.4, 0.8, 0.2), 'cy')] },
+  warden: { n: 22, pal: { b: '#b24bff', m: '#6a1fd0', d: '#1c0d4a', a: '#e0b0ff', c: '#ffd91f', x: '#3de8ff' }, f: P => [
+    part(sStar(11, 11, 10, 6.5, 8, 0), 'dark'), part(sC(11, 11, 6.6), 'body'), part(sC(11, 11, 4), 'acc'), part(sC(11, 11, 2), 'dark'), dot(11, 11, P.c)] },
+  wraith: { n: 16, pal: { b: '#c0a0ff', m: '#7a5ad0', d: '#22104a', a: '#f0e8ff', c: '#ffffff', x: '#3de8ff' }, f: P => [
+    part(sP([[0.6, 5], [6, 6.6], [6, 9.4], [0.6, 11]]), 'acc'), part(sE(7.4, 8, 4.4, 3.6), 'body'), part(sP([[8, 3.4], [13, 5], [9, 6]]), 'acc'), part(sP([[8, 12.6], [13, 11], [9, 10]]), 'acc'), dot(10, 7, P.c), dot(10, 9, P.c)] },
   grunt: { n: 16, pal: { b: '#e8e0b0', m: '#a89870', d: '#3a3220', a: '#fff4c0', c: '#ff4a2a', x: '#c8a050' }, f: P => [   // maggot
     part(sE(3.6, 8, 3, 2.6), 'body'), part(sE(7.4, 8, 3.4, 3.1), 'body'), part(sE(11.6, 8, 3.1, 2.8), 'body'),
     part(sLine(5.6, 5.4, 5.6, 10.6, 0.3), 'dark'), part(sLine(9.4, 5.2, 9.4, 10.8, 0.3), 'dark'), dot(13, 7, P.c), dot(13, 9, P.c), dot(14, 8, P.x)] },
