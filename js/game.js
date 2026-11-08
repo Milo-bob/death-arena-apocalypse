@@ -222,6 +222,8 @@ const Game = {
     if (row >= 1 || act > 0) avail.push('swarmer');
     if (act >= 1 || row >= 3) avail.push('spitter', 'blob');
     if (act >= 2 || row >= 5) avail.push('sniper');
+    if (act >= 1 || row >= 2) avail.push('turret');
+    if (row >= 2) avail.push('rat');
     const list = [];
     while (budget > 0) {
       const o = avail.filter(t => ENEMY[t].cost <= budget);
@@ -269,7 +271,7 @@ const Game = {
     if (!o.raw && !o.noCrit && Math.random() < P.crit) { crit = true; d *= P.critMul; }
     if (crit && P.execute && !e.boss && e.hp < e.maxhp * 0.3) d = e.hp + e.sh + 1;
     this.dealDamage(e, d, crit);
-    C.hitstop = Math.max(C.hitstop || 0, crit ? 0.05 : 0.018); C.shake = Math.max(C.shake, crit ? 3 : 1);
+    C.hitstop = Math.max(C.hitstop || 0, crit ? 0.05 : 0.018); C.shake = Math.max(C.shake, crit ? 3 : 1); if (this.bleed) this.bleed(e);
     Sfx.hit();
     if (o.noProc) return;
     if (P.poison > 0) { e.poison = Math.max(e.poison, P.poison * P.poisonMul); e.poisonT = 3; if (P.poisonSlow) { e.slow = 0.35; e.slowT = 1.5; } }
@@ -305,6 +307,7 @@ const Game = {
     run.kills++; C.kills = (C.kills || 0) + 1;
     this.burst(e.x, e.y, e.col, e.boss ? 40 : 10, e.boss ? 260 : 150); Sfx.kill();
     C.hitstop = Math.max(C.hitstop || 0, e.boss ? 0.2 : e.elite ? 0.07 : 0.03); C.shake = Math.max(C.shake, e.boss ? 14 : e.elite ? 7 : 2.5);
+    if (this.stain) this.stain(e);
     if (this.dropWeapon) this.dropWeapon(e);
     if (this.onKill) this.onKill(e);
     if (e.boss) { C.eb.length = 0; C.haz.length = 0; C.beams.length = 0; C.markers.length = 0; for (const q of C.en) if (q !== e) q.dead = true; C.shake = 14; }
@@ -446,17 +449,20 @@ const Game = {
   },
 
   // ---------- weapons ----------
-  fire(w) {
+  fire(w, noq) {
     const C = this.C, P = this.P, p = C.p, hero = HEROES[this.run.hero], col = CLANS[hero.clan].color, a0 = p.aim;
     C.shake = Math.max(C.shake, w.dmg >= 25 || w.type === 'mortar' ? 3 : 1);
     if (w.type === 'shot') {
       const n = w.n + P.extra; Sfx.shoot();
+      if (w.burst > 1 && !noq) { C.burstQ = C.burstQ || []; for (let i = 1; i < w.burst; i++) C.burstQ.push({ t: 0.07 * i, w }); }
+      const rc = clamp(30 + w.dmg * n * 0.8, 30, 170); p.kvx = (p.kvx || 0) - Math.cos(a0) * rc; p.kvy = (p.kvy || 0) - Math.sin(a0) * rc;
+      this.burst(p.x + Math.cos(a0) * 18, p.y + Math.sin(a0) * 18, '#fff3b0', 2, 130);
       for (let i = 0; i < n; i++) {
         const a = a0 + (n > 1 ? (i - (n - 1) / 2) * w.spread : rnd(-w.spread, w.spread) / 2);
-        C.pb.push({ x: p.x + Math.cos(a) * 14, y: p.y + Math.sin(a) * 14, vx: Math.cos(a) * w.speed, vy: Math.sin(a) * w.speed, r: w.size, dmg: w.dmg, pierce: w.pierce + P.pierce, life: w.life * P.range, hit: [], homing: (w.homing || 0) + P.homing, col });
+        C.pb.push({ x: p.x + Math.cos(a) * 14, y: p.y + Math.sin(a) * 14, vx: Math.cos(a) * w.speed, vy: Math.sin(a) * w.speed, r: w.size, dmg: w.dmg, pierce: w.pierce + P.pierce, life: w.life * P.range, hit: [], homing: (w.homing || 0) + P.homing, col, boom: w.boom || 0, boomDmg: w.boomDmg || 0, bounce: w.bounce || 0 });
       }
     } else if (w.type === 'cone') {
-      Sfx.slash();
+      Sfx.slash(); p.kvx = (p.kvx || 0) + Math.cos(a0) * 150; p.kvy = (p.kvy || 0) + Math.sin(a0) * 150;
       const range = w.range * P.range, arc = w.arc * (1 + 0.2 * P.extra);
       C.fx.push({ k: 'arc', x: p.x, y: p.y, a: a0, r: range, arc, t: 0.14, max: 0.14, col });
       for (const e of C.en) {
@@ -542,6 +548,11 @@ const Game = {
     if (e.freeze > 0) { e.freeze -= dt; this.moveE(e, 0, 0, dt); return; }
     const touch = d < e.r + p.r + 2;
     switch (ENEMY[e.type].ai || e.type) {
+      case 'turret': {
+        e.vx = e.vy = 0; this.moveE(e, 0, 0, dt);
+        if (d < 560) { e.fire -= dt; if (e.fire <= 0) { for (const o of [-0.12, 0, 0.12]) this.eShoot(e, ang + o, 260, e.dmg); e.fire = 2.4 * rnd(0.8, 1.2); } }
+        break;
+      }
       case 'spitter': {
         const tx = Math.cos(ang), ty = Math.sin(ang); let vx = -ty * e.sd * spd * 0.5, vy = tx * e.sd * spd * 0.5;
         if (d > 260) { vx = tx * spd; vy = ty * spd; } else if (d < 150) { vx = -tx * spd; vy = -ty * spd; }
@@ -643,17 +654,23 @@ const Game = {
   // ---------- projectiles & hazards ----------
   updateBullets(dt) {
     const C = this.C, p = C.p;
+    if (C.burstQ && C.burstQ.length) { for (const q of C.burstQ) q.t -= dt; const due = C.burstQ.filter(q => q.t <= 0); C.burstQ = C.burstQ.filter(q => q.t > 0); for (const q of due) this.fire(q.w, true); }
     for (const b of C.pb) {
       if (b.homing) {
         let best = null, bd = 260; for (const e of C.en) if (!e.dead && !b.hit.includes(e)) { const d = dist(e, b); if (d < bd) { bd = d; best = e; } }
         if (best) { const sp = Math.hypot(b.vx, b.vy), cur = Math.atan2(b.vy, b.vx); let da = Math.atan2(best.y - b.y, best.x - b.x) - cur; da = Math.atan2(Math.sin(da), Math.cos(da)); const na = cur + clamp(da, -b.homing * dt, b.homing * dt); b.vx = Math.cos(na) * sp; b.vy = Math.sin(na) * sp; }
       }
       b.x += b.vx * dt; b.y += b.vy * dt; b.life -= dt;
-      if (!this.walkable(b.x, b.y) || C.pillars.some(q => b.x > q.x && b.x < q.x + q.w && b.y > q.y && b.y < q.y + q.h)) b.life = 0;
-      if (b.life <= 0) continue;
+      if (!this.walkable(b.x, b.y)) {
+        if (b.bounce > 0) {
+          const px = b.x - b.vx * dt, py = b.y - b.vy * dt; let fx = !this.walkable(b.x, py), fy = !this.walkable(px, b.y); if (!fx && !fy) fx = fy = true;
+          if (fx) b.vx = -b.vx; if (fy) b.vy = -b.vy; b.x = px; b.y = py; b.bounce--; b.hit = [];
+        } else b.life = 0;
+      } else if (C.pillars.some(q => b.x > q.x && b.x < q.x + q.w && b.y > q.y && b.y < q.y + q.h)) b.life = 0;
+      if (b.life <= 0) { this.boomAt(b); continue; }
       for (const e of C.en) if (!e.dead && !b.hit.includes(e) && dist(e, b) < e.r + b.r) {
-        b.hit.push(e); this.hitEnemy(e, b.dmg); this.burst(b.x, b.y, b.col, 3, 90);
-        if (b.pierce-- <= 0) { b.life = 0; break; }
+        b.hit.push(e); this.hitEnemy(e, b.dmg); this.knock(e, Math.atan2(b.vy, b.vx), clamp(b.dmg * 1.2, 12, 60)); this.burst(b.x, b.y, b.col, 3, 90);
+        if (b.pierce-- <= 0) { b.life = 0; this.boomAt(b); break; }
       }
     }
     C.pb = C.pb.filter(b => b.life > 0);

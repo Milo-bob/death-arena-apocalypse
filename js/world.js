@@ -104,7 +104,7 @@ Object.assign(Game, {
     const sc = W.cells[W.startId]; sc.state.visited = true;
     const P = this.P = buildStats(run, Save.data);
     const C = this.C = { world: W, t: 0, en: [], eb: [], pb: [], haz: [], zones: [], gold: [], parts: [], fl: [], turrets: [], beams: [], markers: [], fx: [], pillars: W.pillars,
-      waves: [], waveIdx: 0, waveCd: 0, shake: 0, boss: null, bladeAng: 0, intro: 0, banner: 2.6, bannerText: ACT_NAMES[areaOf(act)].toUpperCase() + ' ' + (areaOf(act) + 1) + '-' + (act % 3 + 1), enc: null, items: [], chests: [], lvlKills: 0, levelTotal: 0, portal: null, levelUps: 0, wdrops: [], hitstop: 0, curCell: sc, cam: { x: clamp(sc.cx - W_ / 2, 0, W.w - W_), y: clamp(sc.cy + 70 - H / 2, 0, W.h - H) }, mx: 0, my: 0,
+      waves: [], waveIdx: 0, waveCd: 0, shake: 0, boss: null, bladeAng: 0, intro: 0, banner: 2.6, bannerText: ACT_NAMES[areaOf(act)].toUpperCase() + ' ' + (areaOf(act) + 1) + '-' + (act % 3 + 1), enc: null, burstQ: [], items: [], chests: [], lvlKills: 0, levelTotal: 0, portal: null, levelUps: 0, wdrops: [], hitstop: 0, curCell: sc, cam: { x: clamp(sc.cx - W_ / 2, 0, W.w - W_), y: clamp(sc.cy + 70 - H / 2, 0, W.h - H) }, mx: 0, my: 0,
       noHit: true, hpS: 1, dmgS: 1, spdS: 1, curse: {}, clearMsg: 0, near: null,
       p: { x: sc.cx, y: sc.cy + 70, lx: sc.cx, ly: sc.cy + 70, r: 12, aim: -Math.PI / 2, fireT: 0.3, dashT: 0, dashCd: 0, dashDir: 0, dashHit: [], inv: 0.5, abT: 2, flash: 0, over: 0, overRate: 1, shield: 0, still: 0, trailT: 0, regenAcc: 0 },
       dust: Array.from({ length: 36 }, () => ({ x: rnd(0, W_), y: rnd(60, H), vx: rnd(-6, 6), vy: areaOf(act) === 1 ? rnd(-22, -8) : rnd(-4, 6) })) };
@@ -171,11 +171,11 @@ Object.assign(Game, {
     for (let guard = 0; budget > 0 && guard < 300; guard++) {
       const x = (3 + R() * (COLS - 6)) * TILE, y = (3 + R() * (ROWS - 6)) * TILE, cz = this.cellAt(x, y);
       if (!this.fits(x, y, 24) || Math.hypot(x - sc.cx, y - sc.cy) < 650 || (cz && (cz.safe || cz.type === 'boss'))) continue;
-      const cost = 4 + Math.min(act, 6), list = this.compose(Math.min(budget, cost), act, Math.min(4, 1 + act)); budget -= cost;
+      const cost = 4 + Math.min(act, 6), list = R() < 0.16 ? Array(5 + Math.floor(R() * 3)).fill('maggot') : this.compose(Math.min(budget, cost), act, Math.min(4, 1 + act)); budget -= cost;
       for (const t of list) {
         const ex = x + (R() - 0.5) * 90, ey = y + (R() - 0.5) * 90;
         if (!this.fits(ex, ey, 20)) continue;
-        const elite = t !== 'grunt' && R() < 0.05 + 0.02 * act ? Object.keys(ELITE_MODS)[Math.floor(R() * 4)] : null;
+        const elite = t !== 'grunt' && t !== 'maggot' && R() < 0.05 + 0.02 * act ? Object.keys(ELITE_MODS)[Math.floor(R() * 4)] : null;
         const e = this.makeEnemy(t, ex, ey, elite); e.free = true; e.spawnT = 0;
       }
     }
@@ -201,9 +201,26 @@ Object.assign(Game, {
     if (run.coreAcc >= 1) { const g = Math.floor(run.coreAcc); run.coreAcc -= g; run.cores += g; }
     if (e.free) {
       C.lvlKills++;
-      if (!C.portal && !isBossLevel(run.act) && C.lvlKills >= Math.ceil(C.levelTotal * 0.8)) { C.portal = { x: e.x, y: e.y }; this.floatText(e.x, e.y - 40, 'THE PORTAL OPENS', '#a06bff', 1.4); Sfx.good(); }
+      if (!C.portal && !isBossLevel(run.act) && C.lvlKills >= Math.ceil(C.levelTotal * 0.9)) { C.portal = { x: e.x, y: e.y }; this.floatText(e.x, e.y - 40, 'THE PORTAL OPENS', '#a06bff', 1.4); Sfx.good(); }
     }
   },
+  // ---------- gore: bodies and blood stay on the floor ----------
+  stain(e) {
+    const C = this.C, run = this.run; if (!C.floor) return;
+    const g = C.floorCtx || (C.floorCtx = C.floor.getContext('2d')), def = ENEMY[e.type], col = e.boss ? '#8a1020' : ((def && def.blood) || '#7a1018'), big = e.boss ? 2.4 : e.r > 15 ? 1.5 : 1;
+    g.save(); g.fillStyle = col;
+    for (let i = 0, n = Math.round(16 * big * big); i < n; i++) { const a = rnd(0, 6.283), d = Math.abs(rnd(-1, 1)) * 34 * big, s = 2 * rndi(1, 3); g.globalAlpha = rnd(0.45, 0.9); g.fillRect(snap(e.x + Math.cos(a) * d), snap(e.y + Math.sin(a) * d), s, s); }
+    const cs = Sprites.corpse(e.boss ? 'b:' + areaOf(run.act) : 'e:' + e.type);
+    g.globalAlpha = 0.9; g.translate(e.x, e.y); g.rotate(rnd(0, 6.283)); g.imageSmoothingEnabled = false; g.drawImage(cs, -cs.width, -cs.height, cs.width * 2, cs.height * 2);
+    g.restore();
+  },
+  bleed(e) {
+    const C = this.C; if (!C.floor || Math.random() < 0.4) return;
+    const g = C.floorCtx || (C.floorCtx = C.floor.getContext('2d')), def = ENEMY[e.type]; g.fillStyle = e.boss ? '#8a1020' : ((def && def.blood) || '#7a1018');
+    for (let i = 0; i < 3; i++) { g.globalAlpha = rnd(0.4, 0.8); g.fillRect(snap(e.x + rnd(-14, 14)), snap(e.y + rnd(-14, 14)), 2 * rndi(1, 2), 2 * rndi(1, 2)); }
+    g.globalAlpha = 1;
+  },
+  boomAt(b) { if (b.boom) { this.C.haz.push({ x: b.x, y: b.y, r: b.boom * this.P.blastRad, t: 0.05, max: 0.05, dmg: b.boomDmg, friendly: true }); } },
   // ---------- pickups: rads (xp), ammo, health; chests ----------
   spawnItem(x, y, kind, o) { const C = this.C; if (C.items.length > 220) return; C.items.push(Object.assign({ x, y, kind, vx: rnd(-110, 110), vy: rnd(-110, 110), t: 0 }, o || {})); },
   addXp(n) {
@@ -267,7 +284,7 @@ Object.assign(Game, {
   },
   levelLabel() {
     const run = this.run, C = this.C, a = areaOf(run.act), loop = Math.floor(run.act / LOOP_LEVELS);
-    return (loop ? 'LOOP ' + loop + '  ' : '') + ACT_NAMES[a].toUpperCase() + ' ' + (a + 1) + '-' + (run.act % 3 + 1) + (isBossLevel(run.act) ? '  BOSS' : '  KILLS ' + C.lvlKills + '/' + Math.ceil(C.levelTotal * 0.8)) + '  LV ' + (run.plv || 1) + (run.heat ? '  HEAT ' + run.heat : '');
+    return (loop ? 'LOOP ' + loop + '  ' : '') + ACT_NAMES[a].toUpperCase() + ' ' + (a + 1) + '-' + (run.act % 3 + 1) + (isBossLevel(run.act) ? '  BOSS' : '  KILLS ' + C.lvlKills + '/' + Math.ceil(C.levelTotal * 0.9)) + '  LV ' + (run.plv || 1) + (run.heat ? '  HEAT ' + run.heat : '');
   },
 
   // ---------- encounters ----------
@@ -328,6 +345,11 @@ Object.assign(Game, {
     const C = this.C, p = C.p, W = this.world, run = this.run; C.near = null; C.nearW = null;
     for (const d of C.wdrops) if (dist(d, p) < 36) C.nearW = d;
     this.updatePickups(1 / 60);
+    if (p.kvx || p.kvy) {   // weapon recoil / melee lunge
+      p.x += p.kvx / 60; p.y += p.kvy / 60; const kd = Math.pow(0.0005, 1 / 60); p.kvx *= kd; p.kvy *= kd;
+      if (Math.abs(p.kvx) + Math.abs(p.kvy) < 4) p.kvx = p.kvy = 0;
+      this.collide(p, p.r);
+    }
     if (C.enc && C.boss && !C.boss.dead && !C.dead) {   // keep the boss fight supplied with ammo
       C.bossAmmoT = (C.bossAmmoT || 0) + 1 / 60;
       if (C.bossAmmoT > 9) { C.bossAmmoT = 0; for (let i = 0; i < 2; i++) { const t = this.ammoWanted(), an = rnd(0, 6.28), x = p.x + Math.cos(an) * 140, y = p.y + Math.sin(an) * 140; if (this.walkable(x, y)) this.spawnItem(x, y, 'ammo', { type: t, amt: AMMO[t].amt }); } }

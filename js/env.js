@@ -3,12 +3,12 @@ function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79
 const sn = v => Math.round(v / 2) * 2;
 
 const BIOME = [
-  { name: 'ruins', decor: 0, slabs: ['#3a3835', '#403d39', '#35332f', '#443f3a'], grout: '#232220', hi: '#57534c', crack: '#171615', puddle: '#1d2a34', wall: ['#2a2826', '#33302c', '#1d1c1a'], amb: 0.5, tint: '6,10,22' },
-  { name: 'sewers', decor: 0, slabs: ['#2e3a2c', '#344230', '#2a3528', '#3a4a34'], grout: '#141c13', hi: '#556a4a', crack: '#0c120b', puddle: '#1c3a1c', wall: ['#1f2a1e', '#283626', '#121a11'], amb: 0.5, tint: '4,16,6' },
-  { name: 'foundry', decor: 1, slabs: ['#3b2c25', '#43322a', '#372920', '#4a372d'], grout: '#1a110d', hi: '#6a4a38', crack: '#120b08', puddle: '#120e0c', wall: ['#2c1e18', '#38271f', '#1a110d'], amb: 0.44, tint: '24,8,2' },
-  { name: 'frozen', decor: 0, slabs: ['#3a4a5a', '#41546a', '#34445a', '#4a5f78'], grout: '#1a2430', hi: '#a8d4f0', crack: '#101822', puddle: '#2a4a6a', wall: ['#2a3a4c', '#334860', '#1a2634'], amb: 0.4, tint: '10,18,30' },
-  { name: 'labs', decor: 2, slabs: ['#2c3a3a', '#324444', '#283636', '#385050'], grout: '#0e1818', hi: '#4ad0c0', crack: '#081212', puddle: '#143a3a', wall: ['#1c2a2a', '#263838', '#101c1c'], amb: 0.48, tint: '2,18,18' },
-  { name: 'core', decor: 2, slabs: ['#241a2e', '#2b1f36', '#20172a', '#30223c'], grout: '#100a16', hi: '#44305a', crack: '#0a0610', puddle: '#1a0f26', wall: ['#1c1226', '#271a33', '#120a1a'], amb: 0.56, tint: '14,2,20' },
+  { name: 'ruins', decor: 0, slabs: ['#3a3835', '#403d39', '#35332f', '#443f3a'], grout: '#232220', hi: '#57534c', crack: '#171615', puddle: '#1d2a34', wall: ['#2a2826', '#33302c', '#1d1c1a'], amb: 0.275, tint: '6,10,22' },
+  { name: 'sewers', decor: 0, slabs: ['#2e3a2c', '#344230', '#2a3528', '#3a4a34'], grout: '#141c13', hi: '#556a4a', crack: '#0c120b', puddle: '#1c3a1c', wall: ['#1f2a1e', '#283626', '#121a11'], amb: 0.275, tint: '4,16,6' },
+  { name: 'foundry', decor: 1, slabs: ['#3b2c25', '#43322a', '#372920', '#4a372d'], grout: '#1a110d', hi: '#6a4a38', crack: '#120b08', puddle: '#120e0c', wall: ['#2c1e18', '#38271f', '#1a110d'], amb: 0.242, tint: '24,8,2' },
+  { name: 'frozen', decor: 0, slabs: ['#3a4a5a', '#41546a', '#34445a', '#4a5f78'], grout: '#1a2430', hi: '#a8d4f0', crack: '#101822', puddle: '#2a4a6a', wall: ['#2a3a4c', '#334860', '#1a2634'], amb: 0.22, tint: '10,18,30' },
+  { name: 'labs', decor: 2, slabs: ['#2c3a3a', '#324444', '#283636', '#385050'], grout: '#0e1818', hi: '#4ad0c0', crack: '#081212', puddle: '#143a3a', wall: ['#1c2a2a', '#263838', '#101c1c'], amb: 0.264, tint: '2,18,18' },
+  { name: 'core', decor: 2, slabs: ['#241a2e', '#2b1f36', '#20172a', '#30223c'], grout: '#100a16', hi: '#44305a', crack: '#0a0610', puddle: '#1a0f26', wall: ['#1c1226', '#271a33', '#120a1a'], amb: 0.308, tint: '14,2,20' },
 ];
 
 function walk(g, R, x, y, len, col, halo) {
@@ -216,8 +216,8 @@ function buildCaveFloor(act, seed, Wd) {
       if (!fl(x + 1, y)) g.fillRect(px + TILE - 8, py, 8, TILE);
       if (!fl(x, y + 1)) g.fillRect(px, py + TILE - 6, TILE, 6);
     } else if (fl(x, y + 1)) {
-      g.fillStyle = B.wall[1]; g.fillRect(px, py + TILE - 16, TILE, 16);
-      g.globalAlpha = 0.5; g.fillStyle = B.hi; g.fillRect(px, py + TILE - 16, TILE, 2); g.globalAlpha = 1;
+      g.fillStyle = B.wall[1]; g.fillRect(px, py + TILE - 24, TILE, 24);
+      g.globalAlpha = 0.85; g.fillStyle = B.hi; g.fillRect(px, py + TILE - 24, TILE, 3); g.globalAlpha = 1;
       g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(px, py + TILE - 6, TILE, 6);
     }
   }

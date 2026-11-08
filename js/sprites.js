@@ -210,6 +210,12 @@ const ENEMY_ART = {
     part(sStar(12, 12, 6, 10.8, 9.2, 0), 'body'), part(sC(12, 12, 6), 'dark'), part(sRing(12, 12, 4, 0.5, 5), 'acc'),
     part(sB(19.5, 12, 4, 2.2), 'dark'), part(sB(22, 12, 1.6, 2.4), 'cy'), dot(7, 12, P.a)] },
 };
+ENEMY_ART.maggot = { n: 12, pal: { b: '#d8c070', m: '#8a7a2a', d: '#2a240a', a: '#fff0b0', c: '#ff4a2a', x: '#ff8a1f' }, f: P => [
+  part(sB(6, 6, 5, 3.2, 1.2), 'body'), dot(9, 5, P.c), dot(9, 7, P.c), dot(3, 6, P.a)] };
+ENEMY_ART.rat = { n: 14, pal: { b: '#b08a6a', m: '#6a4a2a', d: '#241810', a: '#f0d0b0', c: '#ffd91f', x: '#ff8a1f' }, f: P => [
+  part(sP([[1, 7], [5, 3], [10, 5], [13, 7], [10, 9], [5, 11]]), 'body'), part(sLine(1, 7, 0, 10, 0.5), 'dark'), dot(10, 6, P.c), dot(10, 8, P.c), dot(6, 7, P.a)] };
+ENEMY_ART.turret = { n: 20, pal: { b: '#a0a0b0', m: '#60606e', d: '#1c1c24', a: '#e0e0f0', c: '#ffd91f', x: '#ff8a1f' }, f: P => [
+  part(sB(10, 10, 7, 7, 1.5), 'body'), part(sC(10, 10, 3.5), 'dark'), dot(9, 9, P.a), part(sB(16, 10, 4.5, 1.6), 'dark'), part(sB(19.3, 10, 0.9, 2), 'cy')] };
 const BOSS_ART_OF = [0, 1, 1, 0, 2, 2];   // which of the 3 boss drawings each area's boss uses (colours differ per area)
 ENEMY_ART.swarmer = { n: 12, pal: { b: '#ff7a3a', m: '#a04a1a', d: '#3a1a08', a: '#ffd0a0', c: '#ffd91f', x: '#ff8a1f' }, f: P => [
   part(sC(6, 6, 4.4), 'body'), dot(8, 5, P.c), dot(8, 7, P.c), dot(4, 6, P.a)] };
@@ -313,6 +319,12 @@ const Sprites = {
     else if (key[0] === 'e') { const a = ENEMY_ART[key.slice(2)], pal = a.pal || EPAL; c = this.build(a.n, a.f(pal), pal); }
     else { const k = +key.slice(2), a = BOSS_ART[BOSS_ART_OF[k]]; c = this.build(a.n, a.f(BPAL[k]), BPAL[k]); }
     return this.cache[key] = c;
+  },
+  corpse(key) {   // darkened copy for bodies lying on the floor
+    const k = key + '#c'; if (this.cache[k]) return this.cache[k];
+    const sp = this.get(key), c = document.createElement('canvas'); c.width = sp.width; c.height = sp.height; const g = c.getContext('2d');
+    g.drawImage(sp, 0, 0); g.globalCompositeOperation = 'source-atop'; g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(0, 0, c.width, c.height);
+    return this.cache[k] = c;
   },
   white(key) {
     if (this.cache[key + '#w']) return this.cache[key + '#w'];
