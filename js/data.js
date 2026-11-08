@@ -2,6 +2,9 @@
 const W = 960, H = 540;
 const ARENA = { x0: 26, y0: 58, x1: 934, y1: 514 };
 
+// a run is a chain of levels (run.act counts them): 3 levels per area, the third is the boss level; after 3 areas the run loops
+const areaOf = a => Math.floor(a / 3) % 3, isBossLevel = a => a % 3 === 2;
+
 const rnd = (a, b) => a + Math.random() * (b - a);
 const rndi = (a, b) => Math.floor(rnd(a, b + 1));
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
