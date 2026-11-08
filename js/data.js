@@ -343,7 +343,7 @@ const PERKS = {
   stress: { name: 'Stress', tags: [], r: 'common', d: 'The lower your health, the faster you shoot (up to +60%).', a: P => { P.stress += 0.6; } },
   trigger: { name: 'Trigger Fingers', tags: [], r: 'common', d: 'You shoot 25% faster.', a: P => { P.rate *= 1.25; } },
   sharp: { name: 'Sharp Teeth', tags: [], r: 'common', d: 'All your weapons hit 15% harder.', a: P => { P.dmg *= 1.15; } },
-  hammer: { name: 'Hammerhead', tags: [], r: 'common', d: 'Dashing through enemies hurts them.', a: P => { P.dashDmg += 35; } },
+  hammer: { name: 'Hammerhead', tags: [], r: 'common', d: 'Melee weapons hit 40% harder.', a: P => { P.meleeMul *= 1.4; } },
   strong: { name: 'Strong Spirit', tags: [], r: 'common', d: 'A second life: once, you come back with half health.', a: P => { P.phoenix = 1; } },
   open: { name: 'Open Mind', tags: [], r: 'common', d: 'One more mutation to choose from at every level.', a: P => { P.choices += 1; } },
   heavy: { name: 'Heavy Heart', tags: [], r: 'common', d: 'Explosions are 20% wider, +10% damage.', a: P => { P.blastRad *= 1.2; P.dmg *= 1.1; } },
@@ -453,7 +453,7 @@ function newStats() {
   return { dmg: 1, rate: 1.3, speed: 1, maxhp: 80, pierce: 0, extra: 0, crit: 0.05, critMul: 1.75, killHeal: 0, regen: 0, dashCd: 1, dashDmg: 0, range: 1,
     blades: 0, spin: 1, bladeDmg: 1, orbitR: 1, bladeKnock: 0, poison: 0, poisonMul: 1, poisonSlow: 0, poisonSpread: 0, poisonLeech: 0, burn: 0, killBlast: 0, blastRad: 1, blastMul: 1,
     chain: 0, thorns: 0, taken: 1, goldMul: 1, aura: 0, clearHeal: 0, enemyHp: 1, noHeal: 0, homing: 0, phoenix: 0, dashBlast: 0, critBlast: 0, berserk: 0, still: 0,
-    mutagen: 0, trail: 0, execute: 0, abCd: 1, ammoMul: 1, magnet: 1, dual: 0, xpMul: 1, ammoCost: 1, dropMul: 1, lootTier: 0, choices: 0, healMul: 1, ammoCap: 1, foeSlow: 1, refund: 0, shellMul: 1, energyMul: 1, spreadMul: 1, knockMul: 1, stress: 0, blastImmune: 0, bloodlust: 0, boltHoming: 0, tags: {} };
+    mutagen: 0, trail: 0, execute: 0, abCd: 1, ammoMul: 1, magnet: 1, dual: 0, xpMul: 1, ammoCost: 1, dropMul: 1, lootTier: 0, meleeMul: 1, choices: 0, healMul: 1, ammoCap: 1, foeSlow: 1, refund: 0, shellMul: 1, energyMul: 1, spreadMul: 1, knockMul: 1, stress: 0, blastImmune: 0, bloodlust: 0, boltHoming: 0, tags: {} };
 }
 function buildStats(run, save) {
   const hero = HEROES[run.hero], P = newStats();

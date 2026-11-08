@@ -366,9 +366,6 @@ const Game = {
     this.collide(p, p.r);
     if (p.dashCd > 0) p.dashCd -= dt;
     if (p.inv > 0) p.inv -= dt; if (p.flash > 0) p.flash -= dt; if (p.over > 0) p.over -= dt; if (p.shield > 0) p.shield -= dt; if (p.abT > 0) p.abT -= dt;
-    if (Input.keys.shift && p.dashCd <= 0 && p.dashT <= 0) {
-      p.dashDir = ml ? Math.atan2(my, mx) : p.aim; p.dashT = 0.17; p.dashCd = 1.0 * P.dashCd; p.dashHit = []; p.inv = Math.max(p.inv, 0.25); Sfx.dash();
-    }
     if ((Input.keys.q || Input.rdown) && p.abT <= 0) this.useAbility();
     if (P.regen && run.hp < P.maxhp) run.hp = Math.min(P.maxhp, run.hp + P.regen * dt);
     // ---- attack ----
@@ -470,7 +467,7 @@ const Game = {
         if (e.dead) continue;
         const d = dist(e, p); if (d > range + e.r) continue;
         let da = Math.abs(Math.atan2(e.y - p.y, e.x - p.x) - a0); da = Math.min(da, 6.283 - da);
-        if (da < arc / 2 + e.r / Math.max(d, 1)) { this.hitEnemy(e, w.dmg); this.knock(e, a0, 160); }
+        if (da < arc / 2 + e.r / Math.max(d, 1)) { this.hitEnemy(e, w.dmg * P.meleeMul); this.knock(e, a0, 160); }
       }
       for (const pr of C.props) if (!pr.dead) { const d = dist(pr, p); if (d > range + pr.r) continue; let da = Math.abs(Math.atan2(pr.y - p.y, pr.x - p.x) - a0); da = Math.min(da, 6.283 - da); if (da < arc / 2 + 0.3) this.damageProp(pr, w.dmg); }
       C.eb = C.eb.filter(b => { const d = dist(b, p); if (d > range) return true; let da = Math.abs(Math.atan2(b.y - p.y, b.x - p.x) - a0); da = Math.min(da, 6.283 - da); if (da < arc / 2) { this.burst(b.x, b.y, '#fff', 3, 80); return false; } return true; });
@@ -480,7 +477,7 @@ const Game = {
       for (let i = 0; i < n; i++) {
         const a = a0 + (n > 1 ? (i - (n - 1) / 2) * 0.4 : 0), x2 = p.x + Math.cos(a) * reach, y2 = p.y + Math.sin(a) * reach;
         C.fx.push({ k: 'lance', x1: p.x, y1: p.y, x2, y2, w: wd, t: 0.13, max: 0.13, col });
-        for (const e of C.en) if (!e.dead && segDist(e.x, e.y, p.x, p.y, x2, y2) < wd / 2 + e.r) { this.hitEnemy(e, w.dmg); this.knock(e, a, 90); }
+        for (const e of C.en) if (!e.dead && segDist(e.x, e.y, p.x, p.y, x2, y2) < wd / 2 + e.r) { this.hitEnemy(e, w.dmg * P.meleeMul); this.knock(e, a, 90); }
         for (const pr of C.props) if (!pr.dead && segDist(pr.x, pr.y, p.x, p.y, x2, y2) < wd / 2 + pr.r) this.damageProp(pr, w.dmg);
       }
     } else if (w.type === 'mortar') {
@@ -939,9 +936,9 @@ const Game = {
     this.drawHearts(14, 7, run.hp, P.maxhp);
     ctx.font = '12px Silk, monospace'; ctx.textAlign = 'left'; ctx.fillStyle = '#fff'; 
     // dash / ability pips
-    const dk = p.dashCd > 0 ? 1 - p.dashCd / (1.0 * P.dashCd) : 1, ak = p.abT > 0 ? 1 - p.abT / (w.ability.cd * P.abCd) : 1;
-    pxBar(14, 32, 110, 10, dk, dk >= 1 ? '#3de8ff' : '#2a6a80'); pxBar(134, 32, 110, 10, ak, ak >= 1 ? clan.color : '#555');
-    ctx.font = '9px Silk, monospace'; ctx.fillStyle = '#000'; ctx.fillStyle = '#fff'; ctx.fillText('DASH', 20, 41); ctx.fillText(w.ability.name.toUpperCase().slice(0, 12), 140, 41);
+    const ak = p.abT > 0 ? 1 - p.abT / (w.ability.cd * P.abCd) : 1;
+    pxBar(14, 32, 230, 10, ak, ak >= 1 ? clan.color : '#555');
+    ctx.font = '9px Silk, monospace'; ctx.fillStyle = '#000'; ctx.fillStyle = '#fff'; ctx.fillText('[RMB] ' + w.ability.name.toUpperCase().slice(0, 20) + (ak >= 1 ? '  READY' : ''), 20, 41);
     // center info
     ctx.textAlign = 'center'; ctx.font = '12px Silk, monospace'; ctx.fillStyle = '#9fc'; ctx.fillText(this.levelLabel ? this.levelLabel() : '', W / 2, 18);
     ctx.fillStyle = '#fff'; ctx.fillText(HEROES[run.hero].name.toUpperCase() + ' / ' + w.weapon.name.toUpperCase(), W / 2, 36);
@@ -964,7 +961,7 @@ const Game = {
     if (C.dead) { ctx.fillStyle = 'rgba(80,0,0,.5)'; ctx.fillRect(0, 0, W, H); ctx.textAlign = 'center'; ctx.font = '40px Silk, monospace'; ctx.fillStyle = '#ff2d3d'; ctx.fillText('YOU DIED', W / 2, 270); }
     if (this.paused) { ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(0, 50, W, H); ctx.textAlign = 'center'; ctx.font = '30px Silk, monospace'; ctx.fillStyle = '#fff'; ctx.fillText('PAUSED  [P]', W / 2, 270); }
     ctx.textAlign = 'left';
-    ctx.font = '10px Silk, monospace'; ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.textAlign = 'right'; if (C.t < 25) ctx.fillText('WASD MOVE  MOUSE SHOOT  SPACE SWAP WEAPON  RMB ABILITY  SHIFT DASH  E PICK UP', W - 10, H - 50);
+    ctx.font = '10px Silk, monospace'; ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.textAlign = 'right'; if (C.t < 25) ctx.fillText('WASD MOVE  MOUSE SHOOT  SPACE SWAP WEAPON  RMB ABILITY  E PICK UP', W - 10, H - 50);
     ctx.textAlign = 'left';
   },
   renderIdle() {

@@ -34,7 +34,7 @@ const UI = {
   },
   controls() {
     Menu.set('title');
-    const rows = [['WASD', 'Move'], ['Mouse', 'Aim, hold to shoot'], ['Space / X', 'Swap weapon'], ['Right mouse / Q', 'Character ability'], ['Shift', 'Dash'], ['E', 'Pick up weapon / use'], ['F', 'Auto-fire'], ['P / Backspace', 'Pause'], ['M', 'Music']];
+    const rows = [['WASD', 'Move'], ['Mouse', 'Aim, hold to shoot'], ['Space / X', 'Swap weapon'], ['Right mouse / Q', 'Character ability'], ['E', 'Pick up weapon / use'], ['F', 'Auto-fire'], ['P / Backspace', 'Pause'], ['M', 'Music']];
     this.show('<div class="logo"><div class="l1" style="font-size:26px">CONTROLS</div></div><table style="font-size:16px;margin-top:14px">' + rows.map(r => '<tr><td style="color:var(--amber);font-family:Silk;text-align:right;padding-right:18px">' + r[0] + '</td><td>' + r[1] + '</td></tr>').join('') + '</table><div class="menu"><button class="mbtn" data-nav onclick="UI.title()">BACK</button></div>');
     this.navMode = 'menu'; this.focusFirst();
   },
