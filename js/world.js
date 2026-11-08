@@ -229,13 +229,23 @@ Object.assign(Game, {
     const bob = moving ? -Math.abs(Math.sin(C.t * 14)) * 3 : -Math.sin(C.t * 2.6) * 1.2, sq = moving ? 1 + Math.sin(C.t * 28) * 0.04 : 1;
     const spr = p.flash > 0 ? Sprites.white(id) : Sprites.get(id), fx = snap(p.x), fy = snap(p.y + 15);
     ctx.save(); ctx.globalAlpha = 0.4; ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse(fx, fy, 15, 5, 0, 0, 6.283); ctx.fill(); ctx.restore();
-    ctx.imageSmoothingEnabled = false; ctx.save(); ctx.translate(fx, fy + snap(bob)); ctx.scale(face, sq); ctx.drawImage(spr, -24, -48, 48, 48); ctx.restore();
-    this.drawHeldWeapon(p, fx + face * 9, fy + snap(bob) - 20, face);
+    ctx.imageSmoothingEnabled = false; ctx.save(); ctx.translate(fx, fy + snap(bob)); ctx.scale(face, sq); ctx.drawImage(spr, -20, -40, 40, 40); ctx.restore();
+    this.drawHeldWeapon(p, fx + face * 8, fy + snap(bob) - 14, face);
+  },
+  drawFront(key, x, y, face, scale, flash, r, bob) {   // anything standing: shadow, flip left/right, small bob when it moves
+    const s = flash ? Sprites.white(key) : Sprites.get(key), w = s.width * scale, h = s.height * scale, fx = snap(x), fy = snap(y + r * 0.85);
+    ctx.save(); ctx.globalAlpha *= 0.4; ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse(fx, fy, w * 0.36, w * 0.13, 0, 0, 6.283); ctx.fill(); ctx.restore();
+    ctx.imageSmoothingEnabled = false; ctx.save(); ctx.translate(fx, fy + snap(bob || 0)); ctx.scale(face, 1); ctx.drawImage(s, -w / 2, -h, w, h); ctx.restore();
+  },
+  drawArtWeapon(p) {   // the big late-game weapons are drawn in front of the hero
+    const w = kitOf(this.run).weapon; ctx.save(); ctx.translate(snap(p.x + Math.cos(p.aim) * 15), snap(p.y + Math.sin(p.aim) * 15)); ctx.rotate(p.aim); ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(Sprites.get('w:' + w.art), -8, -18, 36, 36); ctx.restore();
   },
   drawHeldWeapon(p, x, y, face) {
     const w = kitOf(this.run).weapon, O = '#0c0c12', M = '#5a5e6a', L = '#9aa0ae';
     ctx.save(); ctx.translate(x, y); ctx.rotate(p.aim); if (face < 0) ctx.scale(1, -1);
-    if (w.type === 'cone') {
+    if (w.art) { ctx.imageSmoothingEnabled = false; ctx.drawImage(Sprites.get('w:' + w.art), -4, -16, 32, 32); }
+    else if (w.type === 'cone') {
       ctx.fillStyle = O; ctx.fillRect(-2, -4, 12, 8); ctx.fillStyle = '#6a4a2a'; ctx.fillRect(-1, -3, 10, 6);
       ctx.fillStyle = O; ctx.fillRect(8, -5, 26, 10); ctx.fillStyle = L; ctx.fillRect(9, -4, 24, 8); ctx.fillStyle = '#eef2fa'; ctx.fillRect(9, -4, 24, 2);
     } else if (w.type === 'lance') {
@@ -386,6 +396,7 @@ Object.assign(Game, {
   },
   weaponIcon(w, col) {
     const O = '#0c0c12', M = '#9aa0ae';
+    if (w.art) { ctx.imageSmoothingEnabled = false; ctx.drawImage(Sprites.get('w:' + w.art), -14, -14, 28, 28); return; }
     if (w.type === 'cone') { ctx.fillStyle = O; ctx.fillRect(-16, -3, 9, 7); ctx.fillRect(-9, -5, 25, 10); ctx.fillStyle = '#6a4a2a'; ctx.fillRect(-15, -2, 7, 5); ctx.fillStyle = '#d8dce8'; ctx.fillRect(-8, -4, 23, 8); ctx.fillStyle = col; ctx.fillRect(-8, 1, 23, 2); }
     else if (w.type === 'lance') { ctx.fillStyle = O; ctx.fillRect(-16, -2, 32, 5); ctx.fillStyle = '#8a6a3a'; ctx.fillRect(-15, -1, 22, 3); ctx.fillStyle = '#d8dce8'; ctx.fillRect(7, -1, 9, 3); }
     else if (w.type === 'blades') { ctx.fillStyle = col; ctx.fillRect(-4, -4, 8, 8); ctx.fillStyle = O; ctx.fillRect(-2, -2, 4, 4); }
@@ -600,8 +611,9 @@ Object.assign(Game, {
       if (d.x < vx0 || d.x > vx1 || d.y < vy0 || d.y > vy1) continue;
       const h = HEROES[d.id], col = CLANS[h.clan].color, x = snap(d.x), y = snap(d.y + Math.sin(C.t * 4 + d.x) * 2);
       ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.fillRect(x - 12, y + 12, 24, 6);
+      if (h.weapon.art) { ctx.imageSmoothingEnabled = false; ctx.drawImage(Sprites.get('w:' + h.weapon.art), x - 16, y - 16, 32, 32); } else {
       ctx.fillStyle = '#0a0b0e'; ctx.fillRect(x - 12, y - 12, 24, 24); ctx.fillStyle = col; ctx.fillRect(x - 12, y - 12, 24, 2); ctx.fillRect(x - 12, y + 10, 24, 2); ctx.fillRect(x - 12, y - 12, 2, 24); ctx.fillRect(x + 10, y - 12, 2, 24);
-      ctx.font = '12px Silk, monospace'; ctx.fillText({ shot: 'S', cone: 'C', blades: 'B', lance: 'L', mortar: 'M' }[h.weapon.type], x, y + 5);
+      ctx.font = '12px Silk, monospace'; ctx.fillText({ shot: 'S', cone: 'C', blades: 'B', lance: 'L', mortar: 'M' }[h.weapon.type], x, y + 5); }
     }
     if (C.nearW && !C.near) { const h = HEROES[C.nearW.id], t = '[E] ' + h.weapon.name.toUpperCase() + ' (' + h.weapon.type + ')', x = snap(C.nearW.x), y = snap(C.nearW.y); ctx.font = '12px Silk, monospace'; ctx.fillStyle = '#000'; ctx.fillText(t, x + 1, y - 23); ctx.fillStyle = '#ffd91f'; ctx.fillText(t, x, y - 24); }
     if (C.near) { const o = C.near.obj, txt = '[E] ' + { shop: 'TRADE', rest: 'REST', event: 'PRAY', curse: 'TOUCH THE STONE' }[o.kind]; ctx.font = '12px Silk, monospace'; ctx.fillStyle = '#000'; ctx.fillText(txt, snap(o.x) + 1, o.y - 51); ctx.fillStyle = '#ffd91f'; ctx.fillText(txt, snap(o.x), o.y - 52); }

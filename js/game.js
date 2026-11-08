@@ -903,7 +903,7 @@ const Game = {
     if (p.inv > 0 && Math.floor(C.t * 20) % 2 === 0 && p.dashT <= 0) ctx.globalAlpha = 0.45;
     if (p.shield > 0) pxRing(p.x, p.y, 22, '#ffe94a', 2);
     if (p.over > 0) pxRing(p.x, p.y, 19, '#ffd91f', 2);
-    this.sprite(this.run.hero, p.x, p.y, p.aim, 2, p.flash > 0);
+    this.sprite(this.run.hero, p.x, p.y, p.aim, 2, p.flash > 0); if (kitOf(this.run).weapon.art) this.drawArtWeapon(p);
     ctx.globalAlpha = 1;
   },
   drawEnemy(e, p) {

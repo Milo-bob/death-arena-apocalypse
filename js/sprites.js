@@ -187,11 +187,13 @@ const HERO_ART = {
 // ---------- Fish, Crystal, Plant, Robot: same top-down look as the other heroes (bright edge, dark fill, cyan weapon marker, facing right) ----------
 const sE = (cx, cy, rx, ry) => (x, y) => (Math.hypot((x - cx) / rx, (y - cy) / ry) - 1) * Math.min(rx, ry);
 const HERO_FRONT = {};   // no front-view heroes: everyone is drawn from above and turns towards the cursor
-HERO_ART.sun = P => [   // fish: big round head, bulging eyes, forked tail
-  part(sP([[0.8, 5.5], [7.5, 12], [0.8, 18.5], [3.4, 12]]), 'dark'),
-  part(sC(10.5, 12, 7.8), 'body'), part(sLine(3.5, 12, 10.5, 12, 0.6), 'dark'), dot(8, 9, P.a), dot(8, 15, P.a), dot(11, 12, P.a),
-  part(sC(15.6, 6.9, 3.2), 'acc'), part(sC(15.6, 17.1, 3.2), 'acc'), dot(16, 6, '#ffffff'), dot(16, 17, '#ffffff'), dot(17, 7, '#101018'), dot(17, 16, '#101018'),
-  part(sB(19.8, 12, 2.6, 1.5), 'dark'), part(sB(22.5, 12, 1.2, 0.9), 'cy'), dot(23, 12, CY),
+HERO_ART.sun = P => [   // fish, built like the plant: spiky fins instead of leaves, open jaws with teeth
+  part(sP([[0.5, 6], [8.5, 10.5], [3, 12]]), 'dark'), part(sP([[0.5, 18], [8.5, 13.5], [3, 12]]), 'dark'),
+  part(sP([[5, 2], [11.5, 8], [4, 10.5]]), 'dark'), part(sP([[5, 22], [11.5, 16], [4, 13.5]]), 'dark'),
+  part(sE(10.5, 12, 7, 5.8), 'body'), part(sE(9.5, 12, 3.4, 2.6), 'dark'), dot(8, 11, P.a), dot(10, 13, P.a), dot(11, 11, P.x),
+  part(sC(14.8, 7.6, 1.9), 'acc'), part(sC(14.8, 16.4, 1.9), 'acc'), dot(15, 7, '#ffffff'), dot(15, 17, '#ffffff'),
+  part(sP([[14, 9.6], [22.5, 9], [17.4, 11.8]]), 'acc'), part(sP([[14, 14.4], [22.5, 15], [17.4, 12.2]]), 'acc'),
+  dot(19, 10, P.a), dot(21, 10, P.a), dot(19, 14, P.a), dot(21, 14, P.a), part(sB(18.4, 12, 2.9, 0.7), 'cy'), dot(23, 12, CY),
 ];
 HERO_ART.gunner = P => [   // crystal
   part(sStar(11.5, 12, 6, 11, 6.4, 0.3), 'dark'),
@@ -207,14 +209,41 @@ HERO_ART.weaver = P => [   // plant: leaves around a bulb with a flytrap mouth
   part(sP([[13, 5.6], [22.5, 9.2], [17, 11.2]]), 'acc'), part(sP([[13, 18.4], [22.5, 14.8], [17, 12.8]]), 'acc'),
   dot(19, 10, P.a), dot(21, 10, P.a), dot(19, 14, P.a), dot(21, 14, P.a), part(sB(17.5, 12, 3.2, 0.7), 'cy'), dot(23, 12, CY),
 ];
-HERO_ART.brute = P => [   // robot: shoulders, square body, square head with a glowing visor (seen from above)
-  part(sB(10, 4.2, 2.8, 1.8, 0.5), 'acc'), part(sB(10, 19.8, 2.8, 1.8, 0.5), 'acc'),
-  part(sB(3.8, 12, 1.6, 4.6, 0.5), 'acc'), dot(3, 10, P.x), dot(3, 14, P.x),
-  part(sB(10.5, 12, 6.6, 7, 1.5), 'body'),
-  part(sB(13.8, 12, 3.7, 3.7, 0.8), 'dark'), part(sC(12.5, 12, 1.4), 'acc'), dot(12, 12, P.x),
-  part(sB(15.8, 12, 0.8, 2.6), 'cy'),
-  part(sB(20.2, 12, 2.9, 1.5), 'dark'), part(sB(22.7, 12, 1, 0.9), 'cy'), dot(23, 12, CY),
+HERO_ART.brute = P => [   // robot: four angular legs like leaves, a core, and a pincer jaw around the barrel (like the plant, but metal)
+  part(sP([[2.5, 3], [11, 8], [5, 11]]), 'dark'), part(sP([[2.5, 21], [11, 16], [5, 13]]), 'dark'),
+  part(sP([[10, 1.5], [14.8, 7.6], [8, 9]]), 'dark'), part(sP([[10, 22.5], [14.8, 16.4], [8, 15]]), 'dark'),
+  part(sB(10, 12, 6.6, 5.2, 1.4), 'body'), part(sB(8.8, 12, 3, 3, 0.5), 'dark'), dot(7, 10, P.a), dot(7, 14, P.a), dot(9, 12, P.x),
+  part(sP([[14, 6.8], [22.5, 9.8], [17.6, 11.2]]), 'acc'), part(sP([[14, 17.2], [22.5, 14.2], [17.6, 12.8]]), 'acc'),
+  part(sB(16.4, 12, 2.2, 2.2, 0.6), 'dark'), dot(16, 12, P.x), dot(19, 10, P.a), dot(19, 14, P.a), part(sB(19.6, 12, 2, 0.7), 'cy'), dot(23, 12, CY),
 ];
+
+// ---------- weapon designs: the old top-down heroes live on as late-game weapons ----------
+const WEAPON_ART = {
+  maw: { clan: 'bio', f: P => [   // plant: leaves around a bulb with a flytrap mouth
+  part(sP([[2.5, 3.5], [11.5, 8], [5, 11]]), 'dark'), part(sP([[2.5, 20.5], [11.5, 16], [5, 13]]), 'dark'),
+  part(sP([[0.8, 8.5], [8, 10.5], [3, 12]]), 'dark'), part(sP([[0.8, 15.5], [8, 13.5], [3, 12]]), 'dark'),
+  part(sC(10.5, 12, 6.2), 'body'), part(sC(10.5, 12, 2.6), 'dark'), dot(9, 11, P.x), dot(10, 13, P.x), dot(7, 12, P.a),
+  part(sP([[13, 5.6], [22.5, 9.2], [17, 11.2]]), 'acc'), part(sP([[13, 18.4], [22.5, 14.8], [17, 12.8]]), 'acc'),
+  dot(19, 10, P.a), dot(21, 10, P.a), dot(19, 14, P.a), dot(21, 14, P.a), part(sB(17.5, 12, 3.2, 0.7), 'cy'), dot(23, 12, CY),
+  ] },
+  needle: { clan: 'cyber', f: P => [
+    part(sP([[2, 3.5], [9, 7], [4, 9.5]]), 'dark'), part(sP([[2, 20.5], [9, 17], [4, 14.5]]), 'dark'),
+    part(sP([[3.5, 12], [8, 6.5], [16, 8.2], [19.2, 12], [16, 15.8], [8, 17.5]]), 'body'),
+    part(sB(17.5, 12, 0.8, 3.4), 'acc'), part(sLine(18, 12, 23.2, 12, 0.7), 'cy'), dot(23, 12, ICE),
+    part(sC(11.5, 12, 3), 'dark'), part(sB(13, 12, 0.7, 2), 'cy'), dot(7, 9, P.a), dot(7, 15, P.a), dot(5, 12, P.a),
+  ] },
+  egg: { clan: 'bio', f: P => [
+    part(sC(5.5, 12, 4.2), 'dark'), part(sC(9.5, 7.5, 3.4), 'body'), part(sC(9.5, 16.5, 3.4), 'body'), dot(8, 7, P.x), dot(8, 17, P.x), dot(4, 12, P.x),
+    part(sC(13, 12, 5), 'body'), part(sC(13, 12, 2.2), 'dark'), dot(12, 11, P.a),
+    part(sB(19, 12, 3, 2.4, 0.8), 'dark'), part(sB(21.8, 12, 0.9, 3.2), 'cy'), dot(19, 10, P.a), dot(19, 14, P.a),
+  ] },
+  boiler: { clan: 'steam', f: P => [
+    part(sB(4.5, 7.5, 1.7, 2, 0.5), 'dark'), part(sB(4.5, 16.5, 1.7, 2, 0.5), 'dark'), dot(4, 6, P.a), dot(4, 15, P.a),
+    part(sC(10, 12, 7.6), 'body'), part(sRing(10, 12, 4.6, 0.5, 8), 'acc'), part(sC(10, 12, 2.4), 'dark'), dot(9, 11, P.x),
+    part(sB(18, 12, 5, 2.7, 0.5), 'dark'), part(sB(21.8, 12, 1.4, 3.2), 'acc'), part(sB(21.3, 12, 0.6, 1.2), 'cy'),
+    part(sC(13.5, 12, 2.6), 'body'), part(sB(14.8, 12, 0.6, 1.5), 'cy'),
+  ] },
+};
 
 // ---------- enemies (red team, yellow marker) and bosses ----------
 const EPAL = { b: '#ff2d3d', m: '#a01828', d: '#3a0810', a: '#ff9aa6', c: '#ffd91f', x: '#ff8a1f' };
@@ -350,6 +379,7 @@ const Sprites = {
     if (this.cache[key]) return this.cache[key];
     let c;
     if (HEROES[key]) { const PP = HERO_FRONT[key] || SPAL[HEROES[key].clan]; c = this.build(SPR, HERO_ART[key](PP), PP); }
+    else if (key.startsWith('w:')) { const a = WEAPON_ART[key.slice(2)], PP = SPAL[a.clan]; c = this.build(SPR, a.f(PP), PP); }
     else if (key[0] === 'o') { const [nm, used] = key.slice(2).split('_'), PP = used ? OPAL_USED : OPAL[nm]; c = this.build(32, OBJ_ART[nm](PP, !!used), PP); }
     else if (key[0] === 'e') { const a = ENEMY_ART[key.slice(2)], pal = a.pal || EPAL; c = this.build(a.n, a.f(pal), pal); }
     else { const k = +key.slice(2), a = BOSS_ART[BOSS_ART_OF[k]]; c = this.build(a.n, a.f(BPAL[k]), BPAL[k]); }
