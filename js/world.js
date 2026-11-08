@@ -89,7 +89,7 @@ Object.assign(Game, {
     const s = Save.data, hero = HEROES[s.hero];
     const lo = (s.loadout && s.loadout[s.hero]) || {}, own = id => (id && s.heroes[id] && HEROES[id].clan === hero.clan ? id : s.hero);
     this.run = { hero: s.hero, wpn: own(lo.w), abl: own(lo.a), clan: hero.clan, act: 0, seed: (Math.random() * 1e9) | 0, cstate: {}, cleared: 0, perks: [], drawbacks: [], hp: 100, gold: 20 + 25 * (s.meta.fort || 0), cores: 0,
-      heat: s.heat, kills: 0, rooms: 0, xp: 0, plv: 1, coreAcc: 0, bonus: { mut: 0 }, mutKills: 0, killAcc: 0, phoenixUsed: false, t0: Date.now() };
+      heat: s.heat, kills: 0, rooms: 0, xp: 0, plv: 1, coreAcc: 0, ammo: startAmmo(), wpn2: null, bonus: { mut: 0 }, mutKills: 0, killAcc: 0, phoenixUsed: false, t0: Date.now() };
     this.P = buildStats(this.run, s); this.run.hp = this.P.maxhp;
     this.enterAct();
   },
@@ -104,7 +104,7 @@ Object.assign(Game, {
     const sc = W.cells[W.startId]; sc.state.visited = true;
     const P = this.P = buildStats(run, Save.data);
     const C = this.C = { world: W, t: 0, en: [], eb: [], pb: [], haz: [], zones: [], gold: [], parts: [], fl: [], turrets: [], beams: [], markers: [], fx: [], pillars: W.pillars,
-      waves: [], waveIdx: 0, waveCd: 0, shake: 0, boss: null, bladeAng: 0, intro: 0, banner: 2.6, bannerText: ACT_NAMES[areaOf(act)].toUpperCase() + ' ' + (areaOf(act) + 1) + '-' + (act % 3 + 1), enc: null, lvlKills: 0, levelTotal: 0, portal: null, levelUps: 0, wdrops: [], hitstop: 0, curCell: sc, cam: { x: clamp(sc.cx - W_ / 2, 0, W.w - W_), y: clamp(sc.cy + 70 - H / 2, 0, W.h - H) }, mx: 0, my: 0,
+      waves: [], waveIdx: 0, waveCd: 0, shake: 0, boss: null, bladeAng: 0, intro: 0, banner: 2.6, bannerText: ACT_NAMES[areaOf(act)].toUpperCase() + ' ' + (areaOf(act) + 1) + '-' + (act % 3 + 1), enc: null, items: [], chests: [], lvlKills: 0, levelTotal: 0, portal: null, levelUps: 0, wdrops: [], hitstop: 0, curCell: sc, cam: { x: clamp(sc.cx - W_ / 2, 0, W.w - W_), y: clamp(sc.cy + 70 - H / 2, 0, W.h - H) }, mx: 0, my: 0,
       noHit: true, hpS: 1, dmgS: 1, spdS: 1, curse: {}, clearMsg: 0, near: null,
       p: { x: sc.cx, y: sc.cy + 70, lx: sc.cx, ly: sc.cy + 70, r: 12, aim: -Math.PI / 2, fireT: 0.3, dashT: 0, dashCd: 0, dashDir: 0, dashHit: [], inv: 0.5, abT: 2, flash: 0, over: 0, overRate: 1, shield: 0, still: 0, trailT: 0, regenAcc: 0 },
       dust: Array.from({ length: 36 }, () => ({ x: rnd(0, W_), y: rnd(60, H), vx: rnd(-6, 6), vy: areaOf(act) === 1 ? rnd(-22, -8) : rnd(-4, 6) })) };
@@ -180,22 +180,90 @@ Object.assign(Game, {
       }
     }
     C.levelTotal = C.en.filter(e => e.free).length;
-    for (let i = 0, k = 4; i < 200 && k > 0; i++) {   // weapons lying around, like in Nuclear Throne
+    for (let i = 0, k = 7; i < 400 && k > 0; i++) {   // chests: ammo, weapons, health
+      const x = (4 + R() * (COLS - 8)) * TILE, y = (4 + R() * (ROWS - 8)) * TILE;
+      if (this.fits(x, y, 20) && Math.hypot(x - sc.cx, y - sc.cy) > 350) { const q = R(); C.chests.push({ x, y, kind: q < 0.45 ? 'ammo' : q < 0.72 ? 'weapon' : 'heal', open: false }); k--; }
+    }
+    for (let i = 0, k = 2; i < 200 && k > 0; i++) {   // and a couple of weapons on the floor
       const x = (4 + R() * (COLS - 8)) * TILE, y = (4 + R() * (ROWS - 8)) * TILE;
       if (this.fits(x, y, 20) && Math.hypot(x - sc.cx, y - sc.cy) > 500) { this.spawnWeapon(x, y, true); k--; }
     }
   },
   onKill(e) {
-    const C = this.C, run = this.run; if (!C || !C.world) return;
-    const xp = e.boss ? 60 : e.elite ? 14 : ENEMY[e.type].cost * 2;
-    run.plv = run.plv || 1; run.xp = (run.xp || 0) + xp;
-    while (run.xp >= 10 + 6 * run.plv) { run.xp -= 10 + 6 * run.plv; run.plv++; C.levelUps++; }
+    const C = this.C, run = this.run, P = this.P; if (!C || !C.world) return;
+    const xp = e.boss ? 60 : e.elite ? 14 : ENEMY[e.type].cost * 2, n = Math.min(8, Math.max(1, Math.round(xp / 2)));
+    for (let i = 0; i < n; i++) this.spawnItem(e.x, e.y, 'rad', { amt: xp / n });
+    run.ammo = run.ammo || startAmmo();
+    const want = this.ammoWanted(), low = run.ammo[want] / AMMO[want].max < 0.35;
+    if (!e.boss && Math.random() < (low ? 0.34 : 0.17)) this.spawnItem(e.x, e.y, 'ammo', { type: want, amt: AMMO[want].amt });
+    if (!e.boss && !P.noHeal && Math.random() < (run.hp < P.maxhp * 0.5 ? 0.09 : 0.03)) this.spawnItem(e.x, e.y, 'heal', { amt: Math.round(P.maxhp * 0.12) });
     run.coreAcc = (run.coreAcc || 0) + (e.boss ? 0 : e.elite ? 3 : ENEMY[e.type].cost * 0.4) * (1 + 0.15 * run.act) * (1 + 0.2 * run.heat);
     if (run.coreAcc >= 1) { const g = Math.floor(run.coreAcc); run.coreAcc -= g; run.cores += g; }
     if (e.free) {
       C.lvlKills++;
       if (!C.portal && !isBossLevel(run.act) && C.lvlKills >= Math.ceil(C.levelTotal * 0.8)) { C.portal = { x: e.x, y: e.y }; this.floatText(e.x, e.y - 40, 'THE PORTAL OPENS', '#a06bff', 1.4); Sfx.good(); }
     }
+  },
+  // ---------- pickups: rads (xp), ammo, health; chests ----------
+  spawnItem(x, y, kind, o) { const C = this.C; if (C.items.length > 220) return; C.items.push(Object.assign({ x, y, kind, vx: rnd(-110, 110), vy: rnd(-110, 110), t: 0 }, o || {})); },
+  addXp(n) {
+    const run = this.run, C = this.C; run.plv = run.plv || 1; run.xp = (run.xp || 0) + n;
+    while (run.xp >= 10 + 6 * run.plv) { run.xp -= 10 + 6 * run.plv; run.plv++; C.levelUps++; }
+  },
+  addAmmo(type, amt) { const run = this.run; run.ammo = run.ammo || startAmmo(); run.ammo[type] = Math.min(AMMO[type].max, (run.ammo[type] || 0) + Math.round(amt * this.P.ammoMul)); },
+  ammoWanted() {   // mostly the ammo your weapons use
+    const run = this.run, types = [run.wpn || run.hero, run.wpn2].filter(Boolean).map(id => ammoOf(HEROES[id].weapon)).filter(Boolean);
+    return types.length && Math.random() < 0.75 ? pick(types) : pick(Object.keys(AMMO));
+  },
+  updatePickups(dt) {
+    const C = this.C, p = C.p, P = this.P;
+    for (const it of C.items) {
+      it.t += dt; const ox = it.x, oy = it.y;
+      it.x += it.vx * dt; it.y += it.vy * dt; it.vx *= Math.pow(0.04, dt); it.vy *= Math.pow(0.04, dt);
+      if (!this.walkable(it.x, it.y)) { it.x = ox; it.y = oy; it.vx = it.vy = 0; }
+      const d = dist(it, p), mag = (it.kind === 'rad' ? 150 : 100) * P.magnet;
+      if (it.t > 0.35 && d < mag) { const a = Math.atan2(p.y - it.y, p.x - it.x), sp = 360 * (1 - d / mag * 0.5), nx = it.x + Math.cos(a) * sp * dt, ny = it.y + Math.sin(a) * sp * dt; if (this.walkable(nx, ny)) { it.x = nx; it.y = ny; } }
+      if (d < 22 && it.t > 0.2) { it.dead = true; this.collectItem(it); }
+      if (it.kind !== 'rad' && it.t > 45) it.dead = true;
+    }
+    C.items = C.items.filter(i => !i.dead);
+    for (const ch of C.chests) if (!ch.open && dist(ch, p) < 30) { ch.open = true; this.openChest(ch); }
+  },
+  collectItem(it) {
+    const p = this.C.p;
+    if (it.kind === 'rad') this.addXp(it.amt);
+    else if (it.kind === 'ammo') { this.addAmmo(it.type, it.amt); this.floatText(p.x, p.y - 22, '+' + AMMO[it.type].name, AMMO[it.type].col); Sfx.good(); }
+    else if (it.kind === 'heal') { if (!this.P.noHeal) this.healP(it.amt); }
+  },
+  openChest(ch) {
+    const C = this.C; Sfx.good(); C.shake = Math.max(C.shake, 3);
+    if (ch.kind === 'ammo') for (let i = 0; i < 4; i++) { const t = this.ammoWanted(); this.spawnItem(ch.x, ch.y, 'ammo', { type: t, amt: AMMO[t].amt }); }
+    else if (ch.kind === 'weapon') this.spawnWeapon(ch.x, ch.y + 30, false, true);
+    else for (let i = 0; i < 3; i++) this.spawnItem(ch.x, ch.y, 'heal', { amt: Math.round(this.P.maxhp * 0.1) });
+  },
+  useAmmo(w) {
+    const t = ammoOf(w); if (!t) return true;
+    const run = this.run; run.ammo = run.ammo || startAmmo();
+    const c = w.cost || 1; if (run.ammo[t] < c) return false;
+    run.ammo[t] -= c; return true;
+  },
+  noAmmo() { const C = this.C; if (!C.noAmmoT || C.t - C.noAmmoT > 1) { this.floatText(C.p.x, C.p.y - 28, 'NO AMMO', '#ff6a6a', 1.1); C.noAmmoT = C.t; } },
+  swapWeapons() {
+    const run = this.run, C = this.C; if (!run || !C || !run.wpn2 || this.frozen || this.paused) return;
+    const a = run.wpn || run.hero; run.wpn = run.wpn2; run.wpn2 = a; C.bladePos = []; Sfx.good(); this.floatText(C.p.x, C.p.y - 28, HEROES[run.wpn].weapon.name.toUpperCase(), '#fff'); this.persist();
+  },
+  eatWeapon() {
+    const C = this.C, p = C.p; let best = null, bd = 170;
+    for (const d of C.wdrops) { const q = dist(d, p); if (q < bd) { bd = q; best = d; } }
+    if (!best) { p.abT = 0.5; this.floatText(p.x, p.y - 28, 'NOTHING TO EAT', '#ff6a6a'); return; }
+    C.wdrops = C.wdrops.filter(x => x !== best);
+    const t = ammoOf(HEROES[best.id].weapon) || 'bullet'; this.addAmmo(t, AMMO[t].amt * 2); this.healP(8);
+    this.floatText(p.x, p.y - 28, 'MUNCH +' + AMMO[t].name, AMMO[t].col, 1.1); C.shake = Math.max(C.shake, 4);
+  },
+  ammoLine(w) {
+    const run = this.run, a = ammoOf(w.weapon); ctx.textAlign = 'center'; ctx.font = '10px Silk, monospace';
+    const txt = a ? AMMO[a].name + ' ' + Math.floor((run.ammo || {})[a] || 0) + '/' + AMMO[a].max : 'MELEE';
+    ctx.fillStyle = a ? AMMO[a].col : '#9fc'; ctx.fillText(txt + (run.wpn2 ? '   [X] ' + HEROES[run.wpn2].weapon.name.toUpperCase() : ''), W / 2, 47);
   },
   levelLabel() {
     const run = this.run, C = this.C, a = areaOf(run.act), loop = Math.floor(run.act / 9);
@@ -259,6 +327,7 @@ Object.assign(Game, {
   worldUpdate() {
     const C = this.C, p = C.p, W = this.world, run = this.run; C.near = null; C.nearW = null;
     for (const d of C.wdrops) if (dist(d, p) < 36) C.nearW = d;
+    this.updatePickups(1 / 60);
     if (C.levelUps > 0 && !this.frozen && !C.dead) { C.levelUps--; this.frozen = true; Input.down = false; Input.keys = {}; C.nodeCell = null; C.pendingOrb = C.pendingObj = false; UI.levelUp(); return; }
     if (C.portal && !C.dead && dist(C.portal, p) < 34) { run.rooms++; Input.keys = {}; this.descend(0.15); return; }
     const cc = this.cellAt(p.x, p.y);
@@ -273,17 +342,20 @@ Object.assign(Game, {
     }
   },
   // ---------- weapons on the ground (swap with E) ----------
-  spawnWeapon(x, y, quiet) {
-    const C = this.C, cur = this.run.wpn || this.run.hero, ids = Object.keys(HEROES).filter(k => k !== cur && !C.wdrops.some(d => d.id === k));
+  spawnWeapon(x, y, quiet, better) {
+    const C = this.C, run = this.run, mine = [run.wpn || run.hero, run.wpn2], cap = 1 + Math.floor(run.act * 0.8) + (better ? 1 : 0);
+    let ids = Object.keys(HEROES).filter(k => !mine.includes(k) && !C.wdrops.some(d => d.id === k) && weaponTier(k) <= cap);
+    if (!ids.length) ids = Object.keys(HEROES).filter(k => !mine.includes(k));
     if (!ids.length) return;
-    C.wdrops.push({ id: pick(ids), x, y }); if (!quiet) this.floatText(x, y - 30, 'WEAPON DROP', '#ffd91f');
+    C.wdrops.push({ id: pick(ids), x, y }); if (!quiet) this.floatText(x, y - 30, 'WEAPON', '#ffd91f');
   },
   dropWeapon(e) { if (Math.random() < (e.boss ? 1 : e.elite ? 0.4 : 0.02)) this.spawnWeapon(e.x, e.y); },
   pickWeapon(d) {
-    const C = this.C, run = this.run, old = run.wpn || run.hero;
-    C.wdrops = C.wdrops.filter(x => x !== d); run.wpn = d.id; C.bladePos = [];
-    if (old !== d.id) C.wdrops.push({ id: old, x: C.p.x, y: C.p.y + 48 });
-    Sfx.good(); this.floatText(C.p.x, C.p.y - 30, HEROES[d.id].weapon.name.toUpperCase(), CLANS[HEROES[d.id].clan].color, 1.2); this.persist();
+    const C = this.C, run = this.run, cur = run.wpn || run.hero;
+    C.wdrops = C.wdrops.filter(x => x !== d);
+    if (!run.wpn2) { run.wpn2 = d.id; this.floatText(C.p.x, C.p.y - 44, '[X] SWITCH WEAPON', '#ffd91f'); }
+    else { C.wdrops.push({ id: cur, x: C.p.x, y: C.p.y + 48 }); run.wpn = d.id; }
+    C.bladePos = []; Sfx.good(); this.floatText(C.p.x, C.p.y - 30, HEROES[d.id].weapon.name.toUpperCase(), CLANS[HEROES[d.id].clan].color, 1.2); this.persist();
   },
   interact() {
     const C = this.C;
@@ -350,6 +422,20 @@ Object.assign(Game, {
       }
 
       if (c.obj) this.drawObj(c, C.t);
+    }
+    for (const ch of C.chests) {
+      if (ch.x < vx0 || ch.x > vx1 || ch.y < vy0 || ch.y > vy1) continue;
+      const col = { ammo: '#ffd91f', weapon: '#3d9bff', heal: '#39ff6e' }[ch.kind], x = snap(ch.x), y = snap(ch.y);
+      ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.fillRect(x - 16, y + 10, 32, 6);
+      ctx.fillStyle = '#15171c'; ctx.fillRect(x - 15, y - 11, 30, 22); ctx.fillStyle = ch.open ? '#444' : col; ctx.fillRect(x - 15, y - 11, 30, 3); ctx.fillRect(x - 15, y - 11, 3, 22); ctx.fillRect(x + 12, y - 11, 3, 22); ctx.fillRect(x - 15, y + 8, 30, 3);
+      if (!ch.open) { ctx.fillStyle = col; ctx.fillRect(x - 3, y - 5, 6, 8); }
+    }
+    for (const it of C.items) {
+      if (it.x < vx0 || it.x > vx1 || it.y < vy0 || it.y > vy1) continue;
+      const x = snap(it.x), y = snap(it.y + Math.sin(C.t * 6 + it.x) * 1.5);
+      if (it.kind === 'rad') { ctx.fillStyle = 'rgba(80,255,80,.25)'; ctx.fillRect(x - 6, y - 6, 12, 12); ctx.fillStyle = '#7dff4a'; ctx.fillRect(x - 3, y - 3, 6, 6); ctx.fillStyle = '#e6ffd0'; ctx.fillRect(x - 1, y - 1, 2, 2); }
+      else if (it.kind === 'ammo') { const A = AMMO[it.type]; ctx.fillStyle = '#0a0b0e'; ctx.fillRect(x - 8, y - 6, 16, 12); ctx.fillStyle = A.col; ctx.fillRect(x - 8, y - 6, 16, 2); ctx.fillRect(x - 8, y + 4, 16, 2); ctx.font = '9px Silk, monospace'; ctx.fillText(A.L, x, y + 3); }
+      else { ctx.fillStyle = '#ff3a5a'; ctx.fillRect(x - 3, y - 7, 6, 14); ctx.fillRect(x - 7, y - 3, 14, 6); ctx.fillStyle = '#ffd0d8'; ctx.fillRect(x - 1, y - 5, 2, 10); }
     }
     if (C.portal) {
       const q = C.portal;

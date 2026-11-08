@@ -60,7 +60,7 @@ const Save = {
   timer: null,
   key(i) { return 'apoc.slot.' + (Account.on ? Account.meta.uid : 'guest') + '.' + i; },
   blank(clan) {
-    const heroes = {}; for (const [id, h] of Object.entries(HEROES)) if (h.clan === clan && h.cost === 0) heroes[id] = 1;
+    const heroes = {}; for (const [id, h] of Object.entries(HEROES)) if (PLAYABLE.includes(id) && h.cost === 0) heroes[id] = 1;
     return { v: 1, clan, created: Date.now(), updated: Date.now(), cores: 0, heroes, perks: {}, meta: {}, loadout: {}, tree: {}, heat: 0, heatMax: 0, hero: Object.keys(heroes)[0],
       stats: { runs: 0, wins: 0, deaths: 0, kills: 0, bestAct: 0, bestRooms: 0 }, run: null };
   },

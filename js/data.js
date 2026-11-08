@@ -44,6 +44,7 @@ const CLAN_SET = {
   cyber: { n: 3, name: 'Neural Net', d: '-20% dash cooldown, +10% crit.', a: P => { P.dashCd *= 0.8; P.crit += 0.1; } },
   void: { n: 3, name: 'Event Horizon', d: 'Dash damage +30, explosions 20% wider.', a: P => { P.dashDmg += 30; P.blastRad *= 1.2; } },
 };
+for (const k in CLANS) CLANS[k].mod = () => {};   // clans are gone, they only stay as colour palettes
 const clanPerkCount = run => run.perks.filter(id => PERKS[id].clan === run.clan).length;
 
 // ---------- Heroes ----------
@@ -131,6 +132,54 @@ const HEROES = {
     weapon: { type: 'shot', name: 'Dark Matter', rate: 2.8, dmg: 14, speed: 420, n: 1, spread: 0.06, pierce: 1, life: 1.1, size: 4, homing: 2 },
     ability: { type: 'overdrive', name: 'Totality', cd: 14, dur: 4, rate: 1.8 }, mod(P) { P.crit += 0.08; } },
 };
+
+// ---------- Nuclear-Throne style: 8 playable characters, every other hero entry is just a weapon in the loot pool ----------
+const PLAYABLE = ['sun', 'gunner', 'runner', 'boiler', 'weaver', 'net', 'brute', 'siege'];
+Object.assign(HEROES.sun, { name: 'Scrapper', cost: 0, blurb: 'All-rounder. +25% ammo from pickups.',
+  weapon: { type: 'shot', name: 'Rust Revolver', rate: 3.0, dmg: 11, speed: 520, n: 1, spread: 0.05, pierce: 0, life: 0.8, size: 3 },
+  ability: { type: 'blink', name: 'Roll', cd: 5, dist: 190, dmg: 14 }, mod(P) { P.ammoMul *= 1.25; } });
+Object.assign(HEROES.gunner, { name: 'Geode', cost: 0, blurb: 'Tough. Lots of HP, takes less damage.',
+  weapon: { type: 'shot', name: 'Shard Pistol', rate: 2.2, dmg: 15, speed: 540, n: 1, spread: 0.03, pierce: 0, life: 0.9, size: 4 },
+  ability: { type: 'shield', name: 'Crystal Guard', cd: 12, dur: 3 }, mod(P) { P.maxhp += 40; P.taken *= 0.92; P.speed *= 0.94; } });
+Object.assign(HEROES.runner, { name: 'Vee', cost: 0, blurb: 'Fast hands. Shoots 8% faster, more crits.',
+  weapon: { type: 'shot', name: 'Twin Pistols', rate: 4.2, dmg: 7, speed: 500, n: 1, spread: 0.14, pierce: 0, life: 0.8, size: 3 },
+  ability: { type: 'overdrive', name: 'Gun Fury', cd: 12, dur: 4, rate: 1.7 }, mod(P) { P.rate *= 1.08; P.crit += 0.05; } });
+Object.assign(HEROES.boiler, { name: 'Slag', cost: 150, blurb: 'Fragile and explosive. Kills burst into flames.',
+  weapon: { type: 'mortar', name: 'Slag Lobber', rate: 1.0, dmg: 34, r: 62, delay: 0.55, reach: 360 },
+  ability: { type: 'nova', name: 'Meltdown', cd: 11, r: 150, dmg: 45, knock: 260, burn: 6 }, mod(P) { P.maxhp -= 15; P.killBlast += 14; P.burn += 2; } });
+Object.assign(HEROES.weaver, { name: 'Bloom', cost: 250, blurb: 'Fast and regenerating. Piercing thorn bolts.',
+  weapon: { type: 'shot', name: 'Thorn Shooter', rate: 2.0, dmg: 19, speed: 600, n: 1, spread: 0.02, pierce: 2, life: 0.9, size: 4 },
+  ability: { type: 'zone', name: 'Snare Field', cd: 12, r: 110, dur: 5, dps: 9, slow: 0.75, poison: 0 }, mod(P) { P.speed *= 1.1; P.regen += 0.6; } });
+Object.assign(HEROES.net, { name: 'Watcher', cost: 350, blurb: 'Pulls loot from far away. Homing shots.',
+  weapon: { type: 'shot', name: 'Gaze Beam', rate: 3.2, dmg: 10, speed: 330, n: 1, spread: 0.1, pierce: 0, life: 1.1, size: 4, homing: 3 },
+  ability: { type: 'nova', name: 'Mind Shove', cd: 10, r: 170, dmg: 20, knock: 320, burn: 0 }, mod(P) { P.magnet *= 2.2; P.crit += 0.05; } });
+Object.assign(HEROES.brute, { name: 'Bot', cost: 500, blurb: 'Eats weapons for ammo and health [Q].',
+  weapon: { type: 'shot', name: 'Scrap Cannon', rate: 1.4, dmg: 7, speed: 440, n: 5, spread: 0.45, pierce: 0, life: 0.7, size: 4 },
+  ability: { type: 'eat', name: 'Eat Weapon', cd: 3 }, mod(P) { P.maxhp += 10; P.ammoMul *= 1.1; } });
+Object.assign(HEROES.siege, { name: 'Rebel', cost: 650, blurb: 'Calls a drone ally. A bit of regen.',
+  weapon: { type: 'shot', name: 'Ally Pistol', rate: 2.6, dmg: 12, speed: 520, n: 1, spread: 0.05, pierce: 0, life: 0.8, size: 3 },
+  ability: { type: 'turret', name: 'Ally Drone', cd: 10, dur: 12, rate: 4, dmg: 8 }, mod(P) { P.maxhp += 10; P.regen += 0.3; } });
+
+// ammo types (like the original: bullets, shells, bolts, explosives, energy); melee weapons need none
+const AMMO = {
+  bullet: { name: 'BULLETS', col: '#ffd91f', max: 200, amt: 40, L: 'B' },
+  shell: { name: 'SHELLS', col: '#ff6a6a', max: 60, amt: 8, L: 'S' },
+  bolt: { name: 'BOLTS', col: '#39ff6e', max: 60, amt: 8, L: 'T' },
+  explosive: { name: 'EXPLOSIVES', col: '#ff8a1f', max: 60, amt: 6, L: 'X' },
+  energy: { name: 'ENERGY', col: '#3de8ff', max: 90, amt: 12, L: 'E' },
+};
+const startAmmo = () => ({ bullet: 150, shell: 24, bolt: 24, explosive: 20, energy: 40 });
+function ammoOf(w) {
+  if (w.ammo !== undefined) return w.ammo;
+  if (w.type === 'mortar') return 'explosive';
+  if (w.type !== 'shot') return null;
+  return w.n >= 3 ? 'shell' : w.pierce >= 2 ? 'bolt' : w.homing ? 'energy' : 'bullet';
+}
+function weaponTier(id) {
+  const w = HEROES[id].weapon; if (w.tier !== undefined) return w.tier;
+  const dps = w.dmg * (w.rate || 2) * (w.type === 'blades' ? w.n * 0.7 : w.n || 1) * (w.type === 'mortar' ? 1.3 : 1) * (w.pierce ? 1 + 0.25 * w.pierce : 1);
+  return clamp(Math.floor((dps - 20) / 12), 0, 5);
+}
 
 // Loadout: a hero can borrow the weapon and/or ability of any unlocked hero of the same clan
 function kitOf(run) {
@@ -284,7 +333,7 @@ function newStats() {
   return { dmg: 1, rate: 1, speed: 1, maxhp: 100, pierce: 0, extra: 0, crit: 0.05, critMul: 1.75, killHeal: 0, regen: 0, dashCd: 1, dashDmg: 0, range: 1,
     blades: 0, spin: 1, bladeDmg: 1, orbitR: 1, bladeKnock: 0, poison: 0, poisonMul: 1, poisonSlow: 0, poisonSpread: 0, poisonLeech: 0, burn: 0, killBlast: 0, blastRad: 1, blastMul: 1,
     chain: 0, thorns: 0, taken: 1, goldMul: 1, aura: 0, clearHeal: 0, enemyHp: 1, noHeal: 0, homing: 0, phoenix: 0, dashBlast: 0, critBlast: 0, berserk: 0, still: 0,
-    mutagen: 0, trail: 0, execute: 0, abCd: 1, tags: {} };
+    mutagen: 0, trail: 0, execute: 0, abCd: 1, ammoMul: 1, magnet: 1, tags: {} };
 }
 function buildStats(run, save) {
   const hero = HEROES[run.hero], P = newStats();

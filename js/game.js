@@ -127,7 +127,7 @@ const Game = {
   },
   perkPool(minR) {
     const run = this.run, order = ['common', 'rare', 'epic', 'legendary'], ownedTags = this.P.tags;
-    const base = Object.keys(PERKS).filter(id => !run.perks.includes(id) && (!PERKS[id].clan || PERKS[id].clan === run.clan) && (!PERKS[id].lock || Save.data.perks[id]));
+    const base = Object.keys(PERKS).filter(id => !run.perks.includes(id) && !PERKS[id].clan && (!PERKS[id].lock || Save.data.perks[id]));
     for (let m = order.indexOf(minR || 'common'); m >= 0; m--) {
       const pool = base.filter(id => order.indexOf(PERKS[id].r) >= m);
       if (pool.length >= 3 || m === 0) return pool;
@@ -367,7 +367,7 @@ const Game = {
     const w = kitOf(run).weapon;
     if (p.fireT > 0) p.fireT -= dt;
     if ((Input.down || Input.auto) && p.fireT <= 0 && w.type !== 'blades' && C.intro < 1.0) {
-      this.fire(w); p.fireT = 1 / (w.rate * P.rate * (p.over > 0 ? p.overRate : 1));
+      if (this.useAmmo(w)) { this.fire(w); p.fireT = 1 / (w.rate * P.rate * (p.over > 0 ? p.overRate : 1)); } else { p.fireT = 0.25; this.noAmmo(); }
     }
     this.updateBlades(w, dt);
     if (P.aura) for (const e of C.en) if (!e.dead && dist(e, p) < 105) this.dealDamage(e, P.aura * dt, false);
@@ -500,6 +500,7 @@ const Game = {
   useAbility() {
     const C = this.C, P = this.P, p = C.p, a = kitOf(this.run).ability, col = CLANS[this.run.clan].color;
     p.abT = a.cd * P.abCd; Sfx.ability();
+    if (a.type === 'eat') { this.eatWeapon(); return; }
     if (a.type === 'nova') {
       C.fx.push({ k: 'ring', x: p.x, y: p.y, r: a.r, t: 0.35, max: 0.35, col });
       for (const e of C.en) if (!e.dead && dist(e, p) < a.r + e.r) { this.hitEnemy(e, a.dmg, { raw: false }); if (a.burn) { e.burn = Math.max(e.burn, a.burn); e.burnT = 3; } this.knock(e, Math.atan2(e.y - p.y, e.x - p.x), a.knock / 4); }
@@ -901,6 +902,7 @@ const Game = {
     // center info
     ctx.textAlign = 'center'; ctx.font = '12px Silk, monospace'; ctx.fillStyle = '#9fc'; ctx.fillText(this.levelLabel ? this.levelLabel() : '', W / 2, 18);
     ctx.fillStyle = '#fff'; ctx.fillText(HEROES[run.hero].name.toUpperCase() + ' / ' + w.weapon.name.toUpperCase(), W / 2, 36);
+    if (this.ammoLine) this.ammoLine(w);
     ctx.textAlign = 'right'; ctx.font = '14px Silk, monospace'; ctx.fillStyle = '#ffd91f'; ctx.fillText('GOLD ' + run.gold, W - 14, 20);
     ctx.fillStyle = '#3de8ff'; ctx.font = '11px Silk, monospace'; ctx.fillText('CORES ' + run.cores + ' (AT RISK)', W - 14, 38);
     // tags
@@ -959,6 +961,7 @@ addEventListener('keydown', e => {
   if (k === 'f' && Game.mode === 'fight') Input.auto = !Input.auto;
   if (k === 'e') Game.interact();
   if (k === 'm') Music.toggle();
+  if (k === 'x' && Game.swapWeapons) Game.swapWeapons();
   if (['1', '2', '3'].includes(k) && UI.hotkey) UI.hotkey(+k - 1);
 });
 addEventListener('keyup', e => { Input.keys[e.key.toLowerCase()] = false; });

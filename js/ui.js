@@ -79,14 +79,14 @@ const UI = {
     const s = Save.data, c = CLANS[s.clan]; Menu.set('hub', s.clan, s.hero);
     let h = '<div class="row" style="justify-content:space-between;align-items:center"><div><h1 style="margin:0;font-size:26px">' + c.name.toUpperCase() + ' HQ</h1><span class="sm dim">Slot ' + (Save.slot + 1) + '</span></div>'
       + '<div style="text-align:right"><div style="font-family:Silk;color:#3de8ff">CORES ' + s.cores + '</div><button class="btn" onclick="UI.slots()">SAVE SLOTS</button></div></div>';
-    h += '<div class="tabs">' + [['run', 'RUN'], ['hero', 'HERO'], ['armory', 'ARMORY'], ['upgrades', 'UPGRADES'], ['players', 'PLAYERS']].map(t => '<button class="btn ' + (this.tab === t[0] ? 'sel' : '') + '" onclick="UI.hub(\'' + t[0] + '\')">' + t[1] + '</button>').join('') + '</div>';
+    h += '<div class="tabs">' + [['run', 'RUN'], ['armory', 'MUTATIONS'], ['upgrades', 'UPGRADES'], ['players', 'PLAYERS']].map(t => '<button class="btn ' + (this.tab === t[0] ? 'sel' : '') + '" onclick="UI.hub(\'' + t[0] + '\')">' + t[1] + '</button>').join('') + '</div>';
     if (this.tab === 'run') {
       h += '<div class="row">';
-      for (const [id, hero] of Object.entries(HEROES)) {
-        if (hero.clan !== s.clan) continue;
+      for (const id of PLAYABLE) {
+        const hero = HEROES[id];
         const own = !!s.heroes[id], sel = s.hero === id;
         h += '<div class="card ' + (own ? '' : 'locked') + '" style="--c:' + (sel ? c.color : '#345') + ';width:132px;min-height:200px;padding:8px" onclick="UI.pickHero(\'' + id + '\')"><img src="' + Sprites.url(id) + '" style="float:right;width:40px;height:40px;image-rendering:pixelated"><h3>' + hero.name.toUpperCase() + (sel ? ' <span class="pro">*</span>' : '') + '</h3><p class="sm dim">' + hero.blurb + '</p>'
-          + '<p class="sm">Weapon: <b>' + hero.weapon.name + '</b> (' + hero.weapon.type + ')</p><p class="sm">Ability [Q]: <b>' + hero.ability.name + '</b> (' + hero.ability.cd + 's)</p>'
+          + '<p class="sm">Weapon: <b>' + hero.weapon.name + '</b> (' + (ammoOf(hero.weapon) || 'melee') + ')</p><p class="sm">Ability [Q]: <b>' + hero.ability.name + '</b> (' + hero.ability.cd + 's)</p>'
           + (own ? (sel ? '<p class="pro sm">Selected</p>' : '') : '<p style="text-align:center;margin-top:8px;clear:both"><span class="btn" style="font-size:9px;padding:4px 6px;' + (s.cores < hero.cost ? 'opacity:.4' : '') + '">' + hero.cost + ' CORES</span></p>') + '</div>';
       }
       h += '</div><div class="row" style="margin-top:14px;align-items:center"><span class="sm">HEAT</span>';
@@ -301,6 +301,7 @@ const UI = {
   },
 };
 
+UI.clanSelect = function (slot) { this.newGame(slot, 'steam'); };   // no clans any more
 Game.abandonSaved = function () { if (!this.run) { this.run = Save.data.run; this.P = buildStats(this.run, Save.data); } return this.bank(0.25, 'dead'); };
 Account.load();
 UI.title();
