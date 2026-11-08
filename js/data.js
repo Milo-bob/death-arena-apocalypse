@@ -140,31 +140,31 @@ const HEROES = {
 
 // ---------- Nuclear-Throne style: 8 playable characters, every other hero entry is just a weapon in the loot pool ----------
 // ---------- Nuclear-Throne style roster: 12 playable characters, loot weapons are separate entries (w_*) ----------
-const PLAYABLE = ['sun', 'gunner', 'net', 'boiler', 'weaver', 'runner', 'brute', 'hive'];   // Fish, Crystal, Eyes, Melting, Plant, Y.V., Robot, Chicken - all selectable from the start
+const PLAYABLE = ['sun', 'gunner', 'net', 'boiler', 'weaver', 'runner', 'clock', 'brute', 'hive', 'siege', 'phantom', 'umbra'];   // Fish, Crystal, Eyes, Melting, Plant, Y.V., Robot, Chicken - all selectable from the start
 const NO_ABILITY = { type: 'overdrive', name: '-', cd: 99, dur: 0, rate: 1 };
 Object.assign(HEROES.sun, { name: 'Fish', cost: 0, start: 'w_revolver', blurb: 'Extra ammo from drops. Q: roll through danger.',
   ability: { type: 'roll', name: 'Roll', cd: 3.5 }, mod(P) { P.ammoMul *= 1.35; } });
 Object.assign(HEROES.gunner, { name: 'Crystal', cost: 0, start: 'w_revolver', blurb: 'Tough shell. Q: shield that reflects bullets.',
   ability: { type: 'shield', name: 'Shield', cd: 9, dur: 2.5 }, mod(P) { P.maxhp -= 10; P.taken *= 0.95; } });
-Object.assign(HEROES.runner, { name: 'Y.V.', cost: 150, start: 'w_machinegun', blurb: 'Gun god: shoots faster, ammo goes further. Q: pop pop.',
+Object.assign(HEROES.runner, { name: 'Y.V.', cost: 150, start: 'w_revolver', blurb: 'Gun god: shoots faster, ammo goes further. Q: pop pop.',
   ability: { type: 'overdrive', name: 'Pop Pop', cd: 11, dur: 4, rate: 1.8 }, mod(P) { P.rate *= 1.12; P.crit += 0.05; P.ammoCost *= 0.7; } });
-Object.assign(HEROES.net, { name: 'Eyes', cost: 250, start: 'w_laserpistol', blurb: 'Loot flies to you. Q: telekinesis shove.',
+Object.assign(HEROES.net, { name: 'Eyes', cost: 250, start: 'w_revolver', blurb: 'Loot flies to you. Q: telekinesis shove.',
   ability: { type: 'nova', name: 'Telekinesis', cd: 6, r: 210, dmg: 6, knock: 430, burn: 0 }, mod(P) { P.magnet *= 2.5; P.xpMul *= 1.1; } });
 Object.assign(HEROES.boiler, { name: 'Melting', cost: 150, start: 'w_revolver', blurb: 'Fragile, but kills burst into flames. Q: rad burst.',
   ability: { type: 'nova', name: 'Rad Burst', cd: 9, r: 170, dmg: 70, knock: 240, burn: 6 }, mod(P) { P.maxhp -= 40; P.killBlast += 18; P.burn += 2; } });
-Object.assign(HEROES.weaver, { name: 'Plant', cost: 350, start: 'w_crossbow', blurb: 'Fast and regenerating. Q: snare (slows enemies).',
+Object.assign(HEROES.weaver, { name: 'Plant', cost: 350, start: 'w_revolver', blurb: 'Fast and regenerating. Q: snare (slows enemies).',
   ability: { type: 'zone', name: 'Snare', cd: 10, r: 120, dur: 5, dps: 6, slow: 0.8, poison: 0 }, mod(P) { P.speed *= 1.12; P.regen += 0.6; } });
 Object.assign(HEROES.clock, { name: 'Steroids', cost: 450, start: 'w_revolver', start2: 'w_revolver', blurb: 'Dual wields: both guns fire together. Q: berserk.',
   ability: { type: 'overdrive', name: 'Berserk', cd: 13, dur: 5, rate: 1.5 }, mod(P) { P.dual = 1; P.ammoMul *= 1.2; } });
-Object.assign(HEROES.brute, { name: 'Robot', cost: 550, start: 'w_shotgun', blurb: 'Eats weapons for ammo and health with Q.',
+Object.assign(HEROES.brute, { name: 'Robot', cost: 550, start: 'w_revolver', blurb: 'Eats weapons for ammo and health with Q.',
   ability: { type: 'eat', name: 'Eat Weapon', cd: 3 }, mod(P) { P.ammoMul *= 1.1; P.dropMul *= 1.8; P.lootTier += 1; } });
-Object.assign(HEROES.siege, { name: 'Rebel', cost: 650, start: 'w_popgun', blurb: 'Brings a drone ally. Q: call another.',
+Object.assign(HEROES.siege, { name: 'Rebel', cost: 650, start: 'w_revolver', blurb: 'Brings a drone ally. Q: call another.',
   ability: { type: 'turret', name: 'Ally Drone', cd: 8, dur: 14, rate: 4, dmg: 8 }, mod(P) { P.maxhp -= 20; P.regen += 0.3; } });
-Object.assign(HEROES.hive, { name: 'Chicken', cost: 750, start: 'w_machete', blurb: 'Keeps going when it should be dead (revive). Q: flap dash.',
+Object.assign(HEROES.hive, { name: 'Chicken', cost: 750, start: 'w_revolver', blurb: 'Keeps going when it should be dead (revive). Q: flap dash.',
   ability: { type: 'roll', name: 'Flap', cd: 3 }, mod(P) { P.phoenix = 1; P.maxhp -= 40; P.speed *= 1.1; } });
-Object.assign(HEROES.phantom, { name: 'Wraith', cost: 850, start: 'w_plasmagun', blurb: 'Feeds on radiation: more rads. Q: radiation pulse.',
+Object.assign(HEROES.phantom, { name: 'Wraith', cost: 850, start: 'w_revolver', blurb: 'Feeds on radiation: more rads. Q: radiation pulse.',
   ability: { type: 'zone', name: 'Radiation', cd: 9, r: 140, dur: 3, dps: 45, slow: 0.2, poison: 0 }, mod(P) { P.xpMul *= 1.45; } });
-Object.assign(HEROES.umbra, { name: 'Outlaw', cost: 950, start: 'w_rifle', blurb: 'Crits and ambushes. Q: call down a strike at the cursor.',
+Object.assign(HEROES.umbra, { name: 'Outlaw', cost: 950, start: 'w_revolver', blurb: 'Crits and ambushes. Q: call down a strike at the cursor.',
   ability: { type: 'strike', name: 'Strike', cd: 7, dmg: 110, r: 110 }, mod(P) { P.crit += 0.12; P.critMul += 0.3; P.maxhp -= 20; } });
 
 Object.assign(HEROES.sun, { passive: 'More ammo from every pickup.', active: 'Roll: a quick dodge roll, you cannot be hit.' });
@@ -173,6 +173,9 @@ Object.assign(HEROES.net, { passive: 'Loot is pulled to you from far away, a bit
 Object.assign(HEROES.boiler, { passive: 'Only 4 hearts, but kills explode.', active: 'Rad Burst: a big radiation explosion around you.' });
 Object.assign(HEROES.weaver, { passive: 'Walks faster and slowly regenerates.', active: 'Snare: slows every enemy in the area.' });
 Object.assign(HEROES.runner, { passive: 'Shoots faster and ammo lasts longer.', active: 'Pop Pop: rapid fire for a few seconds.' });
+Object.assign(HEROES.siege, { passive: 'Brings a drone ally and regenerates a little.', active: 'Ally Drone: calls another drone that shoots for you.' });
+Object.assign(HEROES.phantom, { passive: 'Feeds on radiation: collects more rads.', active: 'Radiation: a burning radiation field around you.' });
+Object.assign(HEROES.umbra, { passive: 'More critical hits, but fragile.', active: 'Strike: calls down a big blast at your cursor.' });
 Object.assign(HEROES.clock, { passive: 'Dual wield: both weapons fire at once.', active: 'Berserk: fire even faster for a few seconds.' });
 Object.assign(HEROES.hive, { passive: 'Keeps going once when it should be dead.', active: 'Flap: a quick roll, you cannot be hit.' });
 Object.assign(HEROES.brute, { passive: 'Better drop rates: more ammo, health and weapons, and better weapon loot.', active: 'Eat Weapon: turns a nearby weapon into ammo and health.' });

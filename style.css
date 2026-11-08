@@ -46,8 +46,8 @@ body.fight #cv{cursor:none}
 .mbtn{font-family:Silk;font-size:22px;letter-spacing:3px;color:var(--bone);background:none;border:none;padding:6px 26px;cursor:pointer;text-shadow:3px 3px 0 #000}
 .mbtn:hover,.mbtn:focus{color:var(--amber);outline:none}
 .mbtn:hover::before,.mbtn:focus::before{content:'▶ ';font-size:15px}
-.lineup{position:absolute;left:0;right:0;bottom:14px;display:flex;justify-content:center;gap:22px;pointer-events:none}
-.lineup img{width:68px;height:68px;image-rendering:pixelated;animation:bob 2.4s ease-in-out infinite;filter:drop-shadow(0 6px 0 rgba(0,0,0,.5))}
+.lineup{position:absolute;left:0;right:0;bottom:14px;display:flex;justify-content:center;gap:8px;pointer-events:none}
+.lineup img{width:60px;height:60px;image-rendering:pixelated;animation:bob 2.4s ease-in-out infinite;filter:drop-shadow(0 6px 0 rgba(0,0,0,.5))}
 @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
 .cs-main{display:flex;gap:18px;width:100%;margin-top:2px;align-items:center;justify-content:center}
 .cs-stage{position:relative;width:340px;height:196px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end}

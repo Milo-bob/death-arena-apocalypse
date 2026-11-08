@@ -303,7 +303,7 @@ const Game = {
   },
   kill(e, quiet) {
     const C = this.C, P = this.P, run = this.run;
-    e.dead = true;
+    e.dead = true; if (e.free && this.C) this.C.lastDeath = { x: e.x, y: e.y };
     if (quiet) return;
     run.kills++; C.kills = (C.kills || 0) + 1;
     this.burst(e.x, e.y, e.col, e.boss ? 40 : 10, e.boss ? 260 : 150); Sfx.kill();
