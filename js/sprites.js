@@ -336,6 +336,18 @@ const ENEMY_ART = {
     part(sStar(11, 11, 10, 6.5, 8, 0), 'dark'), part(sC(11, 11, 6.6), 'body'), part(sC(11, 11, 4), 'acc'), part(sC(11, 11, 2), 'dark'), dot(11, 11, P.c)] },
   wraith: { n: 16, pal: { b: '#c0a0ff', m: '#7a5ad0', d: '#22104a', a: '#f0e8ff', c: '#ffffff', x: '#3de8ff' }, f: P => [
     part(sP([[0.6, 5], [6, 6.6], [6, 9.4], [0.6, 11]]), 'acc'), part(sE(7.4, 8, 4.4, 3.6), 'body'), part(sP([[8, 3.4], [13, 5], [9, 6]]), 'acc'), part(sP([[8, 12.6], [13, 11], [9, 10]]), 'acc'), dot(10, 7, P.c), dot(10, 9, P.c)] },
+  charger: { n: 22, pal: { b: '#c05a30', m: '#7a3014', d: '#2a1008', a: '#f0e0c0', c: '#ffd91f', x: '#5a4a40' }, f: P => [   // bull
+    part(sE(9, 11, 6.8, 5.6), 'body'), part(sE(8, 11, 4, 3), 'dark'), part(sC(15.4, 11, 3.6), 'body'),
+    part(sP([[14, 6.4], [20.6, 3], [18, 8.6]]), 'acc'), part(sP([[14, 15.6], [20.6, 19], [18, 13.4]]), 'acc'), dot(17, 9.8, P.c), dot(17, 12.2, P.c), dot(3, 11, P.x)] },
+  stalker: { n: 16, pal: { b: '#5ad0ff', m: '#2a7aa0', d: '#0a2a3a', a: '#c8f4ff', c: '#ffffff', x: '#ff3a5a' }, f: P => [   // lurker with blades
+    part(sP([[0.8, 5], [6, 6.6], [6, 9.4], [0.8, 11]]), 'acc'), part(sE(8, 8, 5, 4), 'body'), part(sE(8, 8, 2.8, 2), 'dark'),
+    part(sLine(11, 5, 15.4, 2.6, 0.6), 'acc'), part(sLine(11, 11, 15.4, 13.4, 0.6), 'acc'), dot(10, 7, P.x), dot(10, 9, P.x)] },
+  scorpion: { n: 24, pal: { b: '#e0a030', m: '#8a5a10', d: '#2a1a08', a: '#ffe08a', c: '#ff3a3a', x: '#ff5a1a' }, f: P => [   // big scorpion: pincers, curled tail with a stinger
+    part(sLine(16, 6, 20, 3, 0.8), 'dark'), part(sLine(14, 6, 17, 2, 0.8), 'dark'), part(sLine(16, 18, 20, 21, 0.8), 'dark'), part(sLine(14, 18, 17, 22, 0.8), 'dark'),
+    part(sLine(18, 12, 21.6, 6, 1.6), 'acc'), part(sLine(21.6, 6, 23.4, 12, 1.4), 'acc'), part(sC(23.2, 13, 2), 'x'),
+    part(sE(13, 12, 6.6, 4.6), 'body'), part(sE(13, 12, 3.6, 2.4), 'dark'), part(sC(19, 12, 2.4), 'body'), dot(20, 11, P.c), dot(20, 13, P.c),
+    part(sP([[8, 6.4], [1.4, 3], [2.6, 8.4], [6.6, 9.4]]), 'acc'), part(sP([[8, 17.6], [1.4, 21], [2.6, 15.6], [6.6, 14.6]]), 'acc'),
+    dot(14, 9, P.a), dot(11, 9, P.a), dot(14, 15, P.a), dot(11, 15, P.a)] },
   grunt: { n: 16, pal: { b: '#e8e0b0', m: '#a89870', d: '#3a3220', a: '#fff4c0', c: '#ff4a2a', x: '#c8a050' }, f: P => [   // maggot
     part(sE(3.6, 8, 3, 2.6), 'body'), part(sE(7.4, 8, 3.4, 3.1), 'body'), part(sE(11.6, 8, 3.1, 2.8), 'body'),
     part(sLine(5.6, 5.4, 5.6, 10.6, 0.3), 'dark'), part(sLine(9.4, 5.2, 9.4, 10.8, 0.3), 'dark'), dot(13, 7, P.c), dot(13, 9, P.c), dot(14, 8, P.x)] },

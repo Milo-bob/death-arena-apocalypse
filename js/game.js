@@ -1,4 +1,5 @@
 // Core: run state, node map, rooms, combat, rendering. Menus live in ui.js.
+const GAME_SPEED = 1.25;   // global sim speed: faster enemies, bullets and cooldowns => more dodging/aiming skill
 const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
 const Input = { keys: {}, mx: W / 2, my: H / 2, down: false, rdown: false, auto: false };
 
@@ -221,8 +222,11 @@ const Game = {
     if (row >= 1 || act > 0) avail.push('swarmer');
     if (act >= 1 || row >= 3) avail.push('spitter', 'blob');
     if (act >= 2 || row >= 5) avail.push('sniper');
+    if (act >= 1 || row >= 3) avail.push('charger');
+    if (act >= 2 || row >= 4) avail.push('stalker');
     if (act >= 1 || row >= 2) avail.push('turret');
     if (row >= 2) avail.push('rat');
+    if (row >= 2 || act > 0) avail.push('scorpion');
     if (row >= 1 || act > 0) avail.push('raider', 'crab', 'frostwolf', 'icetower', 'smelter', 'drone', 'laser', 'warden', 'wraith');
     const cast = AREA_ENEMIES[areaOf(act)].filter(t => avail.includes(t)); if (cast.length) avail = cast;
     const list = [];
@@ -326,10 +330,10 @@ const Game = {
   healP(a) { if (this.run.hp < this.P.maxhp) { this.run.hp = Math.min(this.P.maxhp, this.run.hp + a); this.floatText(this.C.p.x, this.C.p.y - 20, '+' + (Math.round(a) / 10), '#39ff6e'); } },
   hurt(dmg, src) {
     const C = this.C, p = C.p, P = this.P, run = this.run;
-    if (!C || p.inv > 0 || p.dashT > 0) return false;
+    if (!C || p.inv > 0) return false;
     if (p.shield > 0) { C.fx.push({ k: 'ring', x: p.x, y: p.y, r: 30, t: 0.2, max: 0.2, col: '#ffe94a' }); return false; }
     const d = dmg * P.taken;
-    run.hp -= d; p.inv = 0.5; p.flash = 0.2; C.shake = Math.max(C.shake, 8); C.noHit = false; Sfx.hurt(); this.impact(0.09, '#ff2a2a', 0.38); C.hitstop = Math.max(C.hitstop || 0, 0.08);
+    run.hp -= d; p.inv = 0.3; p.flash = 0.2; C.shake = Math.max(C.shake, 8); C.noHit = false; Sfx.hurt(); this.impact(0.09, '#ff2a2a', 0.38); C.hitstop = Math.max(C.hitstop || 0, 0.08);
     this.floatText(p.x, p.y - 20, '-' + (Math.round(d) / 10), '#ff2d3d', 1.2);
     this.burst(p.x, p.y, '#ff2d3d', 12, 200);
     if (P.thorns && src && src.hp !== undefined && !src.dead) this.hitEnemy(src, P.thorns, { raw: true, noProc: true, noCrit: true });
@@ -352,7 +356,7 @@ const Game = {
     const ml = Math.hypot(mx, my); if (ml) { mx /= ml; my /= ml; }
     p.aim = Math.atan2(C.my - p.y, C.mx - p.x);
     p.still = ml ? 0 : p.still + dt;
-    let sp = 265 * P.speed;
+    let sp = 292 * P.speed;
     for (const z of C.zones) if (z.slowP && dist(z, p) < z.r) sp *= 0.6;
     if (p.dashT > 0) {
       p.dashT -= dt; sp = 780;
@@ -512,9 +516,9 @@ const Game = {
   },
   useAbility() {
     const C = this.C, P = this.P, p = C.p, a = kitOf(this.run).ability, col = CLANS[this.run.clan].color;
-    p.abT = a.cd * P.abCd; Sfx.ability(a.type);
+    p.abT = a.cd * P.abCd * (a.type === 'roll' ? 1.7 : 1); Sfx.ability(a.type);
     if (a.type === 'eat') { this.eatWeapon(); return; }
-    if (a.type === 'roll') { p.dashDir = p.aim; p.dashT = 0.2; p.dashHit = []; p.inv = Math.max(p.inv, 0.6); Sfx.dash(); return; }
+    if (a.type === 'roll') { p.dashDir = p.aim; p.dashT = 0.2; p.dashHit = []; p.inv = Math.max(p.inv, 0.22); Sfx.dash(); return; }
     if (a.type === 'strike') { C.haz.push({ x: C.mx, y: C.my, r: a.r * P.blastRad, t: 0.7, max: 0.7, dmg: a.dmg, friendly: true }); return; }
     if (a.type === 'nova') {
       C.fx.push({ k: 'ring', x: p.x, y: p.y, r: a.r, t: 0.35, max: 0.35, col });
@@ -530,7 +534,7 @@ const Game = {
     } else if (a.type === 'blink') {
       const x0 = p.x, y0 = p.y, dx = Math.cos(p.aim), dy = Math.sin(p.aim);
       let d = 0; while (d < a.dist) { p.x += dx * 10; p.y += dy * 10; d += 10; const ox = p.x, oy = p.y; this.collide(p, p.r); if (Math.abs(ox - p.x) + Math.abs(oy - p.y) > 4) break; }
-      C.fx.push({ k: 'line', x1: x0, y1: y0, x2: p.x, y2: p.y, t: 0.3, col, w: 8 }); p.inv = Math.max(p.inv, 0.35);
+      C.fx.push({ k: 'line', x1: x0, y1: y0, x2: p.x, y2: p.y, t: 0.3, col, w: 8 }); p.inv = Math.max(p.inv, 0.18);
       for (const e of C.en) if (!e.dead && segDist(e.x, e.y, x0, y0, p.x, p.y) < e.r + 22) this.hitEnemy(e, a.dmg);
     }
   },
@@ -572,6 +576,52 @@ const Game = {
         if (e.wind > 0) { e.wind -= dt; if (e.wind <= 0) { this.eShoot(e, ang, 430, e.dmg, 4); e.fire = 3.4 * rnd(0.8, 1.2); } }
         else { e.fire -= dt; if (e.fire <= 0) e.wind = 0.9; }
         if (touch && e.atk <= 0 && this.hurt(e.dmg, e)) e.atk = 0.8; break;
+      }
+      case 'scorpion': {   // keeps its distance, winds up (stinger glows), then sprays a wide fan of bullets or a double ring
+        const tx = Math.cos(ang), ty = Math.sin(ang); let vx = -ty * e.sd * spd * 0.7, vy = tx * e.sd * spd * 0.7;
+        if (d > 360) { vx = tx * spd; vy = ty * spd; } else if (d < 220) { vx = -tx * spd; vy = -ty * spd; }
+        this.moveE(e, e.wind > 0 ? vx * 0.3 : vx, e.wind > 0 ? vy * 0.3 : vy, dt);
+        if (e.wind > 0) {
+          e.wind -= dt; e.flash = Math.max(e.flash, 0.05);
+          if (e.wind <= 0) {
+            e.pat = (e.pat || 0) + 1;
+            if (e.pat % 2) { const k = 13; for (let i = 0; i < k; i++) this.eShoot(e, ang + (i - (k - 1) / 2) * 0.13, 235 + (i % 2) * 40, e.dmg, 4); }
+            else { const k = 16, off = rnd(0, 6.283); for (let i = 0; i < k; i++) { this.eShoot(e, off + i * 6.283 / k, 175, e.dmg, 4); this.eShoot(e, off + (i + 0.5) * 6.283 / k, 245, e.dmg, 4); } }
+            Sfx.shoot('bullet', true); e.fire = 2.6 * rnd(0.8, 1.2);
+          }
+        } else { e.fire -= dt; if (e.fire <= 0) e.wind = 0.7; }
+        if (touch && e.atk <= 0 && this.hurt(e.dmg, e)) e.atk = 0.8; break;
+      }
+      case 'charger': {   // telegraphs a long line, then charges in a straight line; hitting a wall leaves it stunned
+        if (e.state === 'move') {
+          this.moveE(e, Math.cos(ang) * spd, Math.sin(ang) * spd, dt);
+          e.cd -= dt; if (e.cd <= 0 && d < 520 && d > 110) { e.state = 'aim'; e.st = 0.9; e.ang = ang; }
+          if (touch && e.atk <= 0 && this.hurt(e.dmg * 0.6, e)) e.atk = 0.8;
+        } else if (e.state === 'aim') { this.moveE(e, 0, 0, dt); e.st -= dt; if (e.st > 0.28) e.ang = ang; if (e.st <= 0) { e.state = 'dash'; e.st = 0.85; e.hit = false; }
+        } else if (e.state === 'dash') {
+          const ox = e.x, oy = e.y, sp = 540 * sm;
+          this.moveE(e, Math.cos(e.ang) * sp, Math.sin(e.ang) * sp, dt); e.st -= dt;
+          if (!e.hit && touch) e.hit = this.hurt(e.dmg, e);
+          if (Math.hypot(e.x - ox, e.y - oy) < sp * dt * 0.4) { e.state = 'rest'; e.st = 1.3; C.shake = Math.max(C.shake, 6); this.burst(e.x, e.y, '#c8c0b0', 8, 160); e.vx = e.vy = 0; }
+          else if (e.st <= 0) { e.state = 'rest'; e.st = 0.7; }
+        } else { this.moveE(e, 0, 0, dt); e.st -= dt; if (e.st <= 0) { e.state = 'move'; e.cd = 2.4; } }
+        break;
+      }
+      case 'stalker': {   // vanishes, shows a ring where it will reappear (behind you), then lunges
+        if (e.state === 'move') {
+          this.moveE(e, Math.cos(ang) * spd, Math.sin(ang) * spd, dt);
+          e.cd -= dt; if (e.cd <= 0 && d > 150) { const q = this.safeSpot(p.x - Math.cos(p.aim) * 125, p.y - Math.sin(p.aim) * 125, 14); e.tx = q.x; e.ty = q.y; e.state = 'warp'; e.st = 0.8; }
+          if (touch && e.atk <= 0 && this.hurt(e.dmg * 0.6, e)) e.atk = 0.8;
+        } else if (e.state === 'warp') {
+          this.moveE(e, 0, 0, dt); e.st -= dt;
+          if (e.st <= 0) { this.burst(e.x, e.y, e.col, 6, 120); e.x = e.lx = e.tx; e.y = e.ly = e.ty; this.burst(e.x, e.y, e.col, 8, 140); e.state = 'aim'; e.st = 0.4; }
+        } else if (e.state === 'aim') { this.moveE(e, 0, 0, dt); e.ang = ang; e.st -= dt; if (e.st <= 0) { e.state = 'dash'; e.st = 0.26; e.hit = false; }
+        } else if (e.state === 'dash') {
+          this.moveE(e, Math.cos(e.ang) * 540 * sm, Math.sin(e.ang) * 540 * sm, dt); e.st -= dt;
+          if (!e.hit && touch) e.hit = this.hurt(e.dmg, e);
+          if (e.st <= 0) { e.state = 'rest'; e.st = 0.8; }
+        } else { this.moveE(e, 0, 0, dt); e.st -= dt; if (e.st <= 0) { e.state = 'move'; e.cd = 3.6; } }
+        break;
       }
       case 'burst': {   // fires quick three-round bursts
         const tx = Math.cos(ang), ty = Math.sin(ang); let vx = -ty * e.sd * spd * 0.6, vy = tx * e.sd * spd * 0.6;
@@ -736,7 +786,7 @@ const Game = {
       b.x += b.vx * dt; b.y += b.vy * dt; b.life -= dt;
       if (!this.walkable(b.x, b.y) || C.pillars.some(q => b.x > q.x && b.x < q.x + q.w && b.y > q.y && b.y < q.y + q.h)) b.life = 0;
       if (b.life > 0 && p.shield > 0 && dist(b, p) < 64) { C.pb.push({ x: b.x, y: b.y, vx: -b.vx, vy: -b.vy, r: 5, dmg: b.dmg * 2.5, pierce: 0, life: 1.2, hit: [], homing: 0, col: '#ffe94a', boom: 0, boomDmg: 0, bounce: 0 }); b.life = 0; this.burst(b.x, b.y, '#ffe94a', 4, 120); continue; }
-      if (b.life > 0 && dist(b, p) < b.r + p.r - 1 && this.hurt(b.dmg, null)) b.life = 0;
+      if (b.life > 0 && dist(b, p) < b.r + p.r * 0.62 && this.hurt(b.dmg, null)) b.life = 0;
     }
     C.eb = C.eb.filter(b => b.life > 0);
   },
@@ -974,7 +1024,13 @@ const Game = {
     } else {
       let fa = ang;
       const eai = ENEMY[e.type].ai || e.type;
-      if (eai === 'dasher' && e.state !== 'move') fa = e.ang;
+      if ((eai === 'dasher' || eai === 'charger') && e.state !== 'move' && e.state !== 'rest') fa = e.ang;
+      if (eai === 'charger' && e.state === 'aim') { ctx.globalAlpha = 0.25 + 0.3 * Math.sin(C.t * 30); pxLine(e.x, e.y, e.x + Math.cos(e.ang) * 520, e.y + Math.sin(e.ang) * 520, 18, '#ff3a3a'); ctx.globalAlpha = 1; }
+      if (eai === 'stalker' && e.state === 'warp') { ctx.globalAlpha = 0.5 + 0.3 * Math.sin(C.t * 24); pxRing(e.tx, e.ty, 22 - e.st * 8, '#5ad0ff', 2); pxRing(e.tx, e.ty, 10, '#c8f4ff', 2); ctx.globalAlpha = 0.15; }
+      if (eai === 'stalker' && e.state === 'aim') { ctx.globalAlpha = 0.3 + 0.3 * Math.sin(C.t * 30); pxLine(e.x, e.y, e.x + Math.cos(e.ang) * 150, e.y + Math.sin(e.ang) * 150, 8, '#5ad0ff'); ctx.globalAlpha = 1; }
+      if (eai === 'sniper' && e.wind > 0) { ctx.globalAlpha = 0.35 + 0.3 * (1 - e.wind / 0.9); pxLine(e.x, e.y, e.x + Math.cos(ang) * 700, e.y + Math.sin(ang) * 700, 2, '#c04aff'); ctx.globalAlpha = 1; }
+      if (eai === 'scorpion' && e.wind > 0) { const fan = ((e.pat || 0) + 1) % 2 === 1; ctx.globalAlpha = 0.3 + 0.3 * (1 - e.wind / 0.7);
+        if (fan) { for (const s of [-0.85, 0.85]) pxLine(e.x, e.y, e.x + Math.cos(ang + s) * 380, e.y + Math.sin(ang + s) * 380, 2, '#ffb030'); } else pxRing(e.x, e.y, 30 + (1 - e.wind / 0.7) * 60, '#ffb030', 2); ctx.globalAlpha = 1; }
       if (eai === 'dasher' && e.state === 'aim') { ctx.globalAlpha = 0.3 + 0.3 * Math.sin(C.t * 30); pxLine(e.x, e.y, e.x + Math.cos(e.ang) * 330, e.y + Math.sin(e.ang) * 330, 12, '#ff8a1f'); ctx.globalAlpha = 1; }
       if (eai === 'shooter' && e.wind > 0) { ctx.globalAlpha = 0.5; pxLine(e.x, e.y, e.x + Math.cos(ang) * 400, e.y + Math.sin(ang) * 400, 2, '#ffd91f'); ctx.globalAlpha = 1; }
       if (e.type === 'bomber' && e.state === 'fuse') { pxRing(e.x, e.y, 76, 'rgba(255,100,120,.7)', 2); if (Math.floor(C.t * 14) % 2) fa += 0; }
@@ -1039,7 +1095,7 @@ const Game = {
     const dt = Math.min(0.033, (now - this.last) / 1000 || 0.016); this.last = now;
     if (this.fade) { const f = this.fade; f.t += dt; if (f.t >= 0.25 && !f.done) { f.done = true; f.fn(); } if (f.t >= 0.5) this.fade = null; }
     if (this.C && this.C.hitstop > 0) this.C.hitstop -= dt;
-    else if (this.mode === 'fight' && this.C && !this.paused && !this.frozen) this.update(dt);
+    else if (this.mode === 'fight' && this.C && !this.paused && !this.frozen) this.update(dt * GAME_SPEED);
     this.render();
     requestAnimationFrame(t => this.frame(t));
   },

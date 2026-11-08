@@ -16,7 +16,7 @@ function genWorld(act, seed) {
   const open = (px, py, rad) => { if (!floorAt(px, py)) return false; for (let a = 0; a < 6.3; a += 0.8) if (!floorAt(px + Math.cos(a) * rad, py + Math.sin(a) * rad)) return false; return true; };
   // 1) cavern centres, spread over the whole map (just caves, not rooms: nothing happens in them)
   const pts = [];
-  for (let tries = 0; pts.length < 9 && tries < 8000; tries++) {
+  for (let tries = 0; pts.length < 10 && tries < 8000; tries++) {
     const x = 5 + R() * (COLS - 10), y = 5 + R() * (ROWS - 10);
     if (pts.every(q => Math.hypot(q[0] - x, q[1] - y) > 6.2)) pts.push([x, y]);
   }
@@ -26,10 +26,10 @@ function genWorld(act, seed) {
   const bossId = bossLevel ? far[Math.floor(R() * 2)] : -1;
   const rest = pts.map((_, i) => i).filter(i => i !== startId && i !== bossId).sort(() => R() - 0.5);
   const special = new Map();   // node -> type of the small thing standing in it
-  if (rest[0] !== undefined) special.set(rest[0], 'camp'); if (rest[3] !== undefined) special.set(rest[3], 'event');
+  // no camps, altars, shops or shrines: the cave is only caves, enemies and the boss
   // 2) carve each cavern as an irregular blob
   pts.forEach((q, id) => {
-    const rt = id === bossId ? 5.2 : id === startId ? 3 : special.has(id) ? 3.2 : 3.4 + R() * 2.0; q.push(rt);
+    const rt = id === bossId ? 4.4 : id === startId ? 3 : special.has(id) ? 3.2 : 3.4 + R() * 2.0; q.push(rt);
     carve(q[0], q[1], rt * 0.7);
     for (let k = 0; k < 7; k++) { const a = R() * 6.283, d = rt * (0.35 + R() * 0.5); carve(q[0] + Math.cos(a) * d, q[1] + Math.sin(a) * d, rt * (0.3 + R() * 0.3)); }
   });
@@ -49,19 +49,28 @@ function genWorld(act, seed) {
     for (const a of linked) for (let b = 0; b < n; b++) if (!linked.has(b)) { const d = Math.hypot(pts[a][0] - pts[b][0], pts[a][1] - pts[b][1]); if (!best || d < best[2]) best = [a, b, d]; }
     edges.push(best); linked.add(best[1]);
   }
-  for (let i = 0; i < 2; i++) {
+  for (let i = 0; i < 3; i++) {
     const a = Math.floor(R() * n), near = pts.map((_, b) => b).filter(b => b !== a).sort((u, v) => Math.hypot(pts[u][0] - pts[a][0], pts[u][1] - pts[a][1]) - Math.hypot(pts[v][0] - pts[a][0], pts[v][1] - pts[a][1])).slice(0, 3);
     const b = near[Math.floor(R() * near.length)]; if (!has(a, b)) edges.push([a, b]);
   }
   for (const [a, b] of edges) tunnel(a, b);
   // 4) drunkard-walk side caves and dead ends
-  for (let w = 0; w < 3; w++) {
+  for (let w = 0; w < 5; w++) {
     let x = pts[Math.floor(R() * n)][0], y = pts[Math.floor(R() * n)][1], ang = R() * 6.283;
     for (let s = 0; s < 55; s++) {
       if (R() < 0.15) ang += (R() - 0.5) * 2.4;
       x = clamp(x + Math.cos(ang), 6, COLS - 7); y = clamp(y + Math.sin(ang), 6, ROWS - 7); carve(x, y, 1.0 + R() * 0.8);
     }
   }
+  // 4a) stone islands inside the bigger caverns: irregular walls to fight around (the start cavern stays open)
+  pts.forEach((q, id) => {
+    if (id === startId || q[2] < 4) return;
+    for (let k = 0, m = q[2] > 4.8 ? 2 : 1; k < m; k++) {
+      const a = R() * 6.283, d = q[2] * (0.32 + R() * 0.16), ix = q[0] + Math.cos(a) * d, iy = q[1] + Math.sin(a) * d, rad = 0.8 + R() * 0.7;
+      for (let y = Math.floor(iy - rad); y <= Math.ceil(iy + rad); y++) for (let x = Math.floor(ix - rad); x <= Math.ceil(ix + rad); x++)
+        if (x > 2 && y > 2 && x < COLS - 3 && y < ROWS - 3 && (x - ix) * (x - ix) + (y - iy) * (y - iy) <= rad * rad) grid[y * COLS + x] = 0;
+    }
+  });
   // 4b) safety net: every cavern must be reachable on foot from the start, otherwise dig a straight corridor to it
   const reach = () => {
     const seen = new Uint8Array(COLS * ROWS), st = [[Math.floor(pts[startId][0]), Math.floor(pts[startId][1])]]; seen[st[0][1] * COLS + st[0][0]] = 1;
@@ -83,13 +92,18 @@ function genWorld(act, seed) {
   if (bossLevel) mk(bossId, 'boss');
   for (const [id, type] of special) mk(id, type);
   const bossCell = cells.find(c => c.type === 'boss');
-  if (bossCell) for (let i = 0, k = 5; i < 40 && k > 0; i++) {
-    const a = R() * 6.283, d = bossCell.r * (0.35 + R() * 0.45), w = 44 + Math.floor(R() * 30), h = 44 + Math.floor(R() * 30), x = bossCell.cx + Math.cos(a) * d, y = bossCell.cy + Math.sin(a) * d;
-    if (open(x, y, 80)) { pillars.push({ x: x - w / 2, y: y - h / 2, w, h }); k--; }
-  }
-  for (let i = 0; i < 3; i++) {   // a few loose rocks in the open caves
-    const x = (4 + R() * (COLS - 8)) * TILE, y = (4 + R() * (ROWS - 8)) * TILE, w = 36 + Math.floor(R() * 30), h = 36 + Math.floor(R() * 30);
-    if (open(x, y, 100) && cells.every(c => Math.hypot(c.cx - x, c.cy - y) > 130)) pillars.push({ x: x - w / 2, y: y - h / 2, w, h });
+  const rock = (x, y) => { const w = 32 + Math.floor(R() * 32), h = 32 + Math.floor(R() * 32); pillars.push({ x: x - w / 2, y: y - h / 2, w, h }); };
+  const startCell = cells[0];
+  pts.forEach((q, id) => {   // cover in the caverns: one or two rocks (a little cluster in big caves), never on the start spot
+    const m = id === startId ? 0 : q[2] > 4.8 ? 2 : 1;
+    for (let k = 0, tries = 0; k < m && tries < 25; tries++) {
+      const a = R() * 6.283, d = q[2] * TILE * (0.2 + R() * 0.35), x = q[0] * TILE + Math.cos(a) * d, y = q[1] * TILE + Math.sin(a) * d;
+      if (open(x, y, 64) && !pillars.some(r => Math.hypot(r.x + r.w / 2 - x, r.y + r.h / 2 - y) < 90)) { rock(x, y); k++; }
+    }
+  });
+  for (let i = 0, k = 3; i < 60 && k > 0; i++) {   // loose rocks in the open
+    const x = (4 + R() * (COLS - 8)) * TILE, y = (4 + R() * (ROWS - 8)) * TILE;
+    if (open(x, y, 90) && cells.every(c => Math.hypot(c.cx - x, c.cy - y) > 130) && Math.hypot(startCell.cx - x, startCell.cy - y) > 260) { rock(x, y); k--; }
   }
   const deg = pts.map(() => 0); for (const [a, b] of edges) { deg[a]++; deg[b]++; }
   const nodes = pts.map((q, id) => ({ id, x: q[0] * TILE, y: q[1] * TILE, r: q[2] * TILE * 0.8, deg: deg[id], type: id === startId ? 'start' : id === bossId ? 'boss' : special.get(id) || 'cave' }));
@@ -236,7 +250,7 @@ Object.assign(Game, {
     for (let i = 0; i < n; i++) this.spawnItem(e.x, e.y, 'rad', { amt: xp / n });
     run.ammo = run.ammo || startAmmo();
     const want = this.ammoWanted(), low = run.ammo[want] / AMMO[want].max < 0.35;
-    if (!e.boss && Math.random() < Math.min(0.85, (low ? 0.34 : 0.17) * P.dropMul)) this.spawnItem(e.x, e.y, 'ammo', { type: want, amt: AMMO[want].amt });
+    if (!e.boss && Math.random() < Math.min(0.85, (low ? 0.2 : 0.09) * P.dropMul)) this.spawnItem(e.x, e.y, 'ammo', { type: want, amt: AMMO[want].amt });
     if (!e.boss && !P.noHeal && Math.random() < (run.hp < P.maxhp * 0.5 ? 0.05 : 0.015) * Math.min(P.dropMul, 1.8)) this.spawnItem(e.x, e.y, 'heal', { amt: 10 });
     if (P.bloodlust && !e.boss && !P.noHeal && Math.random() < P.bloodlust) this.healP(10);
     if (e.free) {
@@ -505,7 +519,6 @@ Object.assign(Game, {
   discover(cell) {
     cell.state.visited = true;
     const C = this.C; C.curCell = cell;
-    if (cell.safe || cell.type === 'boss') { C.banner = 2; C.bannerText = CELL_NAME[cell.type]; }
   },
   orbPos(cell) { return cell._orb || (cell._orb = this.safeSpot(cell.cx, cell.cy + (cell.type === 'boss' ? 90 : 50), 22)); },
   worldUpdate() {
@@ -556,7 +569,7 @@ Object.assign(Game, {
     if (!ids.length) return;
     C.wdrops.push({ id: pick(ids), x, y }); if (!quiet) this.floatText(x, y - 30, 'WEAPON', '#ffd91f');
   },
-  dropWeapon(e) { if (Math.random() < Math.min(1, (e.boss ? 1 : e.elite ? 0.4 : 0.02) * this.P.dropMul)) this.spawnWeapon(e.x, e.y); },
+  dropWeapon(e) { if (Math.random() < Math.min(1, (e.boss ? 1 : e.elite ? 0.5 : 0.05) * this.P.dropMul)) this.spawnWeapon(e.x, e.y); },
   pickWeapon(d) {
     const C = this.C, run = this.run, cur = run.wpn || run.hero;
     C.wdrops = C.wdrops.filter(x => x !== d);

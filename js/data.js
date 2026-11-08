@@ -433,16 +433,19 @@ Object.assign(ENEMY, {
   laser:     { name: 'Laser Eye', hp: 34, speed: 55, r: 13, dmg: 20, cost: 5, col: '#ff3de8', ai: 'sniper', blood: '#8a1a78' },
   warden:    { name: 'Warden', hp: 90, speed: 0, r: 16, dmg: 10, cost: 5, col: '#b24bff', ai: 'ring', blood: '#3a1a6a' },
   wraith:    { name: 'Wraith', hp: 28, speed: 140, r: 11, dmg: 15, cost: 3, col: '#c0a0ff', ai: 'grunt', blood: '#5a3a9a' },
+  charger:   { name: 'Bull', hp: 110, speed: 70, r: 16, dmg: 25, cost: 5, col: '#c05a30', ai: 'charger', blood: '#7a2a14' },   // telegraphs, charges in a line, stuns itself on walls
+  stalker:   { name: 'Stalker', hp: 40, speed: 90, r: 11, dmg: 18, cost: 4, col: '#5ad0ff', ai: 'stalker', blood: '#2a7aa0' },   // vanishes and reappears behind you
+  scorpion:  { name: 'Scorpion', hp: 80, speed: 62, r: 15, dmg: 8, cost: 6, col: '#e0a030', ai: 'scorpion', blood: '#8a6a10' },   // fires huge fans and rings of bullets
 });
 Object.assign(ENEMY.spitter, { blood: '#3f7a1f' }); Object.assign(ENEMY.swarmer, { blood: '#a04a1a' }); Object.assign(ENEMY.blob, { blood: '#7a4a1f' }); Object.assign(ENEMY.sniper, { blood: '#6a1fa0' });
 // every area has its own cast (like the original), the boss summons from the same list
 const AREA_ENEMIES = [
-  ['grunt', 'shooter', 'rat', 'swarmer', 'maggot', 'raider'],
-  ['swarmer', 'spitter', 'blob', 'grunt', 'maggot', 'crab', 'crab'],
-  ['tank', 'dasher', 'bomber', 'turret', 'shooter', 'grunt', 'smelter', 'raider'],
-  ['sniper', 'shooter', 'rat', 'blob', 'dasher', 'tank', 'frostwolf', 'frostwolf', 'icetower'],
-  ['turret', 'sniper', 'spitter', 'swarmer', 'bomber', 'dasher', 'drone', 'drone', 'laser'],
-  ['grunt', 'shooter', 'dasher', 'bomber', 'tank', 'spitter', 'blob', 'sniper', 'turret', 'raider', 'smelter', 'drone', 'laser', 'warden', 'wraith', 'wraith'],
+  ['grunt', 'shooter', 'rat', 'swarmer', 'maggot', 'raider', 'scorpion', 'charger'],
+  ['swarmer', 'spitter', 'blob', 'grunt', 'maggot', 'crab', 'crab', 'charger', 'stalker'],
+  ['tank', 'dasher', 'bomber', 'turret', 'shooter', 'grunt', 'smelter', 'raider', 'scorpion', 'stalker'],
+  ['sniper', 'shooter', 'rat', 'blob', 'dasher', 'tank', 'frostwolf', 'frostwolf', 'icetower', 'charger'],
+  ['turret', 'sniper', 'spitter', 'swarmer', 'bomber', 'dasher', 'drone', 'drone', 'laser', 'stalker'],
+  ['grunt', 'shooter', 'dasher', 'bomber', 'tank', 'spitter', 'blob', 'sniper', 'turret', 'raider', 'smelter', 'drone', 'laser', 'warden', 'wraith', 'wraith', 'scorpion', 'charger', 'stalker'],
 ];
 const ELITE_MODS = {
   shield: { name: 'Shielded', col: '#3de8ff' },

@@ -88,6 +88,13 @@ const FRONT_ENEMY = {
   laser: { n: 18, f: P => [part(sB(5, 16.4, 1.5, 1.2, 0.3), 'dark'), part(sB(13, 16.4, 1.5, 1.2, 0.3), 'dark'), part(sC(9, 9, 7.2), 'body'), part(sC(11.2, 9, 4), 'acc'), part(sC(12.2, 9, 2.2), 'dark'), dot(12, 9, P.x), part(sB(16.4, 9, 1.6, 0.7, 0.2), 'cy')] },
   warden: { n: 22, f: P => [part(sB(11, 20.4, 8.4, 1.6, 0.5), 'body'), part(sB(11, 13, 5.6, 7.4, 1.4), 'dark'), part(sC(11, 8, 5.6), 'body'), part(sC(11, 8, 2.8), 'acc'), dot(11, 8, P.c), dot(11, 9, P.c), dot(7, 14, P.a), dot(15, 14, P.a), dot(11, 17, P.a)] },
   wraith: { n: 16, f: P => [part(sP([[3, 14.6], [3.6, 5.6], [7.6, 2], [11.6, 5], [12.4, 14.6], [10, 12.6], [8, 15], [5.6, 12.8]]), 'body'), dot(9, 5, P.c), dot(11, 5, P.c), part(sLine(12, 8, 15, 9.6, 0.6), 'acc')] },
+  charger: { n: 22, f: P => [part(sB(6, 20, 1.6, 2, 0.4), 'dark'), part(sB(15, 20, 1.6, 2, 0.4), 'dark'), part(sE(10, 14, 8, 5.4), 'body'), part(sE(8, 12, 4, 2), 'dark'),
+    part(sC(17.4, 11, 3.6), 'body'), part(sP([[16, 8], [20.4, 2.4], [19.2, 9]]), 'acc'), dot(18.6, 10.4, P.c), dot(20.4, 12, P.d)] },
+  stalker: { n: 16, f: P => [part(sP([[3, 14.6], [3.6, 6], [8, 2], [12, 6], [12.6, 14.6], [10, 12.8], [8, 15.4], [5.6, 12.8]]), 'body'), dot(9, 6, P.x), dot(11, 6, P.x),
+    part(sLine(12, 9, 15.4, 12, 0.7), 'acc'), part(sLine(3, 9, 0.6, 12, 0.7), 'acc')] },
+  scorpion: { n: 24, f: P => [part(sLine(16, 17, 18, 22, 0.8), 'dark'), part(sLine(12, 17, 12, 22.4, 0.8), 'dark'), part(sLine(8, 17, 6, 22, 0.8), 'dark'),
+    part(sE(13, 15, 7.4, 3.8), 'body'), part(sE(13, 15, 4, 1.8), 'dark'), part(sC(19.4, 14.4, 2.6), 'body'), dot(20.4, 13.6, P.c), part(sLine(21, 16, 23.2, 11, 1.6), 'acc'), part(sC(23, 10, 2), 'x'),
+    part(sLine(7, 13, 2.6, 9.4, 1.5), 'acc'), part(sLine(2.6, 9.4, 3, 4.2, 1.4), 'acc'), part(sLine(3, 4.2, 6.4, 1.6, 1.3), 'acc'), part(sP([[6.4, 1.6], [9.6, 3], [8.6, 4.4]]), 'x')] },
 };
 
 // ---------- bosses (40x40, side view) ----------
