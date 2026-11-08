@@ -26,7 +26,7 @@ function genWorld(act, seed) {
   const bossId = bossLevel ? far[Math.floor(R() * 2)] : -1;
   const rest = pts.map((_, i) => i).filter(i => i !== startId && i !== bossId).sort(() => R() - 0.5);
   const special = new Map();   // node -> type of the small thing standing in it
-  if (rest[0] !== undefined) special.set(rest[0], 'camp'); if (rest[1] !== undefined) special.set(rest[1], 'shop'); if (rest[2] !== undefined && R() < 0.5) special.set(rest[2], 'shop'); if (rest[3] !== undefined) special.set(rest[3], 'event');
+  if (rest[0] !== undefined) special.set(rest[0], 'camp'); if (rest[3] !== undefined) special.set(rest[3], 'event');
   // 2) carve each cavern as an irregular blob
   pts.forEach((q, id) => {
     const rt = id === bossId ? 5.2 : id === startId ? 3 : special.has(id) ? 3.2 : 3.4 + R() * 2.0; q.push(rt);

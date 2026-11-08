@@ -944,7 +944,7 @@ const Game = {
     ctx.textAlign = 'center'; ctx.font = '12px Silk, monospace'; ctx.fillStyle = '#9fc'; ctx.fillText(this.levelLabel ? this.levelLabel() : '', W / 2, 18);
     ctx.fillStyle = '#fff'; ctx.fillText(HEROES[run.hero].name.toUpperCase() + ' / ' + w.weapon.name.toUpperCase(), W / 2, 36);
     if (this.drawWeaponHud) this.drawWeaponHud();
-    ctx.textAlign = 'right'; ctx.font = '14px Silk, monospace'; ctx.fillStyle = '#ffd91f'; ctx.fillText('GOLD ' + run.gold, W - 14, 20);
+    ctx.textAlign = 'right';
     // tags
     ctx.textAlign = 'left'; ctx.font = '10px Silk, monospace'; let tx = 14;
     for (const t of Object.keys(P.tags)) {

@@ -219,7 +219,7 @@ const UI = {
   },
   status() {
     const run = Game.run, P = Game.P;
-    let h = '<div class="sm" style="width:100%;display:flex;justify-content:space-between;margin-bottom:6px"><span>HEARTS ' + Math.ceil(run.hp / 10) + '/' + Math.round(P.maxhp / 10) + '</span><span style="color:#ffd91f">GOLD ' + run.gold + '</span></div>';
+    let h = '<div class="sm" style="width:100%;display:flex;justify-content:space-between;margin-bottom:6px"><span>HEARTS ' + Math.ceil(run.hp / 10) + '/' + Math.round(P.maxhp / 10) + '</span></div>';
     return h;
   },
   buildList() {
@@ -310,12 +310,12 @@ const UI = {
       this.show(h); this.acts(...n.ev.offers.map((o, i) => () => this.trade(i)));
     } else {
       const cost = Math.round(Game.P.maxhp * 0.25);
-      this.show('<h2>BLOOD FOUNT</h2>' + this.status() + '<p class="dim">The fount offers riches for blood.</p><div class="row" style="margin-top:16px"><div class="card" onclick="UI.blood()"><h3>SACRIFICE</h3><p>Lose ' + cost + ' HP.</p><p class="pro">+90 gold</p></div></div><div class="row"><button class="btn big" onclick="Game.nodeDone()">WALK AWAY</button></div>');
+      this.show('<h2>BLOOD FOUNT</h2>' + this.status() + '<p class="dim">The fount gives a weapon for blood.</p><div class="row" style="margin-top:16px"><div class="card" onclick="UI.blood()"><h3>SACRIFICE</h3><p>Lose ' + cost + ' HP.</p><p class="pro">A better weapon drops at your feet.</p></div></div><div class="row"><button class="btn big" onclick="Game.nodeDone()">WALK AWAY</button></div>');
       this.acts(() => this.blood());
     }
   },
   trade(i) { const run = Game.run, n = Game.C.node, o = n.ev.offers[i]; Game.takeDrawback(o.draw); Game.takePerk(o.perk); Game.nodeDone(); },
-  blood() { const run = Game.run, P = Game.P; run.hp = Math.max(1, run.hp - Math.round(P.maxhp * 0.25)); run.gold += 90; Game.nodeDone(); },
+  blood() { const run = Game.run, P = Game.P; run.hp = Math.max(1, run.hp - Math.round(P.maxhp * 0.25)); Game.spawnWeapon(Game.C.p.x, Game.C.p.y + 40, false, true, 2); Game.nodeDone(); },
 
   // ---------- curse room ----------
   curse(n) {

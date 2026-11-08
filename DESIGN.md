@@ -94,3 +94,6 @@ Supabase-Projekt eingetragen (js/save.js: URL + publishable Key, beides öffentl
 
 ## Schritt 20: Cores und Heat entfernt
 Keine Cores (Sammeln, HUD, Run-Ende, Camp-Anzeige) und kein Heat-Regler mehr; Schwierigkeit kommt nur aus Gebiet/Loop. Run-Ende zeigt nur Level/Kills/Gebiet. Alter Hub-Code (Skilltree, Meta-Shop) bleibt ungenutzt im Code.
+
+## Schritt 21: Shops entfernt
+Keine Black-Market-Räume mehr, Gold-Anzeige weg (Gold hatte nur im Shop einen Zweck). Blutbrunnen gibt jetzt eine bessere Waffe statt Gold.
