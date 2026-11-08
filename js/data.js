@@ -3,7 +3,8 @@ const W = 960, H = 540;
 const ARENA = { x0: 26, y0: 58, x1: 934, y1: 514 };
 
 // a run is a chain of levels (run.act counts them): 3 levels per area, the third is the boss level; after 3 areas the run loops
-const areaOf = a => Math.floor(a / 3) % 3, isBossLevel = a => a % 3 === 2;
+const AREAS = 6, LOOP_LEVELS = AREAS * 3;
+const areaOf = a => Math.floor(a / 3) % AREAS, isBossLevel = a => a % 3 === 2;
 
 const rnd = (a, b) => a + Math.random() * (b - a);
 const rndi = (a, b) => Math.floor(rnd(a, b + 1));
@@ -160,6 +161,40 @@ Object.assign(HEROES.siege, { name: 'Rebel', cost: 650, blurb: 'Calls a drone al
   weapon: { type: 'shot', name: 'Ally Pistol', rate: 2.6, dmg: 12, speed: 520, n: 1, spread: 0.05, pierce: 0, life: 0.8, size: 3 },
   ability: { type: 'turret', name: 'Ally Drone', cd: 10, dur: 12, rate: 4, dmg: 8 }, mod(P) { P.maxhp += 10; P.regen += 0.3; } });
 
+HEROES.sun.ultras = [
+  { name: 'Gun Nut', d: '+60% ammo from pickups, +15% damage.', a: P => { P.ammoMul *= 1.6; P.dmg *= 1.15; } },
+  { name: 'Quick Draw', d: '+25% attack speed, +10% crit chance.', a: P => { P.rate *= 1.25; P.crit += 0.1; } }];
+HEROES.gunner.ultras = [
+  { name: 'Diamond Skin', d: 'Take 25% less damage, +30 max HP.', a: P => { P.taken *= 0.75; P.maxhp += 30; } },
+  { name: 'Shatter', d: '+30% damage, attackers take 15 damage.', a: P => { P.dmg *= 1.3; P.thorns += 15; } }];
+HEROES.runner.ultras = [
+  { name: 'Sharpshooter', d: '+15% crit chance, crits hit +50% harder.', a: P => { P.crit += 0.15; P.critMul += 0.5; } },
+  { name: 'Bullet Storm', d: '+35% attack speed.', a: P => { P.rate *= 1.35; } }];
+HEROES.boiler.ultras = [
+  { name: 'Supernova', d: 'Kill blasts +25 damage and 40% wider.', a: P => { P.killBlast += 25; P.blastRad *= 1.4; } },
+  { name: 'Wildfire', d: 'Hits burn for +10 dmg/s, burning aura around you.', a: P => { P.burn += 10; P.aura += 12; } }];
+HEROES.weaver.ultras = [
+  { name: 'Overgrowth', d: '+2 regen, +30 max HP.', a: P => { P.regen += 2; P.maxhp += 30; } },
+  { name: 'Predator', d: '+15% move speed, +20% damage.', a: P => { P.speed *= 1.15; P.dmg *= 1.2; } }];
+HEROES.net.ultras = [
+  { name: 'Hive Sight', d: 'Shots home in harder, +10% attack speed.', a: P => { P.homing += 2; P.rate *= 1.1; } },
+  { name: 'Third Eye', d: '+1 projectile, +10% crit chance.', a: P => { P.extra += 1; P.crit += 0.1; } }];
+HEROES.brute.ultras = [
+  { name: 'Overclock', d: '+20% attack speed, +10% damage.', a: P => { P.rate *= 1.2; P.dmg *= 1.1; } },
+  { name: 'Scrap Armor', d: 'Take 15% less damage, +40 max HP.', a: P => { P.taken *= 0.85; P.maxhp += 40; } }];
+HEROES.siege.ultras = [
+  { name: 'Squad Leader', d: '+20% damage, +1 regen.', a: P => { P.dmg *= 1.2; P.regen += 1; } },
+  { name: 'Last Stand', d: 'Up to +60% damage as HP drops, +20 max HP.', a: P => { P.berserk = 1; P.maxhp += 20; } }];
+
+// characters are unlocked by achievements (stats are banked at the end of a run)
+const UNLOCK = {
+  boiler: { d: 'Kill 150 enemies in total', ok: s => s.stats.kills >= 150, prog: s => Math.min(150, s.stats.kills) + '/150' },
+  weaver: { d: 'Reach level 4 in a run', ok: s => s.stats.bestAct >= 4, prog: s => Math.min(4, s.stats.bestAct) + '/4' },
+  net: { d: 'Reach player level 8 in a run', ok: s => (s.stats.bestPlv || 0) >= 8, prog: s => Math.min(8, s.stats.bestPlv || 0) + '/8' },
+  brute: { d: 'Defeat a boss', ok: s => (s.stats.bosses || 0) >= 1, prog: s => Math.min(1, s.stats.bosses || 0) + '/1' },
+  siege: { d: 'Reach level 10 in a run', ok: s => s.stats.bestAct >= 10, prog: s => Math.min(10, s.stats.bestAct) + '/10' },
+};
+
 // ammo types (like the original: bullets, shells, bolts, explosives, energy); melee weapons need none
 const AMMO = {
   bullet: { name: 'BULLETS', col: '#ffd91f', max: 200, amt: 40, L: 'B' },
@@ -313,6 +348,10 @@ const ENEMY = {
   dasher:  { name: 'Lancer', hp: 34, speed: 80, r: 13, dmg: 16, cost: 2, col: '#ff8a1f' },
   bomber:  { name: 'Bomber', hp: 24, speed: 128, r: 13, dmg: 26, cost: 2, col: '#ff9aa6' },
   tank:    { name: 'Crusher', hp: 130, speed: 52, r: 20, dmg: 22, cost: 4, col: '#a01828' },
+  swarmer: { name: 'Swarmer', hp: 11, speed: 150, r: 9, dmg: 6, cost: 1, col: '#ff7a3a', ai: 'grunt' },
+  spitter: { name: 'Spitter', hp: 30, speed: 66, r: 12, dmg: 7, cost: 3, col: '#7dd04a' },
+  blob:    { name: 'Blob', hp: 70, speed: 60, r: 17, dmg: 14, cost: 3, col: '#c0763a', ai: 'grunt', splits: true },
+  sniper:  { name: 'Sniper', hp: 26, speed: 60, r: 12, dmg: 14, cost: 4, col: '#c04aff' },
 };
 const ELITE_MODS = {
   shield: { name: 'Shielded', col: '#3de8ff' },
@@ -320,12 +359,16 @@ const ELITE_MODS = {
   split: { name: 'Splitting', col: '#b24bff' },
   volatile: { name: 'Volatile', col: '#ff8a1f' },
 };
-const ACT_NAMES = ['The Ruins', 'The Foundry', 'Apocalypse Core'];
-const ACT_COL = [['#0e1430', '#17407a'], ['#2a1208', '#7a3a17'], ['#1c0a2a', '#6a1fd0']];
+const ACT_NAMES = ['The Ruins', 'The Sewers', 'The Foundry', 'The Frozen Wastes', 'The Glass Labs', 'Apocalypse Core'];
+const ACT_COL = [['#0e1430', '#17407a'], ['#0e2a14', '#2a7a3a'], ['#2a1208', '#7a3a17'], ['#10202e', '#5aa0d0'], ['#0a2828', '#2ac0b0'], ['#1c0a2a', '#6a1fd0']];
+const DUST_COL = ['#b0a890', '#9aff7a', '#ff9a4a', '#e0f4ff', '#7affe0', '#c070ff'];
 const BOSSES = [
   { name: 'The Warden', hp: 2300, r: 32, col: '#ff2d3d', phases: [['ring', 'aimed', 'charge'], ['ring', 'aimed', 'charge', 'spiral'], ['ring', 'aimed', 'charge', 'spiral', 'summon']] },
+  { name: 'Sludge Mother', hp: 3300, r: 36, col: '#7dff4a', phases: [['aimed', 'slam', 'summon'], ['aimed', 'slam', 'summon', 'spiral'], ['spiral', 'slam', 'summon', 'sweep']] },
   { name: 'Hive Engine', hp: 4200, r: 36, col: '#ff8a1f', phases: [['aimed', 'slam', 'summon'], ['aimed', 'slam', 'summon', 'sweep'], ['spiral', 'slam', 'sweep', 'summon']] },
-  { name: 'Apocalypse Core', hp: 7000, r: 40, col: '#b24bff', phases: [['ring', 'slam', 'charge', 'sweep'], ['spiral', 'aimed', 'slam', 'sweep', 'summon'], ['ring', 'spiral', 'charge', 'sweep', 'slam', 'summon']] },
+  { name: 'Frost Colossus', hp: 5400, r: 38, col: '#8ae8ff', phases: [['ring', 'charge', 'aimed'], ['ring', 'charge', 'sweep', 'spiral'], ['ring', 'spiral', 'charge', 'sweep', 'slam']] },
+  { name: 'Glass Warden', hp: 6400, r: 36, col: '#3de8c8', phases: [['aimed', 'sweep', 'spiral'], ['aimed', 'sweep', 'spiral', 'summon'], ['spiral', 'sweep', 'summon', 'charge']] },
+  { name: 'Apocalypse Core', hp: 8000, r: 40, col: '#b24bff', phases: [['ring', 'slam', 'charge', 'sweep'], ['spiral', 'aimed', 'slam', 'sweep', 'summon'], ['ring', 'spiral', 'charge', 'sweep', 'slam', 'summon']] },
 ];
 
 // ---------- Stat sheet ----------
@@ -345,6 +388,7 @@ function buildStats(run, save) {
   for (const [k, l] of Object.entries((save.tree && save.tree[run.hero]) || {})) if (TREE[k] && l) TREE[k].a(P, l);
   for (const id in P.tags) if (SYN[id] && P.tags[id] >= SYN[id].n) SYN[id].a(P);
   for (const id of run.drawbacks) DRAWBACKS[id].a(P);
+  if (run.ultra != null && hero.ultras && hero.ultras[run.ultra]) hero.ultras[run.ultra].a(P);
   P.maxhp += (run.bonus && run.bonus.hp) || 0;
   P.maxhp = Math.round(P.maxhp);
   return P;

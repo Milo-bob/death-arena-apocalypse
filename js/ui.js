@@ -76,7 +76,8 @@ const UI = {
   // ---------- hub ----------
   hub(tab) {
     if (tab) this.tab = tab;
-    const s = Save.data, c = CLANS[s.clan]; Menu.set('hub', s.clan, s.hero);
+    const s = Save.data, c = CLANS[s.clan];
+    for (const id of PLAYABLE) if (!s.heroes[id] && UNLOCK[id] && UNLOCK[id].ok(s)) { s.heroes[id] = 1; Save.write(true); } Menu.set('hub', s.clan, s.hero);
     let h = '<div class="row" style="justify-content:space-between;align-items:center"><div><h1 style="margin:0;font-size:26px">WASTELAND CAMP</h1><span class="sm dim">Slot ' + (Save.slot + 1) + '</span></div>'
       + '<div style="text-align:right"><div style="font-family:Silk;color:#3de8ff">CORES ' + s.cores + '</div><button class="btn" onclick="UI.slots()">SAVE SLOTS</button></div></div>';
     h += '<div class="tabs">' + [['run', 'RUN'], ['armory', 'MUTATIONS'], ['upgrades', 'UPGRADES'], ['players', 'PLAYERS']].map(t => '<button class="btn ' + (this.tab === t[0] ? 'sel' : '') + '" onclick="UI.hub(\'' + t[0] + '\')">' + t[1] + '</button>').join('') + '</div>';
@@ -87,7 +88,7 @@ const UI = {
         const own = !!s.heroes[id], sel = s.hero === id;
         h += '<div class="card ' + (own ? '' : 'locked') + '" style="--c:' + (sel ? c.color : '#345') + ';width:132px;min-height:200px;padding:8px" onclick="UI.pickHero(\'' + id + '\')"><img src="' + Sprites.url(id) + '" style="float:right;width:40px;height:40px;image-rendering:pixelated"><h3>' + hero.name.toUpperCase() + (sel ? ' <span class="pro">*</span>' : '') + '</h3><p class="sm dim">' + hero.blurb + '</p>'
           + '<p class="sm">Weapon: <b>' + hero.weapon.name + '</b> (' + (ammoOf(hero.weapon) || 'melee') + ')</p><p class="sm">Ability [Q]: <b>' + hero.ability.name + '</b> (' + hero.ability.cd + 's)</p>'
-          + (own ? (sel ? '<p class="pro sm">Selected</p>' : '') : '<p style="text-align:center;margin-top:8px;clear:both"><span class="btn" style="font-size:9px;padding:4px 6px;' + (s.cores < hero.cost ? 'opacity:.4' : '') + '">' + hero.cost + ' CORES</span></p>') + '</div>';
+          + (own ? (sel ? '<p class="pro sm">Selected</p>' : '') : '<p style="text-align:center;margin-top:8px;clear:both"><span class="sm" style="color:#ffd91f">' + (UNLOCK[id] ? UNLOCK[id].d + ' (' + UNLOCK[id].prog(s) + ')' : 'Locked') + '</span></p>') + '</div>';
       }
       h += '</div><div class="row" style="margin-top:14px;align-items:center"><span class="sm">HEAT</span>';
       for (let i = 0; i <= 5; i++) h += '<button class="btn ' + (s.heat === i ? 'sel' : '') + '" ' + (i > s.heatMax ? 'disabled' : '') + ' onclick="Save.data.heat=' + i + ';UI.hub()">' + i + '</button>';
@@ -155,7 +156,6 @@ const UI = {
   pickHero(id) {
     const s = Save.data, hero = HEROES[id];
     if (s.heroes[id]) { s.hero = id; Save.write(); }
-    else if (s.cores >= hero.cost) { s.cores -= hero.cost; s.heroes[id] = 1; s.hero = id; Save.write(true); }
     this.hub();
   },
   unlockPerk(id) { const s = Save.data, pk = PERKS[id]; if (!s.perks[id] && s.cores >= pk.lock) { s.cores -= pk.lock; s.perks[id] = 1; Save.write(true); } this.hub(); },
@@ -201,8 +201,14 @@ const UI = {
     this.show(h); this.acts(...offers.map(id => () => this.take(id)));
   },
   take(id) { Game.takePerk(id); Game.nodeDone(); },
+  takeUltra(i) { Game.run.ultra = i; Game.recalc(); Game.nodeDone(); },
   levelUp() {
-    const run = Game.run, offers = Game.offerPerks(3, run.plv > 6 ? 'rare' : 'common');
+    const run = Game.run, hero = HEROES[run.hero];
+    if (run.plv >= 10 && run.ultra == null && hero.ultras) {
+      this.show('<h2>ULTRA MUTATION</h2><p class="dim sm">Level ' + run.plv + ': choose your final form</p>' + this.status() + '<div class="row">' + hero.ultras.map((u, i) => '<div class="card rar-legendary" onclick="UI.takeUltra(' + i + ')"><span class="dim sm" style="position:absolute;right:8px;top:6px">[' + (i + 1) + ']</span><h3>' + u.name + '</h3><p>' + u.d + '</p></div>').join('') + '</div>');
+      this.acts(() => this.takeUltra(0), () => this.takeUltra(1)); return;
+    }
+    const offers = Game.offerPerks(3, run.plv > 6 ? 'rare' : 'common');
     if (!offers.length) { Game.nodeDone(); return; }
     this.show('<h2>LEVEL UP</h2><p class="dim sm">Level ' + run.plv + ': choose a mutation</p>' + this.status() + '<div class="row">' + offers.map((id, i) => this.perkCard(id, "UI.take('" + id + "')", '', i + 1)).join('') + '</div>' + this.buildList());
     this.acts(...offers.map(id => () => this.take(id)));
@@ -276,7 +282,7 @@ const UI = {
 
   // ---------- act clear / end ----------
   actClear() {
-    const run = Game.run, last = run.act % 9 === 8, loops = Math.floor(run.act / 9);
+    const run = Game.run, last = run.act % LOOP_LEVELS === LOOP_LEVELS - 1, loops = Math.floor(run.act / LOOP_LEVELS);
     Game.persist();
     if (last) {
       this.show('<h1>THE APOCALYPSE ENDS</h1><p>You beat ' + BOSSES[areaOf(run.act)].name + '.</p>' + this.status() + '<p class="dim" style="max-width:560px;text-align:center">Claim victory now, or loop back to the ruins. Enemies and bosses come back much tougher, victory pays more with every loop.</p><div class="row" style="margin-top:20px">'

@@ -186,7 +186,10 @@ const HERO_ART = {
 const EPAL = { b: '#ff2d3d', m: '#a01828', d: '#3a0810', a: '#ff9aa6', c: '#ffd91f', x: '#ff8a1f' };
 const BPAL = [
   { b: '#ff2d3d', m: '#a01828', d: '#3a0810', a: '#ff9aa6', c: '#ffd91f', x: '#ff8a1f' },
+  { b: '#7dff4a', m: '#3fa31f', d: '#12300c', a: '#d0ff6a', c: '#ffd91f', x: '#ff5ad2' },
   { b: '#ff8a1f', m: '#a05010', d: '#3a1c08', a: '#ffd091', c: '#ffd91f', x: '#ff2d3d' },
+  { b: '#8ae8ff', m: '#3a8ab0', d: '#0e2a3a', a: '#e6fdff', c: '#ffd91f', x: '#ff2d3d' },
+  { b: '#3de8c8', m: '#1a8a78', d: '#08302a', a: '#b0fff0', c: '#ffd91f', x: '#ff3de8' },
   { b: '#b24bff', m: '#6a1fd0', d: '#1c0d4a', a: '#e0b0ff', c: '#ffd91f', x: '#3de8ff' },
 ];
 const ENEMY_ART = {
@@ -207,6 +210,15 @@ const ENEMY_ART = {
     part(sStar(12, 12, 6, 10.8, 9.2, 0), 'body'), part(sC(12, 12, 6), 'dark'), part(sRing(12, 12, 4, 0.5, 5), 'acc'),
     part(sB(19.5, 12, 4, 2.2), 'dark'), part(sB(22, 12, 1.6, 2.4), 'cy'), dot(7, 12, P.a)] },
 };
+const BOSS_ART_OF = [0, 1, 1, 0, 2, 2];   // which of the 3 boss drawings each area's boss uses (colours differ per area)
+ENEMY_ART.swarmer = { n: 12, pal: { b: '#ff7a3a', m: '#a04a1a', d: '#3a1a08', a: '#ffd0a0', c: '#ffd91f', x: '#ff8a1f' }, f: P => [
+  part(sC(6, 6, 4.4), 'body'), dot(8, 5, P.c), dot(8, 7, P.c), dot(4, 6, P.a)] };
+ENEMY_ART.spitter = { n: 16, pal: { b: '#7dd04a', m: '#3f8a1f', d: '#122a0c', a: '#d0ff9a', c: '#ffd91f', x: '#ff8a1f' }, f: P => [
+  part(sC(7, 8, 5.6), 'body'), part(sC(7, 8, 2.6), 'dark'), part(sB(12.5, 8, 3, 2.6, 0.8), 'dark'), part(sB(14.6, 8, 0.9, 2.8), 'cy'), dot(5, 7, P.a)] };
+ENEMY_ART.blob = { n: 24, pal: { b: '#c0763a', m: '#7a4a1f', d: '#2a1a0a', a: '#f0c090', c: '#ffd91f', x: '#ff8a1f' }, f: P => [
+  part(sC(12, 12, 10), 'body'), part(sC(12, 12, 6), 'dark'), part(sRing(12, 12, 8, 0.6, 5), 'acc'), dot(17, 10, P.c), dot(17, 14, P.c), dot(7, 12, P.a)] };
+ENEMY_ART.sniper = { n: 16, pal: { b: '#c04aff', m: '#6a1fa0', d: '#200a38', a: '#e8b0ff', c: '#ffd91f', x: '#ff8a1f' }, f: P => [
+  part(sP([[1, 8], [5, 3], [9, 5], [9, 11], [5, 13]]), 'body'), part(sB(12, 8, 4.5, 0.9), 'dark'), part(sB(15.5, 8, 0.7, 1.1), 'cy'), dot(4, 8, P.a)] };
 const BOSS_ART = [
   { n: 40, f: P => [
     part(sP([[2, 8], [10, 4], [10, 12]]), 'dark'), part(sP([[2, 32], [10, 36], [10, 28]]), 'dark'),
@@ -298,8 +310,8 @@ const Sprites = {
     let c;
     if (HEROES[key]) c = this.build(SPR, HERO_ART[key](SPAL[HEROES[key].clan]), SPAL[HEROES[key].clan]);
     else if (key[0] === 'o') { const [nm, used] = key.slice(2).split('_'), PP = used ? OPAL_USED : OPAL[nm]; c = this.build(32, OBJ_ART[nm](PP, !!used), PP); }
-    else if (key[0] === 'e') { const a = ENEMY_ART[key.slice(2)]; c = this.build(a.n, a.f(EPAL), EPAL); }
-    else { const k = +key.slice(2), a = BOSS_ART[k]; c = this.build(a.n, a.f(BPAL[k]), BPAL[k]); }
+    else if (key[0] === 'e') { const a = ENEMY_ART[key.slice(2)], pal = a.pal || EPAL; c = this.build(a.n, a.f(pal), pal); }
+    else { const k = +key.slice(2), a = BOSS_ART[BOSS_ART_OF[k]]; c = this.build(a.n, a.f(BPAL[k]), BPAL[k]); }
     return this.cache[key] = c;
   },
   white(key) {

@@ -151,6 +151,7 @@ const Game = {
     s.cores += got; s.stats.runs++; s.stats.kills += run.kills;
     s.stats.bestAct = Math.max(s.stats.bestAct, run.act + 1);
     s.stats.bestRooms = Math.max(s.stats.bestRooms, run.rooms);
+    s.stats.bestPlv = Math.max(s.stats.bestPlv || 0, run.plv || 1); s.stats.bosses = (s.stats.bosses || 0) + (run.bosses || 0);
     if (why === 'win') { s.stats.wins++; if (run.heat >= s.heatMax && s.heatMax < 5) s.heatMax = run.heat + 1; }
     if (why === 'dead') s.stats.deaths++;
     const res = { why, got, lost: run.cores - got, run: Object.assign({}, run), unbanked: run.cores };
@@ -163,7 +164,7 @@ const Game = {
     const run = this.run; run.act++; run.room = 0; run.cur = { type: 'fight', reward: 'perk' };
     this.heal(0.35); this.frozen = false; this.enterRoom();
   },
-  winRun() { UI.summary(this.bank(1.6 + 0.25 * Math.floor(this.run.act / 9), 'win')); },
+  winRun() { UI.summary(this.bank(1.6 + 0.25 * Math.floor(this.run.act / LOOP_LEVELS), 'win')); },
   abandon() { UI.summary(this.bank(0.25, 'dead')); },
   die() {
     const salv = (Save.data.meta.salvage || 0) * 0.08;
@@ -218,6 +219,9 @@ const Game = {
     if (row >= 1 || act > 0) avail.push('shooter');
     if (row >= 2 || act > 0) avail.push('bomber', 'dasher');
     if (act >= 1 || row >= 4) avail.push('tank');
+    if (row >= 1 || act > 0) avail.push('swarmer');
+    if (act >= 1 || row >= 3) avail.push('spitter', 'blob');
+    if (act >= 2 || row >= 5) avail.push('sniper');
     const list = [];
     while (budget > 0) {
       const o = avail.filter(t => ENEMY[t].cost <= budget);
@@ -312,7 +316,7 @@ const Game = {
     if (P.mutagen && ++run.mutKills % 10 === 0) { run.bonus.mut += 0.02; this.floatText(C.p.x, C.p.y - 24, 'MUTATION +2%', '#7dff4a'); }
     if (P.killBlast > 0) C.haz.push({ x: e.x, y: e.y, r: 42, t: 0.08, dmg: P.killBlast, friendly: true, quick: true });
     if (P.poisonSpread && e.poisonT > 0) for (const q of C.en) if (!q.dead && dist(q, e) < 100) { q.poison = Math.max(q.poison, e.poison); q.poisonT = 3; }
-    if (e.elite === 'split') for (let i = 0; i < 2; i++) { const g = this.makeEnemy('grunt', e.x + rnd(-14, 14), e.y + rnd(-14, 14)); g.hp = g.maxhp *= 0.6; g.spawnT = 0; }
+    if (e.elite === 'split' || ENEMY[e.type].splits) for (let i = 0; i < 2; i++) { const g = this.makeEnemy('grunt', e.x + rnd(-14, 14), e.y + rnd(-14, 14)); g.hp = g.maxhp *= 0.6; g.spawnT = 0; g.free = e.free; g.awake = true; }
     if (e.elite === 'volatile') C.haz.push({ x: e.x, y: e.y, r: 75, t: 0.9, max: 0.9, dmg: 22 * C.dmgS, friendly: false });
   },
   healP(a) { if (this.run.hp < this.P.maxhp) { this.run.hp = Math.min(this.P.maxhp, this.run.hp + a); this.floatText(this.C.p.x, this.C.p.y - 20, '+' + Math.round(a), '#39ff6e'); } },
@@ -537,7 +541,22 @@ const Game = {
     if (e.spawnT > 0) return;
     if (e.freeze > 0) { e.freeze -= dt; this.moveE(e, 0, 0, dt); return; }
     const touch = d < e.r + p.r + 2;
-    switch (e.type) {
+    switch (ENEMY[e.type].ai || e.type) {
+      case 'spitter': {
+        const tx = Math.cos(ang), ty = Math.sin(ang); let vx = -ty * e.sd * spd * 0.5, vy = tx * e.sd * spd * 0.5;
+        if (d > 260) { vx = tx * spd; vy = ty * spd; } else if (d < 150) { vx = -tx * spd; vy = -ty * spd; }
+        this.moveE(e, vx, vy, dt);
+        e.fire -= dt; if (e.fire <= 0) { for (const o of [-0.28, 0, 0.28]) this.eShoot(e, ang + o, 230, e.dmg); e.fire = 2.8 * rnd(0.8, 1.2); }
+        if (touch && e.atk <= 0 && this.hurt(e.dmg, e)) e.atk = 0.8; break;
+      }
+      case 'sniper': {
+        const tx = Math.cos(ang), ty = Math.sin(ang); let vx = -ty * e.sd * spd * 0.4, vy = tx * e.sd * spd * 0.4;
+        if (d > 480) { vx = tx * spd; vy = ty * spd; } else if (d < 330) { vx = -tx * spd; vy = -ty * spd; }
+        this.moveE(e, vx, vy, dt);
+        if (e.wind > 0) { e.wind -= dt; if (e.wind <= 0) { this.eShoot(e, ang, 430, e.dmg, 4); e.fire = 3.4 * rnd(0.8, 1.2); } }
+        else { e.fire -= dt; if (e.fire <= 0) e.wind = 0.9; }
+        if (touch && e.atk <= 0 && this.hurt(e.dmg, e)) e.atk = 0.8; break;
+      }
       case 'grunt': this.moveE(e, Math.cos(ang) * spd, Math.sin(ang) * spd, dt); if (touch && e.atk <= 0) { if (this.hurt(e.dmg, e)) e.atk = 0.8; } break;
       case 'shooter': {
         const sd = e.sd, tx = Math.cos(ang), ty = Math.sin(ang);
@@ -821,7 +840,7 @@ const Game = {
     for (const e of C.en) if (e.boss) glow(e.x, e.y, 120, '255,60,40', 0.04);
     ctx.globalCompositeOperation = 'source-over';
     // drifting dust / embers / spores
-    ctx.fillStyle = ['#b0a890', '#ff9a4a', '#c070ff'][areaOf(this.run.act)];
+    ctx.fillStyle = DUST_COL[areaOf(this.run.act)];
     ctx.globalAlpha = 0.35; for (const d of C.dust) ctx.fillRect(snap(d.x), snap(d.y), 2, 2); ctx.globalAlpha = 1;
   },
   drawWorldObjs(C) {

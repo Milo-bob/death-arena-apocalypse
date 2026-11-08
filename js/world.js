@@ -266,7 +266,7 @@ Object.assign(Game, {
     ctx.fillStyle = a ? AMMO[a].col : '#9fc'; ctx.fillText(txt + (run.wpn2 ? '   [X] ' + HEROES[run.wpn2].weapon.name.toUpperCase() : ''), W / 2, 47);
   },
   levelLabel() {
-    const run = this.run, C = this.C, a = areaOf(run.act), loop = Math.floor(run.act / 9);
+    const run = this.run, C = this.C, a = areaOf(run.act), loop = Math.floor(run.act / LOOP_LEVELS);
     return (loop ? 'LOOP ' + loop + '  ' : '') + ACT_NAMES[a].toUpperCase() + ' ' + (a + 1) + '-' + (run.act % 3 + 1) + (isBossLevel(run.act) ? '  BOSS' : '  KILLS ' + C.lvlKills + '/' + Math.ceil(C.levelTotal * 0.8)) + '  LV ' + (run.plv || 1) + (run.heat ? '  HEAT ' + run.heat : '');
   },
 
@@ -280,7 +280,7 @@ Object.assign(Game, {
     C.dmgS = (1 + 0.12 * act) * (1 + 0.12 * run.heat) * ((curse && curse.dmg) || 1);
     C.spdS = (curse && curse.speed) || 1;
     if (boss) {
-      const b = BOSSES[areaOf(act)], hp = b.hp * (1 + 0.2 * run.heat) * (1 + 0.5 * Math.floor(act / 9)) * P.enemyHp, x = cell.cx, y = cell.cy - 80;
+      const b = BOSSES[areaOf(act)], hp = b.hp * (1 + 0.2 * run.heat) * (1 + 0.5 * Math.floor(act / LOOP_LEVELS)) * P.enemyHp, x = cell.cx, y = cell.cy - 80;
       C.boss = { type: 'boss', boss: true, x, y, lx: x, ly: y, r: b.r, hp, maxhp: hp, sh: 0, flash: 0, phase: 1, pat: null, pt: 0, cd: 2, n: 0, sa: 0, atk: 0, col: b.col, name: b.name, vx: 0, vy: 0, slow: 0, slowT: 0, poison: 0, poisonT: 0, burn: 0, burnT: 0, spawnT: 0, bladeCd: 0, ang: 0, stage: 0 };
       C.en.push(C.boss); C.bannerText = b.name.toUpperCase();
     } else {
@@ -303,7 +303,7 @@ Object.assign(Game, {
   },
   encClear() {
     const C = this.C, run = this.run, cell = C.enc, n = cell.type, p = C.p;
-    cell.state.cleared = true; run.rooms++; run.cleared++;
+    cell.state.cleared = true; run.rooms++; run.cleared++; if (n === 'boss') run.bosses = (run.bosses || 0) + 1;
     const base = { fight: 6, elite: 14, curse: 22, boss: 45 }[n] || 0, got = Math.round(base * (1 + 0.35 * run.act) * (1 + 0.2 * run.heat));
     run.cores += got;
     C.eb.length = 0; C.beams.length = 0; C.haz = C.haz.filter(h => h.friendly); C.enc = null; C.boss = null; C.clearMsg = 2;
@@ -328,6 +328,10 @@ Object.assign(Game, {
     const C = this.C, p = C.p, W = this.world, run = this.run; C.near = null; C.nearW = null;
     for (const d of C.wdrops) if (dist(d, p) < 36) C.nearW = d;
     this.updatePickups(1 / 60);
+    if (C.enc && C.boss && !C.boss.dead && !C.dead) {   // keep the boss fight supplied with ammo
+      C.bossAmmoT = (C.bossAmmoT || 0) + 1 / 60;
+      if (C.bossAmmoT > 9) { C.bossAmmoT = 0; for (let i = 0; i < 2; i++) { const t = this.ammoWanted(), an = rnd(0, 6.28), x = p.x + Math.cos(an) * 140, y = p.y + Math.sin(an) * 140; if (this.walkable(x, y)) this.spawnItem(x, y, 'ammo', { type: t, amt: AMMO[t].amt }); } }
+    }
     if (C.levelUps > 0 && !this.frozen && !C.dead) { C.levelUps--; this.frozen = true; Input.down = false; Input.keys = {}; C.nodeCell = null; C.pendingOrb = C.pendingObj = false; UI.levelUp(); return; }
     if (C.portal && !C.dead && dist(C.portal, p) < 34) { run.rooms++; Input.keys = {}; this.descend(0.15); return; }
     const cc = this.cellAt(p.x, p.y);
@@ -401,7 +405,7 @@ Object.assign(Game, {
     for (const g of glows) glow(...g);
     for (const e of C.en) if (e.boss) glow(e.x, e.y, 120, '255,60,40', 0.04);
     ctx.globalCompositeOperation = 'source-over';
-    ctx.fillStyle = ['#b0a890', '#ff9a4a', '#c070ff'][areaOf(this.run.act)]; ctx.globalAlpha = 0.35;
+    ctx.fillStyle = DUST_COL[areaOf(this.run.act)]; ctx.globalAlpha = 0.35;
     for (const d of C.dust) ctx.fillRect(snap(cx + d.x), snap(cy + d.y), 2, 2); ctx.globalAlpha = 1;
   },
   drawWorldObjs(C) {
