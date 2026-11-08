@@ -106,3 +106,6 @@ Level-ups werden als `run.pendLv` gesammelt. Am Anfang jedes neuen Levels (0,5 s
 - Maw Gun, Needle Storm, Egg Cannon, Boiler Cannon haben jetzt eigene Waffenzeichnungen (WEAPON_SHAPE) und keine Helden-Sprites mehr; sie hängen nicht mehr am Charakter (WEAPON_ART leer).
 - Neue Gegner: Raider (3er-Salven), Mud Crab, Frost Wolf, Ice Spire (Ring-Schüsse), Smelter, Drone, Laser Eye, Warden (Ring), Wraith. Pro Gebiet eigene Besetzung (AREA_ENEMIES).
 - Gebiets-Regeln: Sewers klebrige Giftpfützen (verlangsamen), Foundry viele Fässer, Frozen Wastes Eis (rutschen).
+
+## Schritt 24: individuelle Bosse
+Sechs eigene Boss-Zeichnungen (BOSS_ART, eine pro Boss) und eigene Angriffssets (BOSSES[].phases + move + blink). Neue Muster: fan (Schrotkegel), gapring (Ring mit Lücke), leap (Sprung + Aufprall), gatling (Dauerfeuer), rain (Einschläge um den Spieler), laserx (4 rotierende Strahlen); Technomancer und Nuclear Throne teleportieren sich nach Angriffen.

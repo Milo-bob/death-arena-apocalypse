@@ -454,12 +454,12 @@ const ACT_NAMES = ['The Ruins', 'The Sewers', 'The Foundry', 'The Frozen Wastes'
 const ACT_COL = [['#0e1430', '#17407a'], ['#0e2a14', '#2a7a3a'], ['#2a1208', '#7a3a17'], ['#10202e', '#5aa0d0'], ['#0a2828', '#2ac0b0'], ['#1c0a2a', '#6a1fd0']];
 const DUST_COL = ['#b0a890', '#9aff7a', '#ff9a4a', '#e0f4ff', '#7affe0', '#c070ff'];
 const BOSSES = [
-  { name: 'Big Bandit', hp: 2300, r: 32, col: '#ff2d3d', phases: [['ring', 'aimed', 'charge'], ['ring', 'aimed', 'charge', 'spiral'], ['ring', 'aimed', 'charge', 'spiral', 'summon']] },
-  { name: 'Big Fish', hp: 3300, r: 36, col: '#7dff4a', phases: [['aimed', 'slam', 'summon'], ['aimed', 'slam', 'summon', 'spiral'], ['spiral', 'slam', 'summon', 'sweep']] },
-  { name: 'Big Dog', hp: 4200, r: 36, col: '#ff8a1f', phases: [['aimed', 'slam', 'summon'], ['aimed', 'slam', 'summon', 'sweep'], ['spiral', 'slam', 'sweep', 'summon']] },
-  { name: 'Lil Hunter', hp: 5400, r: 38, col: '#8ae8ff', phases: [['ring', 'charge', 'aimed'], ['ring', 'charge', 'sweep', 'spiral'], ['ring', 'spiral', 'charge', 'sweep', 'slam']] },
-  { name: 'Technomancer', hp: 6400, r: 36, col: '#3de8c8', phases: [['aimed', 'sweep', 'spiral'], ['aimed', 'sweep', 'spiral', 'summon'], ['spiral', 'sweep', 'summon', 'charge']] },
-  { name: 'Nuclear Throne', hp: 8000, r: 40, col: '#b24bff', phases: [['ring', 'slam', 'charge', 'sweep'], ['spiral', 'aimed', 'slam', 'sweep', 'summon'], ['ring', 'spiral', 'charge', 'sweep', 'slam', 'summon']] },
+  { name: 'Big Bandit', hp: 2300, r: 32, col: '#ff2d3d', move: 52, phases: [['fan', 'charge'], ['fan', 'charge', 'ring', 'summon'], ['fan', 'ring', 'charge', 'gatling', 'summon']] },
+  { name: 'Big Fish', hp: 3300, r: 36, col: '#7dff4a', move: 40, phases: [['gapring', 'slam', 'summon'], ['gapring', 'slam', 'summon', 'spiral'], ['gapring', 'slam', 'rain', 'spiral', 'summon']] },
+  { name: 'Big Dog', hp: 4200, r: 36, col: '#ff8a1f', move: 70, phases: [['leap', 'aimed', 'slam'], ['leap', 'charge', 'slam', 'fan'], ['leap', 'charge', 'rain', 'spiral', 'fan']] },
+  { name: 'Lil Hunter', hp: 5400, r: 38, col: '#8ae8ff', move: 60, phases: [['gatling', 'charge', 'ring'], ['gatling', 'leap', 'rain', 'ring'], ['gatling', 'rain', 'sweep', 'leap', 'charge']] },
+  { name: 'Technomancer', hp: 6400, r: 36, col: '#3de8c8', move: 36, blink: 0.55, phases: [['laserx', 'aimed', 'sweep'], ['laserx', 'spiral', 'summon', 'gatling'], ['laserx', 'spiral', 'rain', 'sweep', 'gapring']] },
+  { name: 'Nuclear Throne', hp: 8000, r: 40, col: '#b24bff', move: 44, blink: 0.35, phases: [['ring', 'slam', 'fan', 'sweep'], ['spiral', 'laserx', 'slam', 'rain', 'summon'], ['ring', 'spiral', 'laserx', 'rain', 'leap', 'gatling', 'gapring']] },
 ];
 
 // ---------- Stat sheet ----------

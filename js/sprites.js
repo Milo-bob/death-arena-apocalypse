@@ -380,25 +380,38 @@ const ENEMY_ART = {
     part(sC(10, 10, 6.8), 'body'), part(sRing(10, 10, 4.2, 0.6, 6), 'acc'), part(sC(10, 10, 2.4), 'dark'), dot(9, 9, P.c),
     part(sB(15.6, 10, 4.2, 1.5, 0.4), 'dark'), part(sB(19, 10, 1, 1), 'cy')] },
 };
-const BOSS_ART_OF = [0, 1, 1, 0, 2, 2];   // which of the 3 boss drawings each area's boss uses (colours differ per area)
+const BOSS_ART_OF = [0, 1, 2, 3, 4, 5];   // one unique drawing per boss
 const BOSS_ART = [
-  { n: 40, f: P => [
-    part(sP([[2, 8], [10, 4], [10, 12]]), 'dark'), part(sP([[2, 32], [10, 36], [10, 28]]), 'dark'),
-    part(sB(20, 6, 10, 4.5, 1.5), 'dark'), part(sB(20, 34, 10, 4.5, 1.5), 'dark'),
-    part(sStar(19, 20, 8, 17, 14.5, 0.2), 'body'), part(sC(19, 20, 11), 'dark'), part(sRing(19, 20, 8, 0.8, 8), 'acc'),
-    part(sC(19, 20, 5), 'body'), part(sC(19, 20, 2.6), 'cy'),
-    part(sB(32, 12, 6, 1.9), 'dark'), part(sB(32, 28, 6, 1.9), 'dark'), part(sB(37.5, 12, 1.5, 2.6), 'cy'), part(sB(37.5, 28, 1.5, 2.6), 'cy'),
-    part(sB(30, 20, 1, 7), 'cy'), dot(8, 20, P.a), dot(10, 15, P.a), dot(10, 25, P.a)] },
-  { n: 40, f: P => [
-    ...[[14, 10, 4, 3], [16, 6, 10, 1.5], [22, 7, 24, 2], [14, 30, 4, 37], [16, 34, 10, 38.5], [22, 33, 24, 38]].map(l => part(sLine(l[0], l[1], l[2], l[3], 0.9), 'dark')),
-    part(sC(10, 20, 9.5), 'dark'), part(sRing(10, 20, 6, 0.6, 6), 'acc'), dot(8, 18, P.x), dot(11, 22, P.x), dot(7, 22, P.a), dot(12, 17, P.a),
-    part(sC(22, 20, 8.5), 'body'), part(sC(22, 20, 4.5), 'dark'), part(sB(24, 20, 1, 4), 'cy'),
-    part(sP([[28, 11], [38, 15], [30, 16]]), 'cy'), part(sP([[28, 29], [38, 25], [30, 24]]), 'cy'),
-    part(sC(29, 15, 1.8), 'acc'), part(sC(29, 25, 1.8), 'acc'), dot(29, 15, P.c), dot(29, 25, P.c)] },
-  { n: 40, f: P => [
-    part(sStar(20, 20, 6, 19, 11, 0.3), 'dark'), part(sStar(20, 20, 6, 17, 10, 0), 'body'), part(sC(20, 20, 11), 'dark'), part(sRing(20, 20, 8, 0.7, 7), 'acc'),
-    part(sC(21, 20, 6), 'body'), part(sC(22, 20, 3.2), 'dark'), part(sB(25, 20, 1.2, 5), 'cy'),
-    part(sP([[34, 4], [38, 8], [34, 10]]), 'cy'), part(sP([[34, 36], [38, 32], [34, 30]]), 'cy'), dot(18, 18, P.a), dot(17, 22, P.a)] },
+  { n: 40, f: P => [   // Big Bandit: hooded brute with a huge gun
+    part(sP([[2, 9], [12, 7], [12, 33], [2, 31]]), 'dark'), part(sE(18, 20, 8.5, 13), 'body'), part(sLine(11, 13, 25, 28, 1.3), 'acc'),
+    part(sC(17, 8.5, 5.2), 'acc'), part(sC(17, 31.5, 5.2), 'acc'), part(sC(22, 20, 6.4), 'dark'), part(sB(25, 20, 2, 4.6, 0.6), 'cy'), dot(26, 18, P.c), dot(26, 22, P.c),
+    part(sB(31, 26, 9, 2.6, 0.6), 'dark'), part(sB(27, 26, 2.4, 3.6, 0.5), 'acc'), part(sB(38, 26, 1.8, 1.6), 'cy'), dot(10, 17, P.a), dot(10, 23, P.a)] },
+  { n: 40, f: P => [   // Big Fish: a huge mutant fish
+    part(sP([[1, 20], [10, 10], [10, 30]]), 'dark'), part(sP([[3, 20], [9, 14.4], [9, 25.6]]), 'acc'),
+    part(sP([[16, 8], [25, 2], [25, 12]]), 'dark'), part(sP([[16, 32], [25, 38], [25, 28]]), 'dark'),
+    part(sE(21, 20, 15.5, 10), 'body'), part(sLine(14, 12, 14, 28, 0.8), 'dark'), part(sLine(19, 11, 19, 29, 0.8), 'dark'), part(sLine(24, 11.4, 24, 28.6, 0.8), 'dark'),
+    part(sC(31, 14.4, 3.4), 'acc'), part(sC(31, 25.6, 3.4), 'acc'), dot(32, 14, P.c), dot(32, 26, P.c),
+    part(sP([[33, 16], [39.6, 20], [33, 24]]), 'dark'), dot(36, 18, P.a), dot(36, 22, P.a), dot(38, 20, P.a)] },
+  { n: 40, f: P => [   // Big Dog: spiked war dog
+    part(sLine(6, 20, 0.8, 14, 1.6), 'acc'), part(sE(15, 20, 11.5, 9.4), 'body'), part(sB(8, 8.4, 3.6, 2, 0.6), 'dark'), part(sB(8, 31.6, 3.6, 2, 0.6), 'dark'),
+    part(sB(21, 7.6, 3.6, 2, 0.6), 'dark'), part(sB(21, 32.4, 3.6, 2, 0.6), 'dark'),
+    part(sC(28, 20, 7.6), 'body'), part(sB(35.4, 20, 4.6, 3.6, 0.8), 'acc'), part(sC(39, 20, 1.5), 'dark'),
+    part(sP([[24, 10.6], [31, 12], [27, 15.8]]), 'dark'), part(sP([[24, 29.4], [31, 28], [27, 24.2]]), 'dark'), dot(31, 16, P.c), dot(31, 24, P.c),
+    part(sStar(21, 20, 4, 9.6, 8, 0), 'dark'), dot(22, 20, P.x), dot(14, 14, P.a), dot(14, 26, P.a), dot(10, 20, P.a)] },
+  { n: 40, f: P => [   // Lil Hunter: jetpack mech
+    part(sB(7, 20, 4.4, 8.4, 1), 'dark'), dot(3, 17, P.x), dot(3, 23, P.x), dot(2, 20, P.c), dot(4, 20, P.c),
+    part(sC(19, 20, 10.4), 'body'), part(sRing(19, 20, 9.2, 0.8, 8), 'acc'), part(sC(17, 20, 5), 'dark'),
+    part(sB(25, 20, 3.4, 6, 1), 'cy'), part(sB(24, 7.6, 7, 3.2, 0.8), 'dark'), part(sB(24, 32.4, 7, 3.2, 0.8), 'dark'),
+    part(sB(33.4, 7.6, 4.2, 1.4), 'cy'), part(sB(33.4, 32.4, 4.2, 1.4), 'cy'), dot(18, 16, P.a), dot(18, 24, P.a)] },
+  { n: 40, f: P => [   // Technomancer: floating crystal with four orbiting orbs
+    part(sLine(20, 6, 20, 34, 0.5), 'acc'), part(sLine(6, 20, 34, 20, 0.5), 'acc'),
+    part(sP([[20, 5], [33, 20], [20, 35], [7, 20]]), 'dark'), part(sP([[20, 9.4], [29, 20], [20, 30.6], [11, 20]]), 'body'),
+    part(sC(22, 20, 4.2), 'acc'), part(sC(23, 20, 2.2), 'dark'), dot(23, 20, P.c),
+    part(sC(20, 3.4, 3.2), 'cy'), part(sC(20, 36.6, 3.2), 'cy'), part(sC(3.4, 20, 3.2), 'cy'), part(sC(36.6, 20, 3.2), 'cy'), dot(20, 3, P.c), dot(20, 37, P.c)] },
+  { n: 40, f: P => [   // Nuclear Throne: a spiked throne-crown with a glaring eye
+    part(sStar(20, 20, 9, 19.4, 12, 0), 'dark'), part(sStar(20, 20, 10, 15.6, 12, 0.13), 'body'), part(sC(20, 20, 10.4), 'dark'), part(sRing(20, 20, 8.4, 0.8, 8), 'acc'),
+    part(sC(21, 20, 6.2), 'body'), part(sC(22.4, 20, 3.4), 'dark'), dot(23, 20, P.c), part(sB(26, 20, 1.2, 5.6), 'cy'),
+    part(sP([[32, 12], [39, 20], [32, 28]]), 'cy'), dot(14, 14, P.a), dot(14, 26, P.a), dot(12, 20, P.a)] },
 ];
 
 

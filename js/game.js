@@ -631,7 +631,7 @@ const Game = {
     }
     const speedUp = 1 + 0.18 * (ph - 1);
     if (!b.pat) {
-      this.moveE(b, d > 190 ? Math.cos(ang) * 46 : 0, d > 190 ? Math.sin(ang) * 46 : 0, dt);
+      const mv = def.move || 46; this.moveE(b, d > 190 ? Math.cos(ang) * mv : 0, d > 190 ? Math.sin(ang) * mv : 0, dt);
       b.cd -= dt / speedUp;
       if (b.cd <= 0) { const opts = def.phases[ph - 1].filter(x => x !== b.last); b.pat = pick(opts); b.last = b.pat; b.pt = 0; b.n = 0; if (b.pat === 'slam' || b.pat === 'sweep' || b.pat === 'charge') b.n = 0; }
     } else {
@@ -658,6 +658,38 @@ const Game = {
         case 'slam':
           if (b.n < 1) { b.n = 1; const k = n >= 2 ? 2 : 1; for (let i = 0; i < k; i++) C.haz.push({ x: clamp(p.x + (i ? rnd(-140, 140) : 0), this.arena().x0 + 40, this.arena().x1 - 40), y: clamp(p.y + (i ? rnd(-100, 100) : 0), this.arena().y0 + 40, this.arena().y1 - 40), r: 105, t: 1.0 + i * 0.35, max: 1.0 + i * 0.35, dmg: 24 * C.dmgS, friendly: false, ring: n >= 3 ? 10 : 0, col: b.col }); }
           if (t > 1.9) this.endPat(b); break;
+        case 'fan': {   // wide shotgun-like cones, three waves
+          const times = [0.5, 0.95, 1.4];
+          if (b.n < times.length && t > times[b.n]) { b.n++; const k = 5 + 2 * n; for (let i = 0; i < k; i++) this.eShoot(b, ang + (i - (k - 1) / 2) * 0.17, 300, 10 * C.dmgS, 5); C.shake = Math.max(C.shake, 4); }
+          if (t > 1.9) this.endPat(b); break;
+        }
+        case 'gapring': {   // two rings with a hole you have to find
+          if ((t > 0.5 && b.n < 1) || (t > 1.3 && b.n < 2)) {
+            const ga = b.n < 1 ? ang : ang + 3.14; b.n++;
+            for (let i = 0; i < 28; i++) { const a2 = i / 28 * 6.283; let da = Math.atan2(Math.sin(a2 - ga), Math.cos(a2 - ga)); if (Math.abs(da) < 0.42) continue; this.eShoot(b, a2, 165, 10 * C.dmgS, 5); }
+          }
+          if (t > 2.3) this.endPat(b); break;
+        }
+        case 'leap': {   // jumps onto where you stood and slams the ground
+          const ar = this.arena();
+          if (b.n < 1) { b.n = 1; b.tx = clamp(p.x, ar.x0 + 50, ar.x1 - 50); b.ty = clamp(p.y, ar.y0 + 50, ar.y1 - 50); C.haz.push({ x: b.tx, y: b.ty, r: 95, t: 0.8, max: 0.8, dmg: 22 * C.dmgS, friendly: false, ring: 8, col: b.col, owner: b }); }
+          this.moveE(b, 0, 0, dt);
+          if (t > 0.8 && b.n < 2) { b.n = 2; b.x = b.tx; b.y = b.ty; C.shake = 14; this.burst(b.x, b.y, b.col, 24, 220); this.ring(b, 10 + 2 * n, 210, rnd(0, 6.28)); }
+          if (t > 1.4) this.endPat(b); break;
+        }
+        case 'gatling': {   // a long stream aimed right at you
+          if (t > 0.5 && t < 2.4) { const k = Math.floor((t - 0.5) / 0.09); if (k >= b.n) { b.n = k + 1; this.eShoot(b, ang + rnd(-0.07, 0.07), 340, 8 * C.dmgS, 4); } }
+          if (t > 2.8) this.endPat(b); break;
+        }
+        case 'rain': {   // blasts crash down around you one after another
+          const k = Math.floor((t - 0.3) / 0.28);
+          if (t > 0.3 && k >= b.n && b.n < 6 + 2 * n) { b.n++; const ar = this.arena(); C.haz.push({ x: clamp(p.x + rnd(-210, 210), ar.x0 + 30, ar.x1 - 30), y: clamp(p.y + rnd(-160, 160), ar.y0 + 30, ar.y1 - 30), r: 62, t: 0.9, max: 0.9, dmg: 18 * C.dmgS, friendly: false, ring: 0, col: b.col }); }
+          if (t > 0.3 + 0.28 * (6 + 2 * n) + 1) this.endPat(b); break;
+        }
+        case 'laserx': {   // four rotating beams
+          if (b.n < 1) { b.n = 1; const dir = Math.random() < 0.5 ? -1 : 1; for (let i = 0; i < 4; i++) C.beams.push({ x: b.x, y: b.y, a: ang + i * 1.5708, len: 900, w: 13, tele: 0.9, t: 2.6, rot: dir * (0.7 + 0.15 * n), dmg: 16 * C.dmgS, owner: b }); }
+          if (t > 3.1) this.endPat(b); break;
+        }
         case 'sweep':
           if (b.n < 1) { b.n = 1; C.beams.push({ x: b.x, y: b.y, a: ang, len: 900, w: 15, tele: 0.9, t: 3.4, rot: (Math.random() < 0.5 ? -1 : 1) * (0.9 + 0.2 * n), dmg: 18 * C.dmgS, owner: b }); }
           if (t > 3.6) this.endPat(b); break;
@@ -666,7 +698,14 @@ const Game = {
     if (b.atk > 0) b.atk -= dt;
     if (d < b.r + p.r && b.atk <= 0 && this.hurt(16 * C.dmgS, b)) b.atk = 0.8;
   },
-  endPat(b) { b.pat = null; b.cd = 1.5 - 0.25 * b.phase; },
+  endPat(b) {
+    b.pat = null; b.cd = 1.5 - 0.25 * b.phase;
+    const def = BOSSES[areaOf(this.run.act)], p = this.C.p;
+    if (def.blink && Math.random() < def.blink) {   // some bosses vanish and reappear somewhere else
+      const ar = this.arena();
+      for (let i = 0; i < 20; i++) { const x = rnd(ar.x0 + 60, ar.x1 - 60), y = rnd(ar.y0 + 60, ar.y1 - 60); if (dist({ x, y }, p) > 240 && this.walkable(x, y)) { this.burst(b.x, b.y, b.col, 16, 200); b.x = x; b.y = y; this.burst(x, y, b.col, 16, 200); break; } }
+    }
+  },
   ring(e, n, sp, off) { for (let i = 0; i < n; i++) this.eShoot(e, off + i / n * 6.283, sp, 10 * this.C.dmgS, 5); },
 
   // ---------- projectiles & hazards ----------
