@@ -955,7 +955,7 @@ const Game = {
     if (p.inv > 0 && Math.floor(C.t * 20) % 2 === 0 && p.dashT <= 0) ctx.globalAlpha = 0.45;
     if (p.shield > 0) pxRing(p.x, p.y, 22, '#ffe94a', 2);
     if (p.over > 0) pxRing(p.x, p.y, 19, '#ffd91f', 2);
-    this.sprite(this.run.hero, p.x, p.y, p.aim, 2, p.flash > 0); if (WEAPON_ART[kitOf(this.run).weapon.art]) this.drawArtWeapon(p);
+    if (View.front) this.drawHero(p); else { this.sprite(this.run.hero, p.x, p.y, p.aim, 2, p.flash > 0); if (WEAPON_ART[kitOf(this.run).weapon.art]) this.drawArtWeapon(p); }
     ctx.globalAlpha = 1;
   },
   drawEnemy(e, p) {
@@ -969,7 +969,8 @@ const Game = {
     if (e.type === 'boss') {
       const fa = e.pat === 'charge' && e.pt > 0.9 ? e.ang : ang;
       if (e.pat === 'charge' && e.pt < 0.9) { ctx.globalAlpha = 0.3 + 0.3 * Math.sin(C.t * 30); pxLine(e.x, e.y, e.x + Math.cos(e.ang) * 900, e.y + Math.sin(e.ang) * 900, Math.round(e.r / 2) * 2, '#ff3a3a'); ctx.globalAlpha = 1; }
-      this.sprite('b:' + areaOf(this.run.act), e.x, e.y, fa, 2, fl);
+      if (View.front) this.drawFront('b:' + areaOf(this.run.act) + ':f', e.x, e.y, Math.cos(fa) >= 0 ? 1 : -1, 2, fl, e.r, e.pat ? -Math.abs(Math.sin(C.t * 8)) * 3 : -Math.sin(C.t * 2) * 1.5);
+      else this.sprite('b:' + areaOf(this.run.act), e.x, e.y, fa, 2, fl);
     } else {
       let fa = ang;
       const eai = ENEMY[e.type].ai || e.type;
@@ -978,7 +979,9 @@ const Game = {
       if (eai === 'shooter' && e.wind > 0) { ctx.globalAlpha = 0.5; pxLine(e.x, e.y, e.x + Math.cos(ang) * 400, e.y + Math.sin(ang) * 400, 2, '#ffd91f'); ctx.globalAlpha = 1; }
       if (e.type === 'bomber' && e.state === 'fuse') { pxRing(e.x, e.y, 76, 'rgba(255,100,120,.7)', 2); if (Math.floor(C.t * 14) % 2) fa += 0; }
       const sc = e.type === 'bomber' && e.state === 'fuse' ? 2 : 2;
-      this.sprite('e:' + e.type, e.x, e.y, fa, sc, fl || (e.type === 'bomber' && e.state === 'fuse' && Math.floor(C.t * 14) % 2 === 0));
+      const flw = fl || (e.type === 'bomber' && e.state === 'fuse' && Math.floor(C.t * 14) % 2 === 0);
+      if (View.front) { const mv = ENEMY[e.type].speed > 0; this.drawFront('e:' + e.type + ':f', e.x, e.y, Math.cos(fa) >= 0 ? 1 : -1, sc, flw, e.r, mv ? -Math.abs(Math.sin(C.t * 12 + e.x * 0.05)) * 2.5 : 0); }
+      else this.sprite('e:' + e.type, e.x, e.y, fa, sc, flw);
     }
     ctx.globalAlpha = 1;
     if (!e.boss && e.hp < e.maxhp) { const x = snap(e.x) - 12, y = snap(e.y - e.r - 8); ctx.fillStyle = '#000'; ctx.fillRect(x - 2, y - 2, 28, 6); ctx.fillStyle = e.elite ? ELITE_MODS[e.elite].col : '#ff5a5a'; ctx.fillRect(x, y, 24 * clamp(e.hp / e.maxhp, 0, 1), 2); }
@@ -1055,6 +1058,7 @@ addEventListener('keydown', e => {
   if ([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'backspace'].includes(k)) e.preventDefault();
   Input.keys[k] = true;
   if (k === 'p' || k === 'backspace') Game.togglePause();
+  if (k === 'v' && Game.mode !== 'menu') View.toggle();
   if (k === 'f' && Game.mode === 'fight') Input.auto = !Input.auto;
   if (k === 'e') Game.interact();
   if (k === 'm') Music.toggle();

@@ -350,7 +350,7 @@ const UI = {
     try { window.parent !== window && window.parent.postMessage({ type: 'gameOver', score: res.run.rooms }, '*'); } catch (e) { /* ignore */ }
   },
   pause() {
-    this.show('<h1 style="margin-top:120px">PAUSED</h1><div class="row"><button class="btn big" onclick="Game.togglePause()">RESUME</button></div><div class="row"><button class="btn red" onclick="if(confirm(\'Abandon the run?\')){Game.paused=false;UI.summary(Game.bank(0.25,\'dead\'))}">ABANDON RUN</button></div><p class="dim sm">P or Backspace also resumes.</p>', 'clear');
+    this.show('<h1 style="margin-top:120px">PAUSED</h1><div class="row"><button class="btn big" onclick="Game.togglePause()">RESUME</button></div><div class="row"><button class="btn" onclick="View.toggle();UI.pause()">VIEW: ' + (View.front ? 'SLANTED FRONT' : 'TOP-DOWN') + ' (V)</button></div><div class="row"><button class="btn red" onclick="if(confirm(\'Abandon the run?\')){Game.paused=false;UI.summary(Game.bank(0.25,\'dead\'))}">ABANDON RUN</button></div><p class="dim sm">P or Backspace also resumes.</p>', 'clear');
   },
 };
 

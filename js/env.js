@@ -216,8 +216,10 @@ function buildCaveFloor(act, seed, Wd) {
       if (!fl(x + 1, y)) g.fillRect(px + TILE - 8, py, 8, TILE);
       if (!fl(x, y + 1)) g.fillRect(px, py + TILE - 6, TILE, 6);
     } else if (fl(x, y + 1)) {
-      g.fillStyle = B.wall[1]; g.fillRect(px, py + TILE - 24, TILE, 24);
-      g.globalAlpha = 0.85; g.fillStyle = B.hi; g.fillRect(px, py + TILE - 24, TILE, 3); g.globalAlpha = 1;
+      const FH = View.front ? 36 : 24;   // slanted front view: walls show a taller front face with brick joints
+      g.fillStyle = B.wall[1]; g.fillRect(px, py + TILE - FH, TILE, FH);
+      if (View.front) { g.fillStyle = 'rgba(0,0,0,.2)'; for (let k = 8; k < FH; k += 9) g.fillRect(px, py + TILE - FH + k, TILE, 1); g.fillStyle = 'rgba(255,255,255,.06)'; g.fillRect(px + 13, py + TILE - FH + 1, 1, 7); g.fillRect(px + 29, py + TILE - FH + 10, 1, 7); g.fillRect(px + 7, py + TILE - FH + 19, 1, 7); }
+      g.globalAlpha = 0.85; g.fillStyle = B.hi; g.fillRect(px, py + TILE - FH, TILE, 3); g.globalAlpha = 1;
       g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(px, py + TILE - 6, TILE, 6);
     }
   }

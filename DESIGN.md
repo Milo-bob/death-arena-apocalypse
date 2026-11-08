@@ -109,3 +109,6 @@ Level-ups werden als `run.pendLv` gesammelt. Am Anfang jedes neuen Levels (0,5 s
 
 ## Schritt 24: individuelle Bosse
 Sechs eigene Boss-Zeichnungen (BOSS_ART, eine pro Boss) und eigene Angriffssets (BOSSES[].phases + move + blink). Neue Muster: fan (Schrotkegel), gapring (Ring mit Lücke), leap (Sprung + Aufprall), gatling (Dauerfeuer), rain (Einschläge um den Spieler), laserx (4 rotierende Strahlen); Technomancer und Nuclear Throne teleportieren sich nach Angriffen.
+
+## Schritt 25: schräge Frontalansicht (umschaltbar)
+js/front.js: `View.front` (Standard an, gespeichert in localStorage 'apoc.view'), Taste V oder Pause-Menü "VIEW" schaltet jederzeit zurück auf Draufsicht. Seitenansichten für 12 Helden (FRONT_HERO), 21 Gegner (FRONT_ENEMY) und 6 Bosse (FRONT_BOSS), Spiegeln nach links/rechts, Schatten, Hüpfen beim Laufen, Wände mit höherer Vorderseite und Ziegelfugen (env.js). Draufsicht-Code ist unverändert (Zweig in drawPlayer/drawEnemy). Zum kompletten Entfernen: front.js aus index.html nehmen und `View.front=false` setzen.

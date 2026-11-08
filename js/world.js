@@ -258,11 +258,11 @@ Object.assign(Game, {
   // ---------- the hero: front view, flips left/right, the gun turns towards the cursor ----------
   drawHero(p) {
     const run = this.run, id = run.hero, C = this.C;
-    if (!HERO_FRONT[id]) { this.sprite(id, p.x, p.y, p.aim, 2, p.flash > 0); return; }
+    if (!View.front) { this.sprite(id, p.x, p.y, p.aim, 2, p.flash > 0); return; }
     const face = Math.cos(p.aim) >= 0 ? 1 : -1, moving = Math.hypot(p.x - (p.dpx === undefined ? p.x : p.dpx), p.y - (p.dpy === undefined ? p.y : p.dpy)) > 0.4;
     p.dpx = p.x; p.dpy = p.y;
     const bob = moving ? -Math.abs(Math.sin(C.t * 14)) * 3 : -Math.sin(C.t * 2.6) * 1.2, sq = moving ? 1 + Math.sin(C.t * 28) * 0.04 : 1;
-    const spr = p.flash > 0 ? Sprites.white(id) : Sprites.get(id), fx = snap(p.x), fy = snap(p.y + 15);
+    const spr = p.flash > 0 ? Sprites.white(id + ':f') : Sprites.get(id + ':f'), fx = snap(p.x), fy = snap(p.y + 15);
     ctx.save(); ctx.globalAlpha = 0.4; ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse(fx, fy, 15, 5, 0, 0, 6.283); ctx.fill(); ctx.restore();
     ctx.imageSmoothingEnabled = false; ctx.save(); ctx.translate(fx, fy + snap(bob)); ctx.scale(face, sq); ctx.drawImage(spr, -20, -40, 40, 40); ctx.restore();
     this.drawHeldWeapon(p, fx + face * 8, fy + snap(bob) - 14, face);
