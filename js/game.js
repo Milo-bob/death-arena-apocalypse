@@ -143,7 +143,7 @@ const Game = {
     }
     return out;
   },
-  takePerk(id) { this.run.perks.push(id); this.recalc(); Sfx.good(); },
+  takePerk(id) { this.run.perks.push(id); this.recalc(); Sfx.good(); const pk = PERKS[id]; if (pk.full) this.run.hp = this.P.maxhp; else if (pk.heal) this.run.hp = Math.min(this.P.maxhp, this.run.hp + pk.heal); },
   takeDrawback(id) { this.run.drawbacks.push(id); this.recalc(); },
   bank(frac, why) {
     const run = this.run, s = Save.data;
@@ -320,7 +320,7 @@ const Game = {
     if (P.mutagen && ++run.mutKills % 10 === 0) { run.bonus.mut += 0.02; this.floatText(C.p.x, C.p.y - 24, 'MUTATION +2%', '#7dff4a'); }
     if (P.killBlast > 0) C.haz.push({ x: e.x, y: e.y, r: 42, t: 0.08, dmg: P.killBlast, friendly: true, quick: true });
     if (P.poisonSpread && e.poisonT > 0) for (const q of C.en) if (!q.dead && dist(q, e) < 100) { q.poison = Math.max(q.poison, e.poison); q.poisonT = 3; }
-    if (e.elite === 'split' || ENEMY[e.type].splits) for (let i = 0; i < 2; i++) { const g = this.makeEnemy('grunt', e.x + rnd(-14, 14), e.y + rnd(-14, 14)); g.hp = g.maxhp *= 0.6; g.spawnT = 0; g.free = e.free; g.awake = true; }
+    if (e.elite === 'split' || (ENEMY[e.type] && ENEMY[e.type].splits)) for (let i = 0; i < 2; i++) { const g = this.makeEnemy('grunt', e.x + rnd(-14, 14), e.y + rnd(-14, 14)); g.hp = g.maxhp *= 0.6; g.spawnT = 0; g.free = e.free; g.awake = true; }
     if (e.elite === 'volatile') C.haz.push({ x: e.x, y: e.y, r: 75, t: 0.9, max: 0.9, dmg: 22 * C.dmgS, friendly: false });
   },
   healP(a) { if (this.run.hp < this.P.maxhp) { this.run.hp = Math.min(this.P.maxhp, this.run.hp + a); this.floatText(this.C.p.x, this.C.p.y - 20, '+' + (Math.round(a) / 10), '#39ff6e'); } },
@@ -375,7 +375,7 @@ const Game = {
     const w = kitOf(run).weapon;
     if (p.fireT > 0) p.fireT -= dt;
     if ((Input.down || Input.auto) && p.fireT <= 0 && w.type !== 'blades' && C.intro < 1.0) {
-      if (this.useAmmo(w)) { this.fire(w); if (P.dual && run.wpn2) { const w2 = HEROES[run.wpn2].weapon; if (w2.type !== 'blades' && this.useAmmo(w2)) this.fire(w2); } p.fireT = 1 / (w.rate * P.rate * (p.over > 0 ? p.overRate : 1)); } else { p.fireT = 0.25; this.noAmmo(); }
+      if (this.useAmmo(w)) { this.fire(w); if (P.dual && run.wpn2) { const w2 = HEROES[run.wpn2].weapon; if (w2.type !== 'blades' && this.useAmmo(w2)) this.fire(w2); } p.fireT = 1 / (w.rate * P.rate * (1 + P.stress * (1 - run.hp / P.maxhp)) * (p.over > 0 ? p.overRate : 1)); } else { p.fireT = 0.25; this.noAmmo(); }
     }
     this.updateBlades(w, dt);
     if (P.aura) for (const e of C.en) if (!e.dead && dist(e, p) < 105) this.dealDamage(e, P.aura * dt, false);
@@ -459,8 +459,8 @@ const Game = {
       const rc = clamp(30 + w.dmg * n * 0.8, 30, 170); p.kvx = (p.kvx || 0) - Math.cos(a0) * rc; p.kvy = (p.kvy || 0) - Math.sin(a0) * rc;
       this.burst(p.x + Math.cos(a0) * 18, p.y + Math.sin(a0) * 18, '#fff3b0', 2, 130);
       for (let i = 0; i < n; i++) {
-        const a = a0 + (n > 1 ? (i - (n - 1) / 2) * w.spread : rnd(-w.spread, w.spread) / 2);
-        C.pb.push({ x: p.x + Math.cos(a) * 14, y: p.y + Math.sin(a) * 14, vx: Math.cos(a) * w.speed * 1.2, vy: Math.sin(a) * w.speed * 1.2, r: w.size, dmg: w.dmg, pierce: w.pierce + P.pierce, life: w.life * P.range, hit: [], homing: (w.homing || 0) + P.homing, col, boom: w.boom || 0, boomDmg: w.boomDmg || 0, bounce: w.bounce || 0 });
+        const a = a0 + (n > 1 ? (i - (n - 1) / 2) * w.spread * P.spreadMul : rnd(-w.spread, w.spread) * P.spreadMul / 2);
+        C.pb.push({ x: p.x + Math.cos(a) * 14, y: p.y + Math.sin(a) * 14, vx: Math.cos(a) * w.speed * 1.2, vy: Math.sin(a) * w.speed * 1.2, r: w.size, dmg: w.dmg * (w.ammo === 'shell' || ammoOf(w) === 'shell' ? P.shellMul : ammoOf(w) === 'energy' ? P.energyMul : 1), pierce: w.pierce + P.pierce, life: w.life * P.range, hit: [], homing: (w.homing || 0) + P.homing + (ammoOf(w) === 'bolt' ? P.boltHoming : 0), col, boom: w.boom || 0, boomDmg: w.boomDmg || 0, bounce: w.bounce || 0 });
       }
     } else if (w.type === 'cone') {
       Sfx.slash(); p.kvx = (p.kvx || 0) + Math.cos(a0) * 150; p.kvy = (p.kvy || 0) + Math.sin(a0) * 150;
@@ -493,7 +493,7 @@ const Game = {
       }
     }
   },
-  knock(e, a, f) { if (e.boss) return; const k = e.type === 'tank' ? 0.25 : 1; e.vx += Math.cos(a) * f * k * 4; e.vy += Math.sin(a) * f * k * 4; },
+  knock(e, a, f) { if (e.boss) return; f *= this.P.knockMul; const k = e.type === 'tank' ? 0.25 : 1; e.vx += Math.cos(a) * f * k * 4; e.vy += Math.sin(a) * f * k * 4; },
   updateBlades(w, dt) {
     const C = this.C, P = this.P, p = C.p, isB = w.type === 'blades';
     const n = (isB ? w.n : 0) + P.blades; if (!n) return;
@@ -547,7 +547,7 @@ const Game = {
     if (e.slowT > 0) e.slowT -= dt; else e.slow = 0;
     if (e.dead) return;
     for (const z of C.zones) if (dist(z, e) < z.r + e.r && z.slow) e.slow = Math.max(e.slow, z.slow), e.slowT = 0.2;
-    const sm = (1 - Math.min(0.8, e.slow)) , d = dist(e, p), ang = Math.atan2(p.y - e.y, p.x - e.x), spd = e.speed * sm;
+    const sm = (1 - Math.min(0.8, e.slow)) * P.foeSlow , d = dist(e, p), ang = Math.atan2(p.y - e.y, p.x - e.x), spd = e.speed * sm;
     if (e.boss) return this.updateBoss(e, dt, d, ang);
     if (e.spawnT > 0) return;
     if (e.freeze > 0) { e.freeze -= dt; this.moveE(e, 0, 0, dt); return; }
@@ -698,7 +698,7 @@ const Game = {
       if (!h.quick) { this.burst(h.x, h.y, h.friendly ? '#ff8a1f' : '#ff4a4a', 10, 170); Sfx.boom(); C.shake = Math.max(C.shake, 5); }
       if (h.friendly) { for (const e of C.en.slice()) if (!e.dead && dist(e, h) < h.r + e.r) this.hitEnemy(e, h.dmg, { raw: !!h.quick, noProc: !!h.quick, noCrit: !!h.quick }); for (const pr of C.props) if (!pr.dead && dist(pr, h) < h.r + pr.r) this.damageProp(pr, h.dmg * 1.5 + 10); }
       else {
-        if (dist(h, p) < h.r + p.r) this.hurt(h.dmg, h.owner);
+        if (dist(h, p) < h.r + p.r && !(this.P.blastImmune && !h.owner)) this.hurt(h.dmg, h.owner);
         if (h.ring) for (let i = 0; i < h.ring; i++) this.eShoot({ x: h.x, y: h.y, col: h.col || '#ff4a4a' }, i / h.ring * 6.283, 200, 8 * C.dmgS, 5);
       }
     }
@@ -1006,7 +1006,7 @@ addEventListener('keydown', e => {
   if (k === 'm') Music.toggle();
   if ((k === 'x' || k === ' ') && !e.repeat && Game.swapWeapons) Game.swapWeapons();
   if (Game.mode !== 'fight' && UI.nav) UI.nav(k);
-  if (['1', '2', '3'].includes(k) && UI.hotkey) UI.hotkey(+k - 1);
+  if (['1', '2', '3', '4', '5'].includes(k) && UI.hotkey) UI.hotkey(+k - 1);
 });
 addEventListener('keyup', e => { Input.keys[e.key.toLowerCase()] = false; });
 addEventListener('blur', () => { Input.keys = {}; Input.down = false; });

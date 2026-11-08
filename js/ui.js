@@ -102,7 +102,7 @@ const UI = {
     for (const id of PLAYABLE) if (!s.heroes[id]) { s.heroes[id] = 1; Save.write(true); }   // every hero is selectable from the start Menu.set('hub', s.clan, s.hero);
     let h = '<div class="row" style="justify-content:space-between;align-items:center"><div><h1 style="margin:0;font-size:26px">WASTELAND CAMP</h1><span class="sm dim">Slot ' + (Save.slot + 1) + '</span></div>'
       + '<div style="text-align:right"><div style="font-family:Silk;color:#3de8ff">CORES ' + s.cores + '</div><button class="btn" onclick="UI.slots()">SAVE SLOTS</button></div></div>';
-    h += '<div class="tabs">' + [['run', 'CHARACTERS'], ['armory', 'MUTATIONS'], ['upgrades', 'UPGRADES']].map(t => '<button class="btn ' + (this.tab === t[0] ? 'sel' : '') + '" onclick="UI.hub(\'' + t[0] + '\')">' + t[1] + '</button>').join('') + '</div>';
+    h += '<div class="tabs">' + [].map(t => '<button class="btn ' + (this.tab === t[0] ? 'sel' : '') + '" onclick="UI.hub(\'' + t[0] + '\')">' + t[1] + '</button>').join('') + '</div>';
     if (this.tab === 'run') {
       h += this.selectHtml(s);
     } else if (this.tab === 'hero') {
@@ -254,7 +254,7 @@ const UI = {
       this.show('<h2>ULTRA MUTATION</h2><p class="dim sm">Level ' + run.plv + ': choose your final form</p>' + this.status() + '<div class="row">' + hero.ultras.map((u, i) => '<div class="card rar-legendary" onclick="UI.takeUltra(' + i + ')"><span class="dim sm" style="position:absolute;right:8px;top:6px">[' + (i + 1) + ']</span><h3>' + u.name + '</h3><p>' + u.d + '</p></div>').join('') + '</div>');
       this.acts(() => this.takeUltra(0), () => this.takeUltra(1)); return;
     }
-    const offers = Game.offerPerks(3, run.plv > 6 ? 'rare' : 'common');
+    const offers = Game.offerPerks(4 + (Game.P.choices || 0), 'common');
     if (!offers.length) { Game.nodeDone(); return; }
     this.show('<h2>LEVEL UP</h2><p class="dim sm">Level ' + run.plv + ': choose a mutation</p>' + this.status() + '<div class="row">' + offers.map((id, i) => this.perkCard(id, "UI.take('" + id + "')", '', i + 1)).join('') + '</div>' + this.buildList());
     this.acts(...offers.map(id => () => this.take(id)));

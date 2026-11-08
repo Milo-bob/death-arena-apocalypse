@@ -203,6 +203,7 @@ Object.assign(Game, {
     if (!e.boss && !P.noHeal && Math.random() < (run.hp < P.maxhp * 0.5 ? 0.09 : 0.03) * Math.min(P.dropMul, 1.8)) this.spawnItem(e.x, e.y, 'heal', { amt: 10 });
     run.coreAcc = (run.coreAcc || 0) + (e.boss ? 0 : e.elite ? 3 : ENEMY[e.type].cost * 0.4) * (1 + 0.15 * run.act) * (1 + 0.2 * run.heat);
     if (run.coreAcc >= 1) { const g = Math.floor(run.coreAcc); run.coreAcc -= g; run.cores += g; }
+    if (P.bloodlust && !e.boss && !P.noHeal && Math.random() < P.bloodlust) this.healP(10);
     if (e.free) {
       C.lvlKills++;
       if (!C.portal && !isBossLevel(run.act) && C.lvlKills >= Math.ceil(C.levelTotal * 0.9)) { C.portal = { x: e.x, y: e.y }; this.floatText(e.x, e.y - 40, 'THE PORTAL OPENS', '#a06bff', 1.4); Sfx.good(); }
@@ -312,7 +313,7 @@ Object.assign(Game, {
     const run = this.run, C = this.C; run.plv = run.plv || 1; run.xp = (run.xp || 0) + n * (this.P.xpMul || 1);
     while (run.xp >= 10 + 6 * run.plv) { run.xp -= 10 + 6 * run.plv; run.plv++; C.levelUps++; }
   },
-  addAmmo(type, amt) { const run = this.run; run.ammo = run.ammo || startAmmo(); run.ammo[type] = Math.min(AMMO[type].max, (run.ammo[type] || 0) + Math.round(amt * this.P.ammoMul)); },
+  addAmmo(type, amt) { const run = this.run; run.ammo = run.ammo || startAmmo(); run.ammo[type] = Math.min(Math.round(AMMO[type].max * this.P.ammoCap), (run.ammo[type] || 0) + Math.round(amt * this.P.ammoMul)); },
   ammoWanted() {   // mostly the ammo your weapons use
     const run = this.run, types = [run.wpn || run.hero, run.wpn2].filter(Boolean).map(id => ammoOf(HEROES[id].weapon)).filter(Boolean);
     return types.length && Math.random() < 0.75 ? pick(types) : pick(Object.keys(AMMO));
@@ -337,7 +338,7 @@ Object.assign(Game, {
     const p = this.C.p;
     if (it.kind === 'rad') { this.addXp(it.amt); const C = this.C; if (!C.radSnd || C.t - C.radSnd > 0.06) { Sfx.tick(); C.radSnd = C.t; } }
     else if (it.kind === 'ammo') { this.addAmmo(it.type, it.amt); this.floatText(p.x, p.y - 22, '+' + AMMO[it.type].name, AMMO[it.type].col); Sfx.good(); }
-    else if (it.kind === 'heal') { if (!this.P.noHeal) this.healP(it.amt); }
+    else if (it.kind === 'heal') { if (!this.P.noHeal) this.healP(it.amt * this.P.healMul); }
   },
   openChest(ch) {
     const C = this.C; Sfx.good(); C.shake = Math.max(C.shake, 3);
@@ -348,6 +349,7 @@ Object.assign(Game, {
   useAmmo(w) {
     const t = ammoOf(w); if (!t) return true;
     const run = this.run; run.ammo = run.ammo || startAmmo();
+    if (Math.random() < this.P.refund) return true;
     const c = (w.cost || 1) * (this.P.ammoCost || 1); if (run.ammo[t] < c) return false;
     run.ammo[t] -= c; return true;
   },
