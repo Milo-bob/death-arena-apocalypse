@@ -2,8 +2,8 @@
 // Fill URL and KEY with the values of the NEW Supabase project (Project Settings > API) and run tools/supabase_setup.sql.
 // Without them the game runs as guest, saves stay in this browser.
 const Account = {
-  URL: '',
-  KEY: '',
+  URL: 'https://kqtjtagbhaaddfqibaxh.supabase.co',
+  KEY: 'sb_publishable_a2seTA0Z0oxrlXSaLd0vwg_10U7BMgZ',
   DOMAIN: 'players.holiday-games.com',
   META: 'apoc.account',
   meta: null,          // { name, uid, tok, ref, exp } or null
