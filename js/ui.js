@@ -67,6 +67,9 @@ const UI = {
     Save.data = null; Save.slot = -1; this.hide();
     this.show('<h2>LOADING...</h2>');
     await Save.sync();
+    // one save only: straight into the camp
+    if (Save.readLocal(0)) { Save.open(0); this.hub('run'); } else this.newGame(0, 'steam');
+    return;
     let h = '<h2>CHOOSE A SAVE SLOT</h2><div class="row" style="margin-top:20px">';
     for (let i = 0; i < 3; i++) {
       const d = Save.readLocal(i);
@@ -81,7 +84,7 @@ const UI = {
     h += '</div><div class="row" style="margin-top:20px"><button class="btn" onclick="UI.title()">BACK</button></div>';
     this.show(h);
   },
-  delSlot(i) { if (confirm('Delete this save slot permanently?')) Save.remove(i).then(() => this.slots()); },
+  delSlot(i) { if (confirm('Delete your save permanently? Your progress is gone.')) Save.remove(i).then(() => this.slots()); },
   openSlot(i) { Save.open(i); this.hub(); },
   clanSelect(slot) {
     Menu.set('slots');
@@ -100,8 +103,8 @@ const UI = {
     if (tab) this.tab = tab;
     const s = Save.data, c = CLANS[s.clan];
     for (const id of PLAYABLE) if (!s.heroes[id]) { s.heroes[id] = 1; Save.write(true); }   // every hero is selectable from the start Menu.set('hub', s.clan, s.hero);
-    let h = '<div class="row" style="justify-content:space-between;align-items:center"><div><h1 style="margin:0;font-size:26px">WASTELAND CAMP</h1><span class="sm dim">Slot ' + (Save.slot + 1) + '</span></div>'
-      + '<div style="text-align:right"><div style="font-family:Silk;color:#3de8ff">CORES ' + s.cores + '</div><button class="btn" onclick="UI.slots()">SAVE SLOTS</button></div></div>';
+    let h = '<div class="row" style="justify-content:space-between;align-items:center"><div><h1 style="margin:0;font-size:26px">WASTELAND CAMP</h1></div>'
+      + '<div style="text-align:right"><div style="font-family:Silk;color:#3de8ff">CORES ' + s.cores + '</div><button class="btn" onclick="UI.title()">MAIN MENU</button><button class="btn red" onclick="UI.delSlot(0)">DELETE SAVE</button></div></div>';
     h += '<div class="tabs">' + [].map(t => '<button class="btn ' + (this.tab === t[0] ? 'sel' : '') + '" onclick="UI.hub(\'' + t[0] + '\')">' + t[1] + '</button>').join('') + '</div>';
     if (this.tab === 'run') {
       h += this.selectHtml(s);
