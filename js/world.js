@@ -247,6 +247,27 @@ Object.assign(Game, {
     }
     ctx.restore();
   },
+  // ---------- light aim assist: when an enemy is close to your aim line the shot bends towards it ----------
+  assistAim(w) {
+    const C = this.C, p = C.p, a = p.aim;
+    if (w.type === 'mortar' || w.type === 'blades') return a;
+    const spd = (w.speed || 500) * 1.2, reach = w.type === 'cone' ? w.range * 1.5 : w.type === 'lance' ? w.reach * 1.4 : spd * (w.life || 1);
+    let best = null, bs = 1;
+    for (const e of C.en) {
+      if (e.dead || e.spawnT > 0.25) continue;
+      const dx = e.x - p.x, dy = e.y - p.y, d = Math.hypot(dx, dy); if (d > reach || d < 4) continue;
+      let da = Math.atan2(dy, dx) - a; da = Math.abs(Math.atan2(Math.sin(da), Math.cos(da)));
+      const tol = 0.09 + Math.atan2(e.r + 10, d) * 1.5;
+      if (da > tol || da / tol >= bs) continue;
+      let clear = true; for (let t = 24; t < d; t += 24) if (!this.walkable(p.x + dx * t / d, p.y + dy * t / d)) { clear = false; break; }
+      if (clear) { bs = da / tol; best = e; }
+    }
+    if (!best) return a;
+    const d = dist(best, p), lead = w.type === 'shot' ? Math.min(0.45, d / spd) : 0;
+    const tx = best.x + (best.mvx || 0) * lead, ty = best.y + (best.mvy || 0) * lead;
+    let da = Math.atan2(ty - p.y, tx - p.x) - a; da = Math.atan2(Math.sin(da), Math.cos(da));
+    return a + da * 0.75;
+  },
   // ---------- props: explosive barrels ----------
   damageProp(pr, dmg) {
     if (pr.dead) return;
@@ -443,6 +464,7 @@ Object.assign(Game, {
     const C = this.C, p = C.p, W = this.world, run = this.run; C.near = null; C.nearW = null;
     for (const d of C.wdrops) if (dist(d, p) < 36) C.nearW = d;
     this.updatePickups(1 / 60);
+    for (const e of C.en) { e.mvx = (e.x - (e.px === undefined ? e.x : e.px)) * 60; e.mvy = (e.y - (e.py === undefined ? e.y : e.py)) * 60; e.px = e.x; e.py = e.y; }
     if (p.kvx || p.kvy) {   // weapon recoil / melee lunge
       p.x += p.kvx / 60; p.y += p.kvy / 60; const kd = Math.pow(0.0005, 1 / 60); p.kvx *= kd; p.kvy *= kd;
       if (Math.abs(p.kvx) + Math.abs(p.kvy) < 4) p.kvx = p.kvy = 0;

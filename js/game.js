@@ -451,7 +451,7 @@ const Game = {
 
   // ---------- weapons ----------
   fire(w, noq) {
-    const C = this.C, P = this.P, p = C.p, hero = HEROES[this.run.hero], col = CLANS[hero.clan].color, a0 = p.aim;
+    const C = this.C, P = this.P, p = C.p, hero = HEROES[this.run.hero], col = CLANS[hero.clan].color, a0 = p.aim = this.assistAim(w);
     C.shake = Math.max(C.shake, w.dmg >= 25 || w.type === 'mortar' ? 3 : 1);
     if (w.type === 'shot') {
       const n = w.n + P.extra; Sfx.shoot(ammoOf(w), w.rate >= 7);
