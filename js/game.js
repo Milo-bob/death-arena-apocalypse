@@ -1,4 +1,5 @@
 // Core: run state, node map, rooms, combat, rendering. Menus live in ui.js.
+const FIRE_RATE_MUL = 1.4;   // global: all weapons reload (time between shots) 30% faster, Nuclear Throne feel
 const GAME_SPEED = 1.25;   // global sim speed: faster enemies, bullets and cooldowns => more dodging/aiming skill
 const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
 const Input = { keys: {}, mx: W / 2, my: H / 2, down: false, rdown: false, auto: false };
@@ -379,7 +380,7 @@ const Game = {
     const w = kitOf(run).weapon;
     if (p.fireT > 0) p.fireT -= dt;
     if ((Input.down || Input.auto) && p.fireT <= 0 && w.type !== 'blades' && C.intro < 1.0) {
-      if (this.useAmmo(w)) { this.fire(w); if (P.dual && run.wpn2) { const w2 = HEROES[run.wpn2].weapon; if (w2.type !== 'blades' && this.useAmmo(w2)) this.fire(w2); } p.fireT = 1 / (w.rate * P.rate * (1 + P.stress * (1 - run.hp / P.maxhp)) * (p.over > 0 ? p.overRate : 1)); } else { p.fireT = 0.25; this.noAmmo(); }
+      if (this.useAmmo(w)) { this.fire(w); if (P.dual && run.wpn2) { const w2 = HEROES[run.wpn2].weapon; if (w2.type !== 'blades' && this.useAmmo(w2)) this.fire(w2); } p.fireT = 1 / (w.rate * FIRE_RATE_MUL * P.rate * (1 +P.stress * (1 - run.hp / P.maxhp)) * (p.over > 0 ? p.overRate : 1)); } else { p.fireT = 0.25; this.noAmmo(); }
     }
     this.updateBlades(w, dt);
     if (P.aura) for (const e of C.en) if (!e.dead && dist(e, p) < 105) this.dealDamage(e, P.aura * dt, false);
