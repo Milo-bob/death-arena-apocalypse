@@ -21,35 +21,33 @@ function wpick(items, wf) {
 
 // ---------- Clans: one drawback and one advantage each, applied to the stat sheet P ----------
 const CLANS = {
-  bio: { name: 'Biopunk', color: '#7dff4a', dark: '#1d4a12', blurb: 'Living weapons. Poison, mutation and flesh that heals itself.',
-    pro: 'Heal 1 HP every 5 kills. Poison hits harder.', con: '-10% max HP.',
-    mod(P) { P.maxhp *= 0.9; P.killHeal += 0.2; P.poisonMul *= 1.25; } },
+  bio: { name: 'Biopunk', color: '#7dff4a', dark: '#1d4a12', blurb: 'Living flesh. Mutates, regrows, feeds on kills.',
+    pro: 'Slow regeneration, 6% heal chance on kill.', con: '-8% damage.',
+    mod(P) { P.dmg *= 0.92; P.regen += 0.25; P.bloodlust += 0.06; } },
   steam: { name: 'Steampunk', color: '#ffb347', dark: '#4a2c08', blurb: 'Brass and pressure. Heavy hits, big blasts, slow bodies.',
-    pro: '+20% damage. Kills cause small explosions.', con: '-10% move speed.',
-    mod(P) { P.dmg *= 1.2; P.speed *= 0.9; P.killBlast += 10; } },
-  solar: { name: 'Solarpunk', color: '#ffe94a', dark: '#4a4208', blurb: 'Light and growth. Sustain, control, patient play.',
-    pro: 'Heal 12% max HP after every cleared room.', con: '-15% damage.',
-    mod(P) { P.dmg *= 0.85; P.clearHeal += 0.12; } },
+    pro: '+15% damage, kills cause small explosions.', con: '-8% move speed.',
+    mod(P) { P.dmg *= 1.15; P.speed *= 0.92; P.killBlast += 10; } },
+  solar: { name: 'Solarpunk', color: '#ffe94a', dark: '#4a4208', blurb: 'Light and growth. Sustain and patient play.',
+    pro: 'Health pickups heal 30% more, light burns nearby enemies.', con: '-10% damage.',
+    mod(P) { P.dmg *= 0.9; P.healMul *= 1.3; P.aura += 6; } },
   cyber: { name: 'Cyberpunk', color: '#ff3de8', dark: '#4a0840', blurb: 'Implants and speed. Flexible builds, glass body.',
-    pro: '-25% dash cooldown, +10% crit chance.', con: 'Take +15% damage.',
-    mod(P) { P.dashCd *= 0.75; P.crit += 0.1; P.taken *= 1.15; } },
-  void: { name: 'Voidpunk', color: '#a06bff', dark: '#1c0d3a', blurb: 'Rifts and shadow. Hit-and-run, collapsing space around you.',
-    pro: 'Dashing damages enemies (+20), +10% crit damage.', con: '-10% attack speed.',
-    mod(P) { P.dashDmg += 20; P.critMul += 0.1; P.rate *= 0.9; } },
+    pro: 'Ability recharges 20% faster, +8% crit chance.', con: 'Take +12% damage.',
+    mod(P) { P.abCd *= 0.8; P.crit += 0.08; P.taken *= 1.12; } },
+  void: { name: 'Voidpunk', color: '#a06bff', dark: '#1c0d3a', blurb: 'Rifts and shadow. Bends space, wastes nothing.',
+    pro: '10% of shots cost no ammo, crits hit +25% harder.', con: '-8% attack speed.',
+    mod(P) { P.refund += 0.1; P.critMul += 0.25; P.rate *= 0.92; } },
 };
 
-// ---------- Clan mastery: collect N perks of your own clan for a bonus ----------
+// ---------- Clan mastery: take N mutations of your own clan for a bonus ----------
 const CLAN_SET = {
-  bio: { n: 3, name: 'Hive Mind', d: 'Poison +30% damage, heal 1 HP every 4 kills.', a: P => { P.poisonMul *= 1.3; P.killHeal += 0.25; } },
-  steam: { n: 3, name: 'Foundry Master', d: 'Kill blasts +20 damage, +10% damage.', a: P => { P.killBlast += 20; P.dmg *= 1.1; } },
-  solar: { n: 3, name: 'Eternal Day', d: 'Heal +10% after every cleared room, +1 regen.', a: P => { P.clearHeal += 0.1; P.regen += 1; } },
-  cyber: { n: 3, name: 'Neural Net', d: '-20% dash cooldown, +10% crit.', a: P => { P.dashCd *= 0.8; P.crit += 0.1; } },
-  void: { n: 3, name: 'Event Horizon', d: 'Dash damage +30, explosions 20% wider.', a: P => { P.dashDmg += 30; P.blastRad *= 1.2; } },
+  bio: { n: 2, name: 'Hive Mind', d: 'Regen +0.6, kills heal 6% more often.', a: P => { P.regen += 0.6; P.bloodlust += 0.06; } },
+  steam: { n: 2, name: 'Foundry Master', d: 'Kill blasts +20 damage, +10% damage.', a: P => { P.killBlast += 20; P.dmg *= 1.1; } },
+  solar: { n: 2, name: 'Eternal Day', d: 'Healing +30%, regen +0.5.', a: P => { P.healMul *= 1.3; P.regen += 0.5; } },
+  cyber: { n: 2, name: 'Neural Net', d: 'Ability recharges 15% faster, +8% crit.', a: P => { P.abCd *= 0.85; P.crit += 0.08; } },
+  void: { n: 2, name: 'Event Horizon', d: '+10% free shots, crits +30% harder.', a: P => { P.refund += 0.1; P.critMul += 0.3; } },
 };
 CLANS.aqua = { name: 'Aqua', color: '#4fe0d0', dark: '#0c3030', blurb: '', pro: '', con: '', mod() {} };
 CLANS.iron = { name: 'Iron', color: '#b4bcc8', dark: '#1c2028', blurb: '', pro: '', con: '', mod() {} };
-CLAN_SET.aqua = CLAN_SET.iron = CLAN_SET.void;
-for (const k in CLANS) CLANS[k].mod = () => {};   // clans are gone, they only stay as colour palettes
 const clanPerkCount = run => run.perks.filter(id => PERKS[id].clan === run.clan).length;
 
 // ---------- Heroes ----------
@@ -140,7 +138,7 @@ const HEROES = {
 
 // ---------- Nuclear-Throne style: 8 playable characters, every other hero entry is just a weapon in the loot pool ----------
 // ---------- Nuclear-Throne style roster: 12 playable characters, loot weapons are separate entries (w_*) ----------
-const PLAYABLE = ['sun', 'gunner', 'net', 'boiler', 'weaver', 'runner', 'clock', 'brute', 'hive', 'siege', 'phantom', 'umbra'];   // Fish, Crystal, Eyes, Melting, Plant, Y.V., Robot, Chicken - all selectable from the start
+const PLAYABLE = ['sun', 'weaver', 'hive', 'boiler', 'clock', 'gunner', 'net', 'brute', 'runner', 'siege', 'phantom', 'umbra'];   // grouped by clan: bio, steam, solar, cyber, void;   // Fish, Crystal, Eyes, Melting, Plant, Y.V., Robot, Chicken - all selectable from the start
 const NO_ABILITY = { type: 'overdrive', name: '-', cd: 99, dur: 0, rate: 1 };
 Object.assign(HEROES.sun, { name: 'Fish', cost: 0, start: 'w_revolver', blurb: 'Extra ammo from drops. Q: roll through danger.',
   ability: { type: 'roll', name: 'Roll', cd: 3.5 }, mod(P) { P.ammoMul *= 1.35; } });
@@ -474,7 +472,7 @@ function newStats() {
 }
 function buildStats(run, save) {
   const hero = HEROES[run.hero], P = newStats();
-  CLANS[hero.clan].mod(P);
+  CLANS[run.clan].mod(P);
   if (hero.mod) hero.mod(P);
   for (const [k, l] of Object.entries(save.meta || {})) if (META_UPS[k] && l) META_UPS[k].a(P, l);
   for (const id of run.perks) { const pk = PERKS[id]; pk.a(P); for (const t of pk.tags) P.tags[t] = (P.tags[t] || 0) + 1; }
@@ -488,3 +486,30 @@ function buildStats(run, save) {
   return P;
 }
 function activeSyn(P) { return Object.keys(SYN).filter(t => (P.tags[t] || 0) >= SYN[t].n); }
+
+// ---------- Clans are back (hero.clan stays the sprite palette, hero.tribe is the real clan) ----------
+for (const id of ['sun', 'weaver', 'hive']) HEROES[id].tribe = 'bio';
+for (const id of ['boiler', 'clock']) HEROES[id].tribe = 'steam';
+for (const id of ['gunner', 'net']) HEROES[id].tribe = 'solar';
+for (const id of ['brute', 'runner', 'siege']) HEROES[id].tribe = 'cyber';
+for (const id of ['phantom', 'umbra']) HEROES[id].tribe = 'void';
+for (const id of Object.keys(HEROES)) if (!HEROES[id].tribe) HEROES[id].tribe = 'steam';
+// clan mutations: only offered to heroes of that clan, taking 2 of them completes the clan mastery
+const CLAN_PERKS = {
+  bio: [['spore', 'Spore Lungs', 'common', 'Toxic spores burn enemies near you.', P => { P.aura += 10; }],
+        ['feral', 'Feral Hide', 'rare', 'Your flesh knits itself: faster regeneration.', P => { P.regen += 0.5; }],
+        ['bloomheart', 'Bloom Heart', 'rare', '12% chance to heal a heart on kill.', P => { P.bloodlust += 0.12; }]],
+  steam: [['valve', 'Pressure Valve', 'common', 'Kill blasts hit +14 harder.', P => { P.killBlast += 14; }],
+          ['knuckles', 'Brass Knuckles', 'rare', 'Melee +35% damage, all damage +8%.', P => { P.meleeMul *= 1.35; P.dmg *= 1.08; }],
+          ['boilercore', 'Boiler Core', 'rare', 'Explosions 30% wider and cannot hurt you.', P => { P.blastRad *= 1.3; P.blastImmune = 1; }]],
+  solar: [['sunbath', 'Sun Bath', 'common', 'Health pickups heal 50% more.', P => { P.healMul *= 1.5; }],
+          ['photo', 'Photosynthesis', 'rare', 'Regenerate 0.6 HP per second.', P => { P.regen += 0.6; }],
+          ['radiant', 'Radiant Shots', 'rare', '+8% crit chance, a brighter burning aura.', P => { P.crit += 0.08; P.aura += 8; }]],
+  cyber: [['overclock', 'Overclock', 'common', 'Your ability recharges 25% faster.', P => { P.abCd *= 0.75; }],
+          ['chip', 'Targeting Chip', 'rare', '+10% crit chance, tighter shots.', P => { P.crit += 0.1; P.spreadMul *= 0.7; }],
+          ['nano', 'Nano Armor', 'rare', 'Take 10% less damage, carry 20% more ammo.', P => { P.taken *= 0.9; P.ammoCap *= 1.2; }]],
+  void: [['riftrounds', 'Rift Rounds', 'common', '15% of your shots cost no ammo.', P => { P.refund += 0.15; }],
+         ['shadowstep', 'Shadow Step', 'rare', 'Move 12% faster, enemies are 8% slower.', P => { P.speed *= 1.12; P.foeSlow *= 0.92; }],
+         ['collapse', 'Collapse', 'rare', 'Critical hits do +40% damage.', P => { P.critMul += 0.4; }]],
+};
+for (const [clan, list] of Object.entries(CLAN_PERKS)) for (const [id, name, r, d, a] of list) PERKS['c_' + id] = { clan, name, tags: [], r, d, a };

@@ -43,7 +43,7 @@ const MutIcon = (() => {
       l: (x0, y0, x1, y1, c) => { const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1); for (let i = 0; i <= n; i++) p(x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n, c); },
       t: (cx, ty, h, c) => { for (let j = 0; j < Math.abs(h); j++) { const w = Math.floor(j * 0.9); for (let i = -w; i <= w; i++) p(cx + i, h > 0 ? ty + j : ty - j, c); } },
     };
-    if (DRAW[id]) DRAW[id](d); else { d.c(8, 8, 6, 'gy'); }
+    if (DRAW[id]) DRAW[id](d); else if (typeof PERKS !== 'undefined' && PERKS[id] && PERKS[id].clan) { const cc = CLANS[PERKS[id].clan].color; d.c(8, 8, 7, cc); d.c(8, 8, 4, 'bk'); d.c(8, 8, 2, cc); } else { d.c(8, 8, 6, 'gy'); }
     const out = buf.slice();
     for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) if (!buf[y * 16 + x]) {
       for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < 16 && ny < 16 && buf[ny * 16 + nx]) { out[y * 16 + x] = K.bk; break; } }

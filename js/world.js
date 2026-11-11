@@ -115,7 +115,7 @@ Object.assign(Game, {
   startRun() {
     const s = Save.data, hero = HEROES[s.hero];
     const lo = (s.loadout && s.loadout[s.hero]) || {}, own = id => (id && s.heroes[id] && HEROES[id].clan === hero.clan ? id : s.hero);
-    this.run = { hero: s.hero, wpn: hero.start || s.hero, abl: s.hero, clan: hero.clan, act: 0, seed: (Math.random() * 1e9) | 0, cstate: {}, cleared: 0, perks: [], drawbacks: [], hp: 100, gold: 20 + 25 * (s.meta.fort || 0),
+    this.run = { hero: s.hero, wpn: hero.start || s.hero, abl: s.hero, clan: hero.tribe, act: 0, seed: (Math.random() * 1e9) | 0, cstate: {}, cleared: 0, perks: [], drawbacks: [], hp: 100, gold: 20 + 25 * (s.meta.fort || 0),
       kills: 0, rooms: 0, xp: 0, plv: 1, coreAcc: 0, ammo: startAmmo(), wpn2: hero.start2 || null, bonus: { mut: 0 }, mutKills: 0, killAcc: 0, phoenixUsed: false, t0: Date.now() };
     this.P = buildStats(this.run, s); this.run.hp = this.P.maxhp;
     this.enterAct();

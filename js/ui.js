@@ -136,11 +136,11 @@ const UI = {
     let r = ''; pat.forEach((row, y) => [...row].forEach((c, x) => { if (c === 'X') r += '<rect x="' + x + '" y="' + y + '" width="1" height="1"/>'; }));
     return '<svg width="21" height="18" viewBox="0 0 7 6" shape-rendering="crispEdges" fill="' + (on ? '#ff3a4a' : '#3a1018') + '">' + r + '</svg>';
   },
-  charHearts(id) { const s = Save.data, run = { hero: id, clan: HEROES[id].clan, perks: [], drawbacks: [], bonus: {} }; return Math.round(buildStats(run, s).maxhp / 10); },
+  charHearts(id) { const s = Save.data, run = { hero: id, clan: HEROES[id].tribe, perks: [], drawbacks: [], bonus: {} }; return Math.round(buildStats(run, s).maxhp / 10); },
   selectHtml(s) {
     if (!s.heroes[s.hero]) s.hero = PLAYABLE.find(id => s.heroes[id]) || PLAYABLE[0];
     let h = '<div class="cs-main"><div class="cs-stage" id="csStage"></div><div class="cs-info" id="csInfo"></div></div><div class="cs-row">';
-    for (const id of PLAYABLE) h += '<div class="cs-tile" id="tile_' + id + '" data-id="' + id + '" onclick="UI.selectChar(this.dataset.id)"><img src="' + Sprites.url(id) + '"><span class="lk">?</span></div>';
+    for (const id of PLAYABLE) h += '<div class="cs-tile" style="--cc:' + CLANS[HEROES[id].tribe].color + '" id="tile_' + id + '" data-id="' + id + '" onclick="UI.selectChar(this.dataset.id)"><img src="' + Sprites.url(id) + '"><span class="lk">?</span></div>';
     return h + '</div><div class="cs-actions" id="csActions"></div>';
   },
   selectInit() { this.navMode = 'select'; this.selectChar(Save.data.hero); },
@@ -152,6 +152,7 @@ const UI = {
     document.getElementById('csStage').innerHTML = '<div class="cs-glow"></div><img class="cs-big" src="' + Sprites.url(id) + '" style="' + (own ? '' : 'filter:brightness(0) opacity(.55)') + '"><div class="cs-name">' + esc(hero.name.toUpperCase()) + '</div>';
     let hearts = ''; for (let i = 0; i < n; i++) hearts += this.heartSvg(true);
     document.getElementById('csInfo').innerHTML = '<div class="cs-hearts">' + hearts + '</div>'
+      + '<div class="cs-lab" style="color:' + CLANS[hero.tribe].color + '">CLAN: ' + CLANS[hero.tribe].name.toUpperCase() + '</div><p>' + esc(CLANS[hero.tribe].pro + ' ' + CLANS[hero.tribe].con) + '</p>'
       + '<div class="cs-lab">PASSIVE</div><p>' + esc(hero.passive || '') + '</p>'
       + '<div class="cs-lab">ACTIVE [Q] ' + esc(hero.ability.name.toUpperCase()) + '</div><p>' + esc(hero.active || '') + '</p>'
       + '<div class="cs-lab">WEAPON</div><p>' + esc(sw.name) + (hero.start2 ? ' x2' : '') + ' <span style="color:' + (a ? AMMO[a].col : '#9fc') + '">(' + (a ? AMMO[a].name.toLowerCase() : 'melee') + ')</span></p>'

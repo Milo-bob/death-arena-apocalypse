@@ -129,7 +129,7 @@ const Game = {
   },
   perkPool(minR) {
     const run = this.run, order = ['common', 'rare', 'epic', 'legendary'], ownedTags = this.P.tags;
-    const base = Object.keys(PERKS).filter(id => !run.perks.includes(id) && !PERKS[id].clan && (!PERKS[id].lock || Save.data.perks[id]));
+    const base = Object.keys(PERKS).filter(id => !run.perks.includes(id) && (!PERKS[id].clan || PERKS[id].clan === run.clan) && (!PERKS[id].lock || Save.data.perks[id]));
     for (let m = order.indexOf(minR || 'common'); m >= 0; m--) {
       const pool = base.filter(id => order.indexOf(PERKS[id].r) >= m);
       if (pool.length >= 3 || m === 0) return pool;
@@ -140,7 +140,7 @@ const Game = {
     let pool = this.perkPool(minR), out = [];
     const ownedTags = this.P.tags;
     while (out.length < n && pool.length) {
-      const id = wpick(pool, i => RARITY[PERKS[i].r].w * (1 + 0.9 * PERKS[i].tags.reduce((s, t) => s + Math.min(2, ownedTags[t] || 0), 0)));
+      const id = wpick(pool, i => RARITY[PERKS[i].r].w * (PERKS[i].clan ? 1.6 : 1) * (1 + 0.9 * PERKS[i].tags.reduce((s, t) => s + Math.min(2, ownedTags[t] || 0), 0)));
       out.push(id); pool = pool.filter(x => x !== id);
     }
     return out;
