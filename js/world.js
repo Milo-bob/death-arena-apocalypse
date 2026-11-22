@@ -131,7 +131,7 @@ Object.assign(Game, {
     const sc = W.cells[W.startId]; sc.state.visited = true;
     const P = this.P = buildStats(run, Save.data);
     const C = this.C = { world: W, t: 0, en: [], eb: [], pb: [], haz: [], zones: [], heals: [], parts: [], fl: [], turrets: [], beams: [], markers: [], fx: [], pillars: W.pillars,
-      waves: [], waveIdx: 0, waveCd: 0, shake: 0, boss: null, bladeAng: 0, intro: 0, banner: 2.6, bannerText: ACT_NAMES[areaOf(act)].toUpperCase() + ' ' + (areaOf(act) + 1) + '-' + (act % 3 + 1), enc: null, props: [], burstQ: [], items: [], chests: [], lvlKills: 0, levelTotal: 0, portal: null, levelUps: 0, wdrops: [], hitstop: 0, curCell: sc, cam: { x: clamp(sc.cx - W_ / 2, 0, W.w - W_), y: clamp(sc.cy + 70 - H / 2, 0, W.h - H) }, mx: 0, my: 0,
+      waves: [], waveIdx: 0, waveCd: 0, shake: 0, boss: null, bladeAng: 0, intro: 0, banner: 2.6, bannerText: ACT_NAMES[areaOf(act)].toUpperCase() + ' ' + (areaOf(act) + 1) + '-' + (act % LV_PER + 1), enc: null, props: [], burstQ: [], items: [], chests: [], lvlKills: 0, levelTotal: 0, portal: null, levelUps: 0, wdrops: [], hitstop: 0, curCell: sc, cam: { x: clamp(sc.cx - W_ / 2, 0, W.w - W_), y: clamp(sc.cy + 70 - H / 2, 0, W.h - H) }, mx: 0, my: 0,
       noHit: true, hpS: 1, dmgS: 1, spdS: 1, curse: {}, clearMsg: 0, near: null,
       p: { x: sc.cx, y: sc.cy + 70, lx: sc.cx, ly: sc.cy + 70, r: 12, aim: -Math.PI / 2, fireT: 0.3, dashT: 0, dashCd: 0, dashDir: 0, dashHit: [], inv: 0.5, abT: 2, flash: 0, over: 0, overRate: 1, shield: 0, still: 0, trailT: 0, regenAcc: 0 },
       dust: Array.from({ length: 36 }, () => ({ x: rnd(0, W_), y: rnd(60, H), vx: rnd(-6, 6), vy: areaOf(act) === 1 ? rnd(-22, -8) : rnd(-4, 6) })) };
@@ -140,6 +140,7 @@ Object.assign(Game, {
       if (c.type === 'camp') c.obj = { kind: 'rest', x: c.cx, y: c.cy };
       else if (c.type === 'shop' || c.type === 'event' || c.type === 'curse') c.obj = { kind: c.type, x: c.cx, y: c.cy };
     }
+    if (run.carryW && run.carryW.length) { run.carryW.forEach((id, i) => { const a = i * 2.4 + 0.8, q = this.safeSpot(C.p.x + Math.cos(a) * 70, C.p.y + Math.sin(a) * 70, 22); C.wdrops.push({ id, x: q.x, y: q.y }); }); run.carryW = null; }
     C.floor = buildCaveFloor(act, run.seed, W); this.spawnRoamers(W); this.areaHazards(W);
     this.mode = 'fight'; this.paused = false; this.frozen = false; this.fade = { t: 0.25, done: true, fn() {} }; document.body.classList.add('fight'); UI.hide();
     Music.play('menu'); this.persist();
@@ -201,12 +202,17 @@ Object.assign(Game, {
     const C = this.C, run = this.run, a = areaOf(run.act), R = rng(run.seed + 7), sc = Wd.cells[Wd.startId];
     const spots = (n, rad, minD, fn) => { for (let i = 0, g = 0; i < n && g < 400; g++) { const x = (3 + R() * (COLS - 6)) * TILE, y = (3 + R() * (ROWS - 6)) * TILE; if (this.openAt(x, y, rad) && Math.hypot(x - sc.cx, y - sc.cy) > minD) { fn(x, y); i++; } } };
     if (a === 1) spots(9, 60, 200, (x, y) => C.zones.push({ x, y, r: 48 + R() * 28, dur: 1e9, max: 1e9, slow: 0.35, slowP: true, col: '#3f7a1f' }));   // sewers: sticky toxic puddles
+    if (a === 5) { spots(12, 70, 200, (x, y) => C.zones.push({ x, y, r: 56 + R() * 34, dur: 1e9, max: 1e9, slow: 0.45, slowP: true, col: '#b8964a' })); spots(8, 22, 260, (x, y) => C.props.push({ x, y, r: 13, hp: 22, maxhp: 22, flash: 0 })); }   // desert: quicksand that drags you down
+    if (a === 6) spots(14, 60, 200, (x, y) => C.zones.push({ x, y, r: 44 + R() * 30, dur: 1e9, max: 1e9, slow: 0.4, slowP: true, col: '#2f9a3a' }));   // overgrowth: toxic bogs
+    if (a === 7) spots(26, 22, 240, (x, y) => C.props.push({ x, y, r: 13, hp: 22, maxhp: 22, flash: 0 }));   // magma pits: volatile barrels everywhere
+    if (a === 8) spots(10, 60, 200, (x, y) => C.zones.push({ x, y, r: 50 + R() * 30, dur: 1e9, max: 1e9, slow: 0.5, slowP: true, col: '#4a2aa0' }));   // void: gravity wells
     if (a === 2) spots(16, 22, 260, (x, y) => C.props.push({ x, y, r: 13, hp: 22, maxhp: 22, flash: 0 }));   // foundry: barrels everywhere
   },
   spawnRoamers(Wd) {
     const C = this.C, run = this.run, act = run.act, R = rng(run.seed + 99), sc = Wd.cells[Wd.startId], boss = Wd.cells.find(c => c.type === 'boss');
-    C.hpS = (1 + 0.2 * act) * this.P.enemyHp * 1.5; C.dmgS = (1 + 0.1 * act); C.spdS = 1;
-    const budget = (50 + act * 5) * (boss ? 0.55 : 1), caves = Wd.nodes.filter(n => n.type === 'cave' && Math.hypot(n.x - sc.cx, n.y - sc.cy) > 520), tot = caves.reduce((s, n) => s + n.r, 0) || 1;
+    const loop = Math.floor(act / LOOP_LEVELS);   // every loop: tougher and more of them
+    C.hpS = (1 + 0.2 * act) * (1 + 0.8 * loop) * this.P.enemyHp * 1.5; C.dmgS = (1 + 0.07 * act) * (1 + 0.25 * loop); C.spdS = 1 + 0.08 * loop;
+    const budget = (50 + Math.min(act, 28) * 5) * (1 + 0.2 * loop) * (boss ? 0.55 : 1), caves = Wd.nodes.filter(n => n.type === 'cave' && Math.hypot(n.x - sc.cx, n.y - sc.cy) > 520), tot = caves.reduce((s, n) => s + n.r, 0) || 1;
     const maggots = AREA_ENEMIES[areaOf(act)].includes('maggot');
     // rule: enemy packs sit in the caverns (bigger cavern = more enemies), never within 520px of where you start
     for (const n of caves) {
@@ -218,7 +224,7 @@ Object.assign(Game, {
         for (const t of list) {
           const ex = x + (R() - 0.5) * 90, ey = y + (R() - 0.5) * 90;
           if (!this.openAt(ex, ey, 18)) continue;
-          const elite = t !== 'grunt' && t !== 'maggot' && R() < 0.05 + 0.02 * act ? Object.keys(ELITE_MODS)[Math.floor(R() * 4)] : null;
+          const elite = t !== 'grunt' && t !== 'maggot' && R() < Math.min(0.5, 0.05 + 0.02 * act) ? Object.keys(ELITE_MODS)[Math.floor(R() * 4)] : null;
           const e = this.makeEnemy(t, ex, ey, elite); e.free = true; e.spawnT = 0;
         }
         if (R() < 0.5) { const bx = x + (R() - 0.5) * 160, by = y + (R() - 0.5) * 160; if (this.openAt(bx, by, 20)) C.props.push({ x: bx, y: by, r: 13, hp: 22, maxhp: 22, flash: 0 }); }   // barrels near packs
@@ -459,7 +465,7 @@ Object.assign(Game, {
   },
   levelLabel() {
     const run = this.run, C = this.C, a = areaOf(run.act), loop = Math.floor(run.act / LOOP_LEVELS);
-    return (loop ? 'LOOP ' + loop + '  ' : '') + ACT_NAMES[a].toUpperCase() + ' ' + (a + 1) + '-' + (run.act % 3 + 1) + (isBossLevel(run.act) ? '  BOSS' : C.portal ? '  PORTAL OPEN' : '  ENEMIES LEFT ' + (C.left === undefined ? C.levelTotal : C.left)) + '  LV ' + (run.plv || 1) + (run.pendLv > 0 ? '  MUTATION READY' : '');
+    return (loop ? 'LOOP ' + loop + '  ' : '') + ACT_NAMES[a].toUpperCase() + ' ' + (a + 1) + '-' + (run.act % LV_PER + 1) + (isBossLevel(run.act) ? '  BOSS' : C.portal ? '  PORTAL OPEN' : '  ENEMIES LEFT ' + (C.left === undefined ? C.levelTotal : C.left)) + '  LV ' + (run.plv || 1) + (run.pendLv > 0 ? '  MUTATION READY' : '');
   },
 
   // ---------- encounters ----------
@@ -468,11 +474,12 @@ Object.assign(Game, {
     curse = curse || null;
     if (curse && curse.halfhp) { P.maxhp = Math.round(P.maxhp / 2); run.hp = Math.min(run.hp, P.maxhp); }
     C.enc = cell; C.curse = curse || {}; C.cellEnc = cell; C.intro = 1.0; C.waves = []; C.waveIdx = 0; C.waveCd = 0; C.boss = null; C.elitesLeft = elite ? 2 : 0;
-    C.hpS = (1 + 0.12 * act) * (1 + 0.04 * row) * P.enemyHp * ((curse && curse.hp) || 1);
-    C.dmgS = (1 + 0.03 * act) * ((curse && curse.dmg) || 1);
+    const loopN = Math.floor(act / LOOP_LEVELS);
+    C.hpS = (1 + 0.12 * act) * (1 + 0.6 * loopN) * (1 + 0.04 * row) * P.enemyHp * ((curse && curse.hp) || 1);
+    C.dmgS = (1 + 0.03 * act) * (1 + 0.2 * loopN) * ((curse && curse.dmg) || 1);
     C.spdS = (curse && curse.speed) || 1;
     if (boss) {
-      const b = BOSSES[areaOf(act)], hp = b.hp * (1 + 0.5 * Math.floor(act / LOOP_LEVELS)) * P.enemyHp, sp = this.safeSpot(cell.cx, cell.cy - 80, 34), x = sp.x, y = sp.y;
+      const b = BOSSES[areaOf(act)], hp = b.hp * (1 + 0.9 * loopN) * P.enemyHp, sp = this.safeSpot(cell.cx, cell.cy - 80, 34), x = sp.x, y = sp.y;
       C.boss = { type: 'boss', boss: true, x, y, lx: x, ly: y, r: b.r, hp, maxhp: hp, sh: 0, flash: 0, phase: 1, pat: null, pt: 0, cd: 2, n: 0, sa: 0, atk: 0, col: b.col, name: b.name, vx: 0, vy: 0, slow: 0, slowT: 0, poison: 0, poisonT: 0, burn: 0, burnT: 0, spawnT: 0, bladeCd: 0, ang: 0, stage: 0 };
       C.en.push(C.boss); C.bannerText = b.name.toUpperCase(); Sfx.bossIntro();
     } else {
@@ -536,11 +543,22 @@ Object.assign(Game, {
     }
     if (C.suck) {   // the portal pulls you in, spinning and shrinking, then the next level begins
       const s = C.suck; s.t += 1 / 60; p.x += (s.x - p.x) * 0.12; p.y += (s.y - p.y) * 0.12; p.inv = 1; Input.keys = {}; Input.down = false; Input.rdown = false;
+      if (!s.carry) { s.carry = C.wdrops.filter(d => dist(d, s) < 340); run.carryW = s.carry.map(d => d.id); }   // weapons lying near the portal fly in with you
+      for (const d of s.carry) { d.x += (s.x - d.x) * 0.1; d.y += (s.y - d.y) * 0.1; }
       C.shake = Math.max(C.shake, 2 + s.t * 6); if (s.t > 0.35) this.impact(0.1, '#a06bff', Math.min(0.95, (s.t - 0.35) * 1.3));
       if (s.t > 1.1) { run.rooms++; C.suck = null; this.descend(s.h); }
       return;
     }
-    if (C.portal && !C.dead && dist(C.portal, p) < 34) { C.suck = { x: C.portal.x, y: C.portal.y, t: 0, h: 0.15 }; Sfx.portal(); this.impact(0.08, '#a06bff', 0.4); return; }
+    if (C.portal && !C.dead) {   // the open portal drags you in from afar: gentle at the edge, strong close up
+      const dd = dist(C.portal, p), R = 380;
+      if (dd < R && dd > 34) {
+        const k = 1 - dd / R, sp = (90 + k * k * 520) / 60, ux = (C.portal.x - p.x) / dd, uy = (C.portal.y - p.y) / dd;
+        if (this.walkable(p.x + ux * sp, p.y)) p.x += ux * sp;
+        if (this.walkable(p.x, p.y + uy * sp)) p.y += uy * sp;
+        C.shake = Math.max(C.shake, k * 2.5);
+      }
+    }
+    if (C.portal && !C.dead && dist(C.portal, p) < 40) { C.suck = { x: C.portal.x, y: C.portal.y, t: 0, h: 0.15 }; Sfx.portal(); this.impact(0.08, '#a06bff', 0.4); return; }
     const cc = this.cellAt(p.x, p.y);
     if (cc && cc !== C.curCell) this.discover(cc);
     if (C.clearMsg > 0) C.clearMsg -= 1 / 60;
@@ -657,8 +675,12 @@ Object.assign(Game, {
     }
     if (C.portal) {
       const q = C.portal;
-      for (let k = 0; k < 3; k++) { ctx.strokeStyle = ['#ffffff', '#3de8ff', '#a06bff'][k]; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(q.x, q.y, 12 + k * 8 + Math.sin(C.t * 5 + k) * 3, 0, 6.283); ctx.stroke(); }
-      ctx.font = '12px Silk, monospace'; ctx.fillStyle = '#fff'; ctx.fillText('PORTAL', q.x, q.y - 42);
+      const gr = ctx.createRadialGradient(q.x, q.y, 2, q.x, q.y, 56); gr.addColorStop(0, 'rgba(255,255,255,.95)'); gr.addColorStop(0.3, 'rgba(61,232,255,.55)'); gr.addColorStop(0.7, 'rgba(120,60,255,.35)'); gr.addColorStop(1, 'rgba(120,60,255,0)');
+      ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(q.x, q.y, 56, 0, 6.283); ctx.fill();
+      ctx.lineWidth = 3; ctx.lineCap = 'round';
+      for (let arm = 0; arm < 4; arm++) { ctx.strokeStyle = arm % 2 ? '#a06bff' : '#3de8ff'; ctx.beginPath(); for (let i = 0; i <= 16; i++) { const f = i / 16, a = arm * 1.571 + C.t * 3.5 + f * 4.2, r = 4 + f * 40; const x = q.x + Math.cos(a) * r, y = q.y + Math.sin(a) * r * 0.9; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.stroke(); }
+      for (let i = 0; i < 18; i++) { const f = (i / 18 + C.t * 0.6) % 1, a = i * 2.4 - f * 5, r = (1 - f) * 120; ctx.fillStyle = i % 2 ? '#a06bff' : '#bff6ff'; ctx.fillRect(snap(q.x + Math.cos(a) * r) - 1, snap(q.y + Math.sin(a) * r) - 1, 3, 3); }
+      ctx.font = '12px Silk, monospace'; ctx.fillStyle = '#fff'; ctx.fillText('PORTAL', q.x, q.y - 62);
     }
     if (C.suck) { const s = C.suck; for (let i = 0; i < 36; i++) { const a = i * 0.37 + C.t * 7, r = (1 - ((i / 36 + C.t * 1.6) % 1)) * (50 + s.t * 150); ctx.fillStyle = i % 2 ? '#a06bff' : '#3de8ff'; ctx.fillRect(snap(s.x + Math.cos(a) * r) - 2, snap(s.y + Math.sin(a) * r) - 2, 4, 4); } }
     for (const d of C.wdrops) {

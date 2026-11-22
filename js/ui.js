@@ -245,7 +245,7 @@ const UI = {
     const run = Game.run, last = run.act % LOOP_LEVELS === LOOP_LEVELS - 1, loops = Math.floor(run.act / LOOP_LEVELS);
     Game.persist();
     if (last) {
-      this.show('<h1>THE APOCALYPSE ENDS</h1><p>You beat ' + BOSSES[areaOf(run.act)].name + '.</p>' + this.status() + '<p class="dim" style="max-width:560px;text-align:center">Claim victory now, or loop back to the ruins. Enemies and bosses come back much tougher, victory pays more with every loop.</p><div class="row" style="margin-top:20px">'
+      this.show('<h1>THE APOCALYPSE ENDS</h1><p>You beat ' + BOSSES[areaOf(run.act)].name + '.</p>' + this.status() + '<p class="dim" style="max-width:560px;text-align:center">Claim victory now, or loop back to the ruins. Enemies and bosses come back much tougher and in bigger numbers, victory pays more with every loop.</p><div class="row" style="margin-top:20px">'
         + '<div class="card" onclick="Game.winRun()" style="--c:#39ff6e"><h3 class="pro">CLAIM VICTORY</h3><p>End the run as a winner.</p></div>'
         + '<div class="card" onclick="Game.descend()" style="--c:#ff2d3d"><h3 class="con">LOOP ' + (loops + 1) + '</h3><p>Back to the ruins, much tougher. Heal 35%. Keep all perks and weapons.</p></div></div>');
       return;

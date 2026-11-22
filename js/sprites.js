@@ -229,6 +229,10 @@ const BPAL = [
   { b: '#ff8a1f', m: '#a05010', d: '#3a1c08', a: '#ffd091', c: '#ffd91f', x: '#ff2d3d' },
   { b: '#8ae8ff', m: '#3a8ab0', d: '#0e2a3a', a: '#e6fdff', c: '#ffd91f', x: '#ff2d3d' },
   { b: '#3de8c8', m: '#1a8a78', d: '#08302a', a: '#b0fff0', c: '#ffd91f', x: '#ff3de8' },
+  { b: '#f0c860', m: '#a07a28', d: '#3a2a08', a: '#fff0b0', c: '#ff3a3a', x: '#3de8c8' },
+  { b: '#3aff6a', m: '#1a8a34', d: '#06300e', a: '#c0ffd0', c: '#ffd91f', x: '#ff3a8a' },
+  { b: '#ff5a1f', m: '#a02a08', d: '#2a0802', a: '#ffd090', c: '#ffe94a', x: '#3a3030' },
+  { b: '#9a6aff', m: '#4a1ab0', d: '#12062c', a: '#e0c8ff', c: '#ff3ae8', x: '#3de8ff' },
   { b: '#b24bff', m: '#6a1fd0', d: '#1c0d4a', a: '#e0b0ff', c: '#ffd91f', x: '#3de8ff' },
 ];
 // ---------- enemies in the style of the original's wasteland creatures, seen from above like the heroes ----------
@@ -312,7 +316,146 @@ const ENEMY_ART = {
     part(sC(10, 10, 6.8), 'body'), part(sRing(10, 10, 4.2, 0.6, 6), 'acc'), part(sC(10, 10, 2.4), 'dark'), dot(9, 9, P.c),
     part(sB(15.6, 10, 4.2, 1.5, 0.4), 'dark'), part(sB(19, 10, 1, 1), 'cy')] },
 };
-const BOSS_ART_OF = [0, 1, 2, 3, 4, 5];   // one unique drawing per boss
+// late-game enemies: new palettes on existing drawings
+const VARIANT = (name, base, pal) => { ENEMY_ART[name] = { n: ENEMY_ART[base].n, pal: Object.assign({}, ENEMY_ART[base].pal || EPAL, pal), f: ENEMY_ART[base].f }; };
+VARIANT('scarab', 'swarmer', { b: '#d8a820', m: '#8a6a10', d: '#2a1e04', a: '#fff0a0', c: '#3de8c8' });
+VARIANT('sandviper', 'frostwolf', { b: '#e8c070', m: '#9a7430', d: '#3a2a10', a: '#fff0c0', c: '#ff3a3a' });
+VARIANT('duneraider', 'raider', { b: '#d8a860', m: '#8a5a28', d: '#2a1a08', a: '#ffe8b0', x: '#5a4a30' });
+VARIANT('mummy', 'smelter', { b: '#e8dcb0', m: '#a89868', d: '#3a3018', a: '#fffae0', c: '#ff3a3a', x: '#8a7a50' });
+VARIANT('sandtotem', 'icetower', { b: '#f0c860', m: '#a07a28', d: '#3a2a08', a: '#fff0b0', c: '#ffffff', x: '#ff3a3a' });
+VARIANT('sandscorp', 'scorpion', { b: '#f0b030', m: '#a06a10', d: '#3a2208', a: '#ffe8a0', c: '#ff2a2a', x: '#ff6a1a' });
+VARIANT('toadspit', 'spitter', { b: '#5aff7a', m: '#2a9a3a', d: '#0a3a14', a: '#c0ffd0', c: '#ffd91f' });
+VARIANT('jaguar', 'frostwolf', { b: '#e0a040', m: '#9a6418', d: '#2a1a08', a: '#fff0c0', c: '#3aff6a' });
+VARIANT('ape', 'charger', { b: '#8a6a4a', m: '#5a4228', d: '#1c1208', a: '#e8d0b0', c: '#ff3a3a', x: '#3aff6a' });
+VARIANT('vinetrap', 'warden', { b: '#3aff6a', m: '#1a8a34', d: '#06300e', a: '#c0ffd0', c: '#ff3a8a', x: '#ffd91f' });
+VARIANT('darter', 'sniper', { b: '#7aff9a', m: '#2a8a3a', d: '#0a3014', a: '#d0ffd8', c: '#ff3a3a', x: '#6a4a2a' });
+VARIANT('chameleon', 'stalker', { b: '#8aff5a', m: '#3a9a1a', d: '#0c300a', a: '#e0ffc0', c: '#ffffff', x: '#ff3a8a' });
+VARIANT('magmablob', 'blob', { b: '#ff6a2a', m: '#a02a08', d: '#300a02', a: '#ffd080', c: '#ffe94a', x: '#ff3a1a' });
+VARIANT('ashbat', 'drone', { b: '#b0a8a0', m: '#5a5450', d: '#1a1816', a: '#e8e0d8', c: '#ff5a1a', x: '#ffd91f' });
+VARIANT('lavagolem', 'smelter', { b: '#ff7a2a', m: '#a03a08', d: '#2a0c02', a: '#ffe090', c: '#ffe94a', x: '#3a3030' });
+VARIANT('cinderer', 'raider', { b: '#ff9a4a', m: '#b04a10', d: '#300e02', a: '#ffe0b0', x: '#3a3030' });
+VARIANT('emberhound', 'frostwolf', { b: '#ff5a2a', m: '#a02a0a', d: '#300a02', a: '#ffd090', c: '#ffe94a' });
+VARIANT('magmaturret', 'turret', { b: '#ff8a3a', m: '#a04a14', d: '#2a0e04', a: '#ffe0b0', c: '#ffe94a', x: '#3a3030' });
+VARIANT('fireimp', 'bomber', { b: '#ff3a1a', m: '#a01a08', d: '#2a0802', a: '#ffc090', c: '#ffe94a', x: '#ffd91f' });
+VARIANT('voidling', 'wraith', { b: '#a06aff', m: '#5a2ab0', d: '#18083a', a: '#e8d8ff', c: '#ffffff', x: '#ff3ae8' });
+VARIANT('eclipse', 'stalker', { b: '#c08aff', m: '#6a2ab0', d: '#1c0a3a', a: '#f0e0ff', c: '#ffffff', x: '#ff3ae8' });
+VARIANT('riftmaw', 'warden', { b: '#8a4aff', m: '#4a1ab0', d: '#12062c', a: '#d8c0ff', c: '#ff3ae8', x: '#3de8ff' });
+VARIANT('voidsniper', 'laser', { b: '#d06aff', m: '#7a1ab0', d: '#240a3a', a: '#f4d0ff', c: '#ffffff', x: '#ff3a3a' });
+VARIANT('horror', 'charger', { b: '#7a3ad0', m: '#3e1a80', d: '#0e0620', a: '#d8c0ff', c: '#ff3ae8', x: '#2a2038' });
+VARIANT('abomination', 'smelter', { b: '#9a5aff', m: '#4a1ab0', d: '#12062c', a: '#e0c8ff', c: '#ff3ae8', x: '#2a2038' });
+VARIANT('voiddrone', 'drone', { b: '#b08aff', m: '#5a2ab0', d: '#18083a', a: '#e8d8ff', c: '#ff3ae8', x: '#3de8ff' });
+// own drawings for the late-game enemies (sprites face right)
+const OWN = (name, n, f) => { ENEMY_ART[name].n = n; ENEMY_ART[name].f = f; };
+// ----- desert -----
+OWN('scarab', 14, P => [
+  part(sLine(4, 3, 2, 0.6, 0.35), 'dark'), part(sLine(7, 3, 8, 0.4, 0.35), 'dark'), part(sLine(4, 11, 2, 13.4, 0.35), 'dark'), part(sLine(7, 11, 8, 13.6, 0.35), 'dark'),
+  part(sE(6, 7, 4.8, 3.8), 'body'), part(sLine(1.6, 7, 10, 7, 0.3), 'dark'), part(sC(11, 7, 2.2), 'dark'),
+  part(sLine(12.4, 5.8, 13.8, 4, 0.3), 'acc'), part(sLine(12.4, 8.2, 13.8, 10, 0.3), 'acc'), dot(11, 6, P.c), dot(11, 8, P.c), dot(5, 5, P.a), dot(5, 9, P.a)]);
+OWN('sandviper', 22, P => [
+  part(sC(3, 15, 2.2), 'dark'), part(sC(6, 12, 2.6), 'body'), part(sC(9.4, 14, 3), 'body'), part(sC(13, 11, 3.2), 'body'),
+  part(sP([[13, 4.4], [20.6, 8.4], [13.6, 12.6]]), 'body'), part(sP([[14, 6], [18, 8.4], [14, 10.4]]), 'dark'),
+  dot(15, 6, P.c), dot(15, 10, P.c), dot(20, 8, P.c), dot(21, 8, P.c), dot(6, 11, P.a), dot(9, 13, P.a), dot(12, 10, P.a), dot(1, 16, P.a)]);
+OWN('duneraider', 18, P => [
+  part(sLine(2, 5, 0.4, 10, 0.7), 'acc'), part(sE(6, 9, 3.4, 5), 'body'), part(sC(8.4, 9, 3.2), 'acc'), part(sC(9.4, 9, 1.8), 'dark'), dot(10, 8, P.c), dot(10, 10, P.c),
+  part(sLine(4, 5, 12, 5.4, 0.5), 'dark'), part(sB(14, 12.4, 3.6, 0.7, 0.2), 'dark'), part(sB(17.2, 12.4, 0.8, 0.6), 'cy'), dot(6, 7, P.a), dot(6, 11, P.a)]);
+OWN('mummy', 28, P => [
+  part(sLine(6, 9, 0.6, 5, 0.5), 'acc'), part(sLine(5, 17, 0.4, 21, 0.5), 'acc'),
+  part(sE(11, 14, 8.4, 10), 'body'), part(sE(11, 14, 5, 7), 'dark'), part(sLine(4, 8, 18, 12, 0.5), 'acc'), part(sLine(3, 14, 19, 17, 0.5), 'acc'), part(sLine(5, 20, 17, 22, 0.5), 'acc'),
+  part(sB(21, 5.6, 4, 1.8, 0.6), 'body'), part(sB(21, 22.4, 4, 1.8, 0.6), 'body'), part(sLine(15, 8, 18, 6, 1.4), 'body'), part(sLine(15, 20, 18, 22, 1.4), 'body'),
+  part(sC(19, 14, 4.2), 'body'), part(sLine(16, 12, 22, 12.4, 0.4), 'acc'), dot(21, 13, P.c), dot(21, 16, P.c)]);
+OWN('sandtotem', 20, P => [
+  part(sB(10, 15, 6.4, 4.4, 0.6), 'body'), part(sB(10, 9.6, 5, 3.4, 0.6), 'body'), part(sP([[10, 0.6], [15, 5], [5, 5]]), 'acc'),
+  part(sRing(10, 11, 9, 0.5, 6), 'acc'), dot(8, 9, P.c), dot(12, 9, P.c), dot(10, 11, P.a), dot(7, 15, P.a), dot(10, 15, P.a), dot(13, 15, P.a), dot(10, 3, P.x)]);
+OWN('sandscorp', 26, P => [
+  part(sLine(8, 13, 3, 8, 1.2), 'acc'), part(sLine(3, 8, 4, 3, 1.1), 'acc'), part(sLine(4, 3, 9, 1.6, 1), 'acc'), part(sP([[8.4, 0], [13, 2], [9, 4]]), 'cy'),
+  part(sLine(11, 17, 8, 22, 0.7), 'dark'), part(sLine(14, 17, 14, 23, 0.7), 'dark'), part(sLine(17, 17, 20, 22, 0.7), 'dark'),
+  part(sE(12, 14, 6.6, 4.4), 'body'), part(sE(12, 14, 3.4, 2.2), 'dark'), part(sC(19, 14, 2.6), 'body'), dot(20, 13, P.c), dot(20, 15, P.c),
+  part(sP([[21, 11], [25.4, 6], [24.4, 12.4]]), 'acc'), part(sP([[21, 17], [25.4, 22], [24.4, 15.6]]), 'acc')]);
+// ----- jungle -----
+OWN('toadspit', 20, P => [
+  part(sE(3.6, 3.6, 3, 1.8), 'dark'), part(sE(3.6, 16.4, 3, 1.8), 'dark'),
+  part(sE(9, 10, 7, 6), 'body'), part(sE(10, 10, 4, 3.4), 'dark'), part(sC(14, 5.4, 2.6), 'acc'), part(sC(14, 14.6, 2.6), 'acc'), dot(15, 5, P.c), dot(15, 15, P.c),
+  part(sLine(15, 10, 19, 10, 0.5), 'dark'), part(sC(18, 10, 1.6), 'cy'), dot(6, 7, P.a), dot(8, 13, P.a), dot(11, 7, P.a)]);
+OWN('jaguar', 22, P => [
+  part(sLine(4, 10, 1.4, 6, 0.7), 'acc'), part(sLine(1.4, 6, 0.4, 2.6, 0.6), 'acc'),
+  part(sLine(7, 5, 6, 2.4, 0.9), 'dark'), part(sLine(7, 15, 6, 17.6, 0.9), 'dark'), part(sLine(14, 5, 15, 2.6, 0.9), 'dark'), part(sLine(14, 15, 15, 17.4, 0.9), 'dark'),
+  part(sE(9, 10, 7.4, 3.8), 'body'), part(sC(17, 10, 3.6), 'body'), part(sP([[15, 6.6], [16.4, 3.4], [18.4, 6.4]]), 'dark'), part(sP([[15, 13.4], [16.4, 16.6], [18.4, 13.6]]), 'dark'),
+  part(sB(20, 10.4, 1.8, 1.4, 0.5), 'acc'), dot(18, 8, P.c), dot(18, 12, P.c), dot(6, 8, P.d), dot(9, 12, P.d), dot(11, 8, P.d), dot(4, 11, P.d)]);
+OWN('ape', 28, P => [
+  part(sE(10, 14, 7.6, 10.6), 'body'), part(sE(9, 14, 4.4, 6), 'dark'), part(sLine(5, 8, 22, 4, 0.7), 'dark'),
+  part(sLine(12, 5, 21, 4.6, 2.4), 'body'), part(sLine(12, 23, 21, 23.4, 2.4), 'body'), part(sC(23.4, 4.6, 3.4), 'dark'), part(sC(23.4, 23.4, 3.4), 'dark'),
+  part(sC(18, 14, 4.4), 'body'), part(sE(20, 14, 2.4, 3), 'acc'), dot(20, 12, P.c), dot(20, 16, P.c), part(sLine(15, 10, 20, 11, 0.4), 'dark'), dot(8, 12, P.a), dot(6, 16, P.a)]);
+OWN('vinetrap', 24, P => [
+  part(sLine(12, 12, 2, 3, 0.8), 'dark'), part(sLine(12, 12, 3, 21, 0.8), 'dark'), part(sLine(12, 12, 21, 2, 0.8), 'dark'), part(sLine(12, 12, 22, 22, 0.8), 'dark'),
+  part(sStar(12, 12, 6, 11, 6, 0.2), 'acc'), part(sC(12, 12, 6.4), 'body'), part(sC(12, 12, 4), 'dark'), part(sC(13, 12, 2), 'cy'), dot(13, 12, P.c),
+  dot(3, 4, P.x), dot(4, 20, P.x), dot(20, 3, P.x), dot(21, 21, P.x)]);
+OWN('darter', 18, P => [
+  part(sP([[2, 3.6], [8, 1], [9, 6.4]]), 'acc'), part(sP([[2, 14.4], [8, 17], [9, 11.6]]), 'acc'), part(sP([[0.6, 9], [6, 4], [6, 14]]), 'dark'),
+  part(sE(7, 9, 3.6, 4.6), 'body'), part(sC(9, 9, 2.6), 'dark'), dot(10, 8, P.c), dot(10, 10, P.c),
+  part(sLine(10, 11, 17, 11, 0.4), 'dark'), part(sB(17.4, 11, 0.6, 0.8), 'cy'), dot(5, 7, P.a), dot(5, 11, P.a)]);
+OWN('chameleon', 22, P => [
+  part(sRing(4, 14, 3, 0.7, 0), 'acc'), part(sLine(6, 12, 8, 10.4, 1), 'body'),
+  part(sLine(8, 5, 7, 2.6, 0.8), 'dark'), part(sLine(8, 15, 7, 17.6, 0.8), 'dark'), part(sLine(14, 5, 15, 2.6, 0.8), 'dark'), part(sLine(14, 15, 15, 17.4, 0.8), 'dark'),
+  part(sE(11, 10, 6.8, 3.6), 'body'), part(sLine(6, 8, 6, 12.4, 0.4), 'dark'), part(sLine(10, 7, 10, 13, 0.4), 'dark'),
+  part(sP([[15, 6], [21.4, 9], [21.4, 11], [15, 14]]), 'body'), part(sC(16, 6.6, 2), 'acc'), dot(16, 6, P.c), dot(19, 10, P.x)]);
+// ----- volcano -----
+OWN('magmablob', 24, P => [
+  part(sC(12, 12, 9.4), 'body'), part(sC(5.6, 8, 3.8), 'body'), part(sC(17.4, 18, 3.6), 'body'), part(sC(18, 5.6, 3), 'body'),
+  part(sC(11, 12, 5.6), 'dark'), part(sC(12, 12, 3.2), 'cy'), part(sLine(4, 14, 9, 17, 0.5), 'acc'), part(sLine(14, 5, 18, 10, 0.5), 'acc'),
+  dot(16, 11, P.c), dot(16, 14, P.c), dot(8, 18, P.a), dot(7, 5, P.a)]);
+OWN('ashbat', 20, P => [
+  part(sP([[8, 10], [1, 1.4], [4.6, 7], [5, 11]]), 'dark'), part(sP([[8, 10], [1, 18.6], [4.6, 13], [5, 9]]), 'dark'),
+  part(sP([[10, 8], [7, 0.8], [13, 6]]), 'dark'), part(sP([[10, 12], [7, 19.2], [13, 14]]), 'dark'),
+  part(sE(11, 10, 3.6, 3), 'body'), part(sC(14.4, 10, 2.4), 'body'), part(sP([[13, 8], [14, 6], [15, 8.2]]), 'acc'), dot(15, 9, P.c), dot(15, 11, P.c), dot(8, 10, P.x), dot(3, 4, P.x), dot(3, 16, P.x)]);
+OWN('lavagolem', 32, P => [
+  part(sB(15, 17, 8, 10, 2), 'body'), part(sB(13, 17, 4.6, 6.4, 1.5), 'dark'), part(sC(14, 17, 3.4), 'cy'),
+  part(sLine(5, 14, 11, 9, 0.6), 'acc'), part(sLine(12, 24, 17, 28, 0.6), 'acc'), part(sLine(16, 8, 20, 14, 0.6), 'acc'),
+  part(sC(8, 8, 4), 'dark'), part(sC(8, 26, 4), 'dark'), part(sLine(10, 10, 20, 7, 2.2), 'body'), part(sLine(10, 24, 20, 27, 2.2), 'body'), part(sC(23, 6, 4.4), 'body'), part(sC(23, 28, 4.4), 'body'),
+  part(sB(24, 17, 3.6, 3.8, 1), 'body'), dot(26, 15, P.c), dot(26, 19, P.c), dot(22, 6, P.x), dot(22, 28, P.x)]);
+OWN('cinderer', 18, P => [
+  part(sP([[3, 9], [0.6, 4], [4, 6], [2.4, 1.6], [6.6, 5.4], [7, 9]]), 'acc'), part(sE(7, 10, 3.4, 4.8), 'body'), part(sC(8, 7, 2.8), 'dark'), dot(9, 6, P.c), dot(9, 8, P.c),
+  part(sB(13, 11.6, 3.6, 1, 0.3), 'dark'), part(sB(17, 11.6, 1, 0.6), 'cy'), dot(14, 10, P.x), dot(17, 10, P.x), dot(16, 8.4, P.x), dot(5, 11, P.a), dot(5, 14, P.a)]);
+OWN('emberhound', 22, P => [
+  part(sP([[6, 7], [1.4, 3], [3, 7.6], [0.6, 8]]), 'acc'), part(sLine(3, 11, 0.4, 14, 0.7), 'acc'),
+  part(sLine(7, 5, 6, 2.4, 0.9), 'dark'), part(sLine(7, 15, 6, 17.6, 0.9), 'dark'), part(sLine(14, 5, 15, 2.6, 0.9), 'dark'), part(sLine(14, 15, 15, 17.4, 0.9), 'dark'),
+  part(sE(9, 10, 6.4, 3.6), 'body'), part(sP([[5, 6.6], [7, 1], [10, 2], [12, 6.6]]), 'acc'),
+  part(sP([[13, 6.4], [20.6, 8.6], [20.6, 11.4], [13, 13.6]]), 'body'), part(sP([[13, 6], [14.4, 3], [16, 6.4]]), 'dark'), dot(16, 8, P.c), dot(16, 12, P.c), dot(20, 10, P.d)]);
+OWN('magmaturret', 22, P => [
+  part(sB(11, 11, 8, 8, 2), 'dark'), part(sRing(11, 11, 7, 0.5, 0), 'acc'), part(sC(11, 11, 5), 'body'), part(sC(11, 11, 2.6), 'dark'), dot(11, 11, P.c),
+  part(sB(18, 11, 4, 1.8, 0.4), 'dark'), part(sB(20.6, 11, 1.2, 1.2), 'cy'), dot(4, 4, P.x), dot(18, 4, P.x), dot(4, 18, P.x), dot(18, 18, P.x), dot(15, 8, P.a), dot(15, 14, P.a)]);
+OWN('fireimp', 18, P => [
+  part(sLine(3, 9, 0.6, 12, 0.4), 'dark'), part(sP([[6, 5], [2, 1], [7.4, 3]]), 'dark'), part(sP([[6, 13], [2, 17], [7.4, 15]]), 'dark'),
+  part(sC(7, 9, 3.6), 'body'), part(sP([[6, 6], [5, 3], [8, 5.4]]), 'acc'), part(sP([[6, 12], [5, 15], [8, 12.6]]), 'acc'), dot(9, 8, P.c), dot(9, 10, P.c),
+  part(sLine(9, 11, 12, 11, 0.5), 'body'), part(sC(14, 10, 3), 'dark'), part(sLine(14, 7, 15.4, 4.4, 0.3), 'acc'), dot(16, 3, P.x), dot(14, 10, P.x)]);
+// ----- void -----
+OWN('voidling', 18, P => [
+  part(sLine(3, 5, 0.4, 2.4, 0.4), 'acc'), part(sLine(3, 9, 0.2, 9, 0.4), 'acc'), part(sLine(3, 13, 0.4, 15.6, 0.4), 'acc'),
+  part(sC(9, 9, 5.4), 'dark'), part(sRing(9, 9, 3.6, 0.7, 3), 'acc'), part(sC(11, 9, 2.2), 'cy'), dot(12, 9, P.c), dot(7, 6, P.a), dot(6, 11, P.a)]);
+OWN('eclipse', 22, P => [
+  part(sStar(11, 11, 12, 10.4, 8, 0), 'acc'), part(sC(11, 11, 6.6), 'dark'), part(sRing(11, 11, 6.6, 0.7, 0), 'body'), part(sC(13, 11, 3), 'cy'), dot(14, 11, P.c),
+  part(sLine(2, 4, 5, 7, 0.4), 'acc'), part(sLine(2, 18, 5, 15, 0.4), 'acc')]);
+OWN('riftmaw', 30, P => [
+  part(sStar(15, 15, 12, 14.4, 9, 0), 'dark'), part(sC(15, 15, 9.6), 'body'), part(sRing(15, 15, 11.6, 0.8, 10), 'acc'),
+  part(sE(16, 15, 7, 5), 'dark'), part(sE(17, 15, 4.6, 2.8), 'cy'), part(sP([[10, 12], [12, 15], [14, 12]]), 'acc'), part(sP([[10, 18], [12, 15], [14, 18]]), 'acc'), part(sP([[18, 12], [20, 15], [22, 12]]), 'acc'), part(sP([[18, 18], [20, 15], [22, 18]]), 'acc'),
+  dot(6, 8, P.x), dot(24, 8, P.x), dot(6, 22, P.x), dot(24, 22, P.x)]);
+OWN('voidsniper', 22, P => [
+  part(sP([[0.8, 4], [9, 6], [9, 14], [0.8, 16]]), 'dark'), part(sLine(4, 10, 0.6, 10, 0.5), 'acc'),
+  part(sE(8, 10, 3.8, 4.8), 'body'), part(sC(10, 10, 3), 'dark'), dot(11, 9, P.c), dot(11, 11, P.c),
+  part(sLine(11, 14, 17, 5, 0.4), 'acc'), part(sC(18.6, 4.6, 2.6), 'cy'), part(sC(19, 4.6, 1.2), 'dark'), dot(19, 4, P.c), part(sRing(18.6, 4.6, 3.8, 0.4, 5), 'acc')]);
+OWN('horror', 30, P => [
+  part(sLine(8, 8, 1, 3, 0.9), 'dark'), part(sLine(7, 14, 0.4, 14, 0.9), 'acc'), part(sLine(8, 20, 1, 25, 0.9), 'dark'), part(sLine(10, 24, 5, 29, 0.8), 'acc'), part(sLine(10, 6, 5, 1, 0.8), 'acc'),
+  part(sE(12, 14.5, 9, 9.4), 'body'), part(sE(11, 14.5, 5.4, 5.6), 'dark'), part(sC(20, 14.5, 5.6), 'body'),
+  part(sP([[17, 9], [19, 3], [22, 8.6]]), 'acc'), part(sP([[17, 20], [19, 26], [22, 20.4]]), 'acc'),
+  part(sP([[22, 12], [29, 14.5], [22, 17]]), 'dark'), dot(23, 14, P.a), dot(25, 14, P.a), dot(27, 14, P.a), dot(19, 11, P.c), dot(19, 14, P.c), dot(21, 11, P.c), dot(21, 17, P.c), dot(19, 17, P.c), dot(8, 12, P.c), dot(10, 17, P.c)]);
+OWN('abomination', 34, P => [
+  part(sLine(13, 8, 24, 4, 2.4), 'body'), part(sLine(13, 26, 24, 30, 2.4), 'body'), part(sC(27, 3.6, 4), 'dark'), part(sC(27, 30.4, 4), 'dark'),
+  part(sE(14, 17, 12, 11.6), 'body'), part(sE(12, 17, 7.6, 7.4), 'dark'), part(sC(12, 17, 4), 'cy'), part(sC(25, 11, 4.4), 'body'), part(sC(25, 23, 4.4), 'body'), part(sC(28, 17, 5), 'body'),
+  part(sP([[30, 14], [33.4, 17], [30, 20]]), 'dark'), dot(26, 10, P.c), dot(26, 12.4, P.c), dot(26, 22, P.c), dot(26, 24, P.c), dot(30, 15, P.c), dot(30, 19, P.c),
+  part(sStar(10, 17, 7, 12, 8, 0.2), 'acc'), dot(6, 10, P.a), dot(5, 22, P.a), dot(9, 28, P.a)]);
+OWN('voiddrone', 16, P => [
+  part(sP([[4, 3], [10, 5], [6, 7]]), 'dark'), part(sP([[4, 13], [10, 11], [6, 9]]), 'dark'),
+  part(sC(8, 8, 3.8), 'body'), part(sRing(8, 8, 6.4, 0.6, 4), 'acc'), part(sC(10, 8, 1.9), 'cy'), dot(10, 8, P.c), dot(6, 6, P.a), dot(6, 10, P.a)]);
+const BOSS_ART_OF = [0, 1, 2, 3, 4, 6, 7, 8, 9, 5];   // one unique drawing per boss (the core boss is the last area, drawing 5)
 const BOSS_ART = [
   { n: 40, f: P => [   // Big Bandit: hooded brute with a huge gun
     part(sP([[2, 9], [12, 7], [12, 33], [2, 31]]), 'dark'), part(sE(18, 20, 8.5, 13), 'body'), part(sLine(11, 13, 25, 28, 1.3), 'acc'),
@@ -344,6 +487,25 @@ const BOSS_ART = [
     part(sStar(20, 20, 9, 19.4, 12, 0), 'dark'), part(sStar(20, 20, 10, 15.6, 12, 0.13), 'body'), part(sC(20, 20, 10.4), 'dark'), part(sRing(20, 20, 8.4, 0.8, 8), 'acc'),
     part(sC(21, 20, 6.2), 'body'), part(sC(22.4, 20, 3.4), 'dark'), dot(23, 20, P.c), part(sB(26, 20, 1.2, 5.6), 'cy'),
     part(sP([[32, 12], [39, 20], [32, 28]]), 'cy'), dot(14, 14, P.a), dot(14, 26, P.a), dot(12, 20, P.a)] },
+  { n: 40, f: P => [   // Sand Titan: giant scorpion with raised claws and a stinger tail
+    part(sLine(10, 20, 4, 8, 2.6), 'acc'), part(sLine(4, 8, 8, 2, 2.4), 'acc'), part(sC(8.5, 3.5, 3), 'x'),
+    part(sLine(12, 24, 4, 34, 1.8), 'dark'),
+    part(sE(20, 20, 12, 9.5), 'body'), part(sE(19, 20, 7.5, 5.4), 'dark'), part(sLine(14, 14, 14, 26, 0.6), 'acc'), part(sLine(20, 13, 20, 27, 0.6), 'acc'),
+    part(sC(31, 20, 5.4), 'body'), part(sP([[28, 12], [37, 10], [34, 17]]), 'acc'), part(sP([[28, 28], [37, 30], [34, 23]]), 'acc'), dot(34, 18, P.c), dot(34, 22, P.c),
+    part(sLine(9, 28, 5, 34, 2), 'acc'), part(sC(5, 35, 2.4), 'x')] },
+  { n: 40, f: P => [   // Jungle King: a huge, vine-wrapped ape
+    part(sC(9, 10, 5), 'dark'), part(sC(9, 30, 5), 'dark'), part(sLine(14, 14, 9, 10, 2.4), 'body'), part(sLine(14, 26, 9, 30, 2.4), 'body'),
+    part(sE(17, 20, 11, 12.5), 'body'), part(sE(15, 20, 6.4, 8), 'dark'), part(sLine(10, 12, 24, 28, 0.8), 'acc'), part(sLine(10, 28, 24, 12, 0.8), 'acc'),
+    part(sC(28, 20, 8), 'body'), part(sE(30, 20, 5, 5.6), 'acc'), part(sE(31, 20, 2.4, 3.2), 'dark'), dot(30, 15, P.c), dot(30, 25, P.c), dot(33, 20, P.x),
+    part(sP([[25, 12], [31, 10], [28, 15]]), 'dark'), part(sP([[25, 28], [31, 30], [28, 25]]), 'dark')] },
+  { n: 40, f: P => [   // Magma Lord: a spiked molten core inside a rock shell
+    part(sStar(20, 20, 12, 19.4, 10, 0), 'dark'), part(sC(20, 20, 13.6), 'body'), part(sRing(20, 20, 12, 0.9, 8), 'acc'),
+    part(sLine(10, 12, 18, 20, 0.8), 'acc'), part(sLine(30, 12, 22, 18, 0.8), 'acc'), part(sLine(12, 30, 19, 23, 0.8), 'acc'), part(sLine(30, 30, 23, 24, 0.8), 'acc'),
+    part(sC(20, 20, 7), 'dark'), part(sC(20, 20, 5), 'cy'), part(sC(22, 20, 2.6), 'x'), dot(23, 19, P.a), dot(23, 21, P.a)] },
+  { n: 40, f: P => [   // Void Eater: a maw ringed with teeth and one huge eye
+    part(sStar(20, 20, 13, 19.4, 14, 0), 'dark'), part(sC(20, 20, 13.4), 'body'), part(sRing(20, 20, 11, 1, 10), 'acc'),
+    part(sE(20, 20, 9.4, 6.4), 'dark'), part(sC(21, 20, 4.6), 'cy'), part(sC(22, 20, 2.4), 'x'), dot(23, 19, P.a),
+    part(sP([[3, 20], [10, 15], [10, 25]]), 'acc'), part(sP([[37, 20], [30, 15], [30, 25]]), 'acc'), dot(20, 8, P.a), dot(20, 32, P.a), dot(12, 20, P.a)] },
 ];
 
 

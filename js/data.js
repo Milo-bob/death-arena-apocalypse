@@ -2,10 +2,10 @@
 const W = 960, H = 540;
 const ARENA = { x0: 26, y0: 58, x1: 934, y1: 514 };
 
-// a run is a chain of levels (run.act counts them): 3 levels per area, the third is the boss level; after 3 areas the run loops
-const AREAS = 6, LOOP_LEVELS = AREAS * 3;
+// a run is a chain of levels (run.act counts them): 4 levels per area, the fourth is the boss level; after the last area the run loops
+const AREAS = 10, LV_PER = 4, LOOP_LEVELS = AREAS * LV_PER;
 const AIM_ASSIST = false;
-const areaOf = a => Math.floor(a / 3) % AREAS, isBossLevel = a => a % 3 === 2;
+const areaOf = a => Math.floor(a / LV_PER) % AREAS, isBossLevel = a => a % LV_PER === LV_PER - 1;
 
 const rnd = (a, b) => a + Math.random() * (b - a);
 const rndi = (a, b) => Math.floor(rnd(a, b + 1));
@@ -476,6 +476,40 @@ Object.assign(ENEMY, {
   scorpion:  { name: 'Scorpion', hp: 80, speed: 62, r: 15, dmg: 8, cost: 6, col: '#e0a030', ai: 'scorpion', blood: '#8a6a10' },   // fires huge fans and rings of bullets
 });
 Object.assign(ENEMY.spitter, { blood: '#3f7a1f' }); Object.assign(ENEMY.swarmer, { blood: '#a04a1a' }); Object.assign(ENEMY.blob, { blood: '#7a4a1f' }); Object.assign(ENEMY.sniper, { blood: '#6a1fa0' });
+// ---------- late-game enemies (areas 6-9): tougher, same behaviours ----------
+Object.assign(ENEMY, {
+  // desert
+  scarab:     { name: 'Scarab', hp: 24, speed: 165, r: 9, dmg: 14, cost: 1, col: '#e0b030', ai: 'grunt', blood: '#8a6a10' },
+  sandviper:  { name: 'Sand Viper', hp: 70, speed: 125, r: 12, dmg: 26, cost: 3, col: '#e8c070', ai: 'dasher', blood: '#8a6a30' },
+  duneraider: { name: 'Dune Raider', hp: 65, speed: 80, r: 12, dmg: 14, cost: 3, col: '#d89a50', ai: 'burst', blood: '#7a4a1a' },
+  mummy:      { name: 'Mummy', hp: 260, speed: 52, r: 20, dmg: 32, cost: 5, col: '#e8dcb0', ai: 'tank', blood: '#8a7a40' },
+  sandtotem:  { name: 'Sand Totem', hp: 140, speed: 0, r: 14, dmg: 12, cost: 4, col: '#f0c860', ai: 'ring', blood: '#8a6a30' },
+  sandscorp:  { name: 'Dune Scorpion', hp: 150, speed: 64, r: 15, dmg: 12, cost: 6, col: '#f0a020', ai: 'scorpion', blood: '#8a5a10' },
+  // jungle
+  toadspit:   { name: 'Poison Toad', hp: 80, speed: 68, r: 12, dmg: 12, cost: 3, col: '#5aff7a', ai: 'spitter', blood: '#2a8a3a' },
+  jaguar:     { name: 'Jaguar', hp: 75, speed: 135, r: 12, dmg: 30, cost: 3, col: '#e0a040', ai: 'dasher', blood: '#7a4a1a' },
+  ape:        { name: 'Ape', hp: 240, speed: 74, r: 17, dmg: 34, cost: 5, col: '#8a6a4a', ai: 'charger', blood: '#4a2a14' },
+  vinetrap:   { name: 'Vine Trap', hp: 170, speed: 0, r: 16, dmg: 12, cost: 5, col: '#3aff6a', ai: 'ring', blood: '#1a6a2a' },
+  darter:     { name: 'Blowgunner', hp: 60, speed: 62, r: 12, dmg: 30, cost: 4, col: '#7aff9a', ai: 'sniper', blood: '#2a8a3a' },
+  chameleon:  { name: 'Chameleon', hp: 100, speed: 95, r: 11, dmg: 30, cost: 4, col: '#8aff5a', ai: 'stalker', blood: '#3a8a1a' },
+  // volcano
+  magmablob:  { name: 'Magma Blob', hp: 150, speed: 64, r: 17, dmg: 24, cost: 3, col: '#ff6a2a', ai: 'grunt', splits: true, blood: '#a03a10' },
+  ashbat:     { name: 'Ash Bat', hp: 44, speed: 135, r: 10, dmg: 14, cost: 2, col: '#b0a8a0', ai: 'shooter', blood: '#4a4440' },
+  lavagolem:  { name: 'Lava Golem', hp: 400, speed: 48, r: 22, dmg: 38, cost: 6, col: '#ff7a2a', ai: 'tank', blood: '#c04a10' },
+  cinderer:   { name: 'Cinderer', hp: 80, speed: 82, r: 12, dmg: 16, cost: 3, col: '#ff9a4a', ai: 'burst', blood: '#a03a10' },
+  emberhound: { name: 'Ember Hound', hp: 90, speed: 125, r: 12, dmg: 32, cost: 3, col: '#ff5a2a', ai: 'dasher', blood: '#a03a10' },
+  magmaturret:{ name: 'Magma Turret', hp: 170, speed: 0, r: 15, dmg: 14, cost: 4, col: '#ff8a3a', ai: 'turret', blood: '#a03a10' },
+  fireimp:    { name: 'Fire Imp', hp: 50, speed: 140, r: 12, dmg: 50, cost: 3, col: '#ff3a1a', ai: 'bomber', blood: '#a02a10' },
+  // void
+  voidling:   { name: 'Voidling', hp: 56, speed: 170, r: 11, dmg: 24, cost: 2, col: '#a06aff', ai: 'grunt', blood: '#4a2a9a' },
+  eclipse:    { name: 'Eclipse', hp: 130, speed: 100, r: 12, dmg: 36, cost: 5, col: '#c08aff', ai: 'stalker', blood: '#4a2a9a' },
+  riftmaw:    { name: 'Rift Maw', hp: 260, speed: 0, r: 17, dmg: 14, cost: 6, col: '#8a4aff', ai: 'ring', blood: '#3a1a8a' },
+  voidsniper: { name: 'Void Seer', hp: 90, speed: 62, r: 13, dmg: 40, cost: 5, col: '#d06aff', ai: 'sniper', blood: '#6a1a9a' },
+  horror:     { name: 'Horror', hp: 330, speed: 80, r: 17, dmg: 42, cost: 6, col: '#7a3ad0', ai: 'charger', blood: '#3a1a8a' },
+  abomination:{ name: 'Abomination', hp: 560, speed: 50, r: 23, dmg: 44, cost: 7, col: '#9a5aff', ai: 'tank', blood: '#4a2a9a' },
+  voiddrone:  { name: 'Void Drone', hp: 70, speed: 125, r: 10, dmg: 16, cost: 3, col: '#b08aff', ai: 'shooter', blood: '#4a2a9a' },
+});
+const NEW_ENEMIES = ['scarab', 'sandviper', 'duneraider', 'mummy', 'sandtotem', 'sandscorp', 'toadspit', 'jaguar', 'ape', 'vinetrap', 'darter', 'chameleon', 'magmablob', 'ashbat', 'lavagolem', 'cinderer', 'emberhound', 'magmaturret', 'fireimp', 'voidling', 'eclipse', 'riftmaw', 'voidsniper', 'horror', 'abomination', 'voiddrone'];
 // every area has its own cast (like the original), the boss summons from the same list
 const AREA_ENEMIES = [
   ['grunt', 'shooter', 'rat', 'swarmer', 'maggot', 'raider', 'scorpion', 'charger'],
@@ -483,6 +517,10 @@ const AREA_ENEMIES = [
   ['tank', 'dasher', 'bomber', 'turret', 'shooter', 'grunt', 'smelter', 'raider', 'scorpion', 'stalker'],
   ['sniper', 'shooter', 'rat', 'blob', 'dasher', 'tank', 'frostwolf', 'frostwolf', 'icetower', 'charger'],
   ['turret', 'sniper', 'spitter', 'swarmer', 'bomber', 'dasher', 'drone', 'drone', 'laser', 'stalker'],
+  ['scarab', 'scarab', 'sandviper', 'duneraider', 'mummy', 'sandtotem', 'sandscorp', 'charger', 'sniper', 'stalker'],
+  ['toadspit', 'jaguar', 'jaguar', 'ape', 'vinetrap', 'darter', 'chameleon', 'swarmer', 'spitter', 'mummy'],
+  ['magmablob', 'ashbat', 'ashbat', 'lavagolem', 'cinderer', 'emberhound', 'magmaturret', 'fireimp', 'fireimp', 'smelter'],
+  ['voidling', 'voidling', 'eclipse', 'riftmaw', 'voidsniper', 'horror', 'abomination', 'voiddrone', 'wraith', 'laser'],
   ['grunt', 'shooter', 'dasher', 'bomber', 'tank', 'spitter', 'blob', 'sniper', 'turret', 'raider', 'smelter', 'drone', 'laser', 'warden', 'wraith', 'wraith', 'scorpion', 'charger', 'stalker'],
 ];
 const ELITE_MODS = {
@@ -491,16 +529,20 @@ const ELITE_MODS = {
   split: { name: 'Splitting', col: '#b24bff' },
   volatile: { name: 'Volatile', col: '#ff8a1f' },
 };
-const ACT_NAMES = ['The Ruins', 'The Sewers', 'The Foundry', 'The Frozen Wastes', 'The Glass Labs', 'Apocalypse Core'];
-const ACT_COL = [['#0e1430', '#17407a'], ['#0e2a14', '#2a7a3a'], ['#2a1208', '#7a3a17'], ['#10202e', '#5aa0d0'], ['#0a2828', '#2ac0b0'], ['#1c0a2a', '#6a1fd0']];
-const DUST_COL = ['#b0a890', '#9aff7a', '#ff9a4a', '#e0f4ff', '#7affe0', '#c070ff'];
+const ACT_NAMES = ['The Ruins', 'The Sewers', 'The Foundry', 'The Frozen Wastes', 'The Glass Labs', 'The Dead Desert', 'The Overgrowth', 'The Magma Pits', 'The Void', 'Apocalypse Core'];
+const ACT_COL = [['#0e1430', '#17407a'], ['#0e2a14', '#2a7a3a'], ['#2a1208', '#7a3a17'], ['#10202e', '#5aa0d0'], ['#0a2828', '#2ac0b0'], ['#2e2410', '#c8a050'], ['#082a10', '#3ad060'], ['#2e0e06', '#ff5a1f'], ['#0c0820', '#7a4aff'], ['#1c0a2a', '#6a1fd0']];
+const DUST_COL = ['#b0a890', '#9aff7a', '#ff9a4a', '#e0f4ff', '#7affe0', '#e8d090', '#b0ff9a', '#ff9a4a', '#a090ff', '#c070ff'];
 const BOSSES = [
   { name: 'Big Bandit', hp: 2300, r: 32, col: '#ff2d3d', move: 52, phases: [['fan', 'charge'], ['fan', 'charge', 'ring', 'summon'], ['fan', 'ring', 'charge', 'gatling', 'summon']] },
   { name: 'Big Fish', hp: 3300, r: 36, col: '#7dff4a', move: 40, phases: [['gapring', 'slam', 'summon'], ['gapring', 'slam', 'summon', 'spiral'], ['gapring', 'slam', 'rain', 'spiral', 'summon']] },
   { name: 'Big Dog', hp: 4200, r: 36, col: '#ff8a1f', move: 70, phases: [['leap', 'aimed', 'slam'], ['leap', 'charge', 'slam', 'fan'], ['leap', 'charge', 'rain', 'spiral', 'fan']] },
   { name: 'Lil Hunter', hp: 5400, r: 38, col: '#8ae8ff', move: 60, phases: [['gatling', 'charge', 'ring'], ['gatling', 'leap', 'rain', 'ring'], ['gatling', 'rain', 'sweep', 'leap', 'charge']] },
   { name: 'Technomancer', hp: 6400, r: 36, col: '#3de8c8', move: 36, blink: 0.55, phases: [['laserx', 'aimed', 'sweep'], ['laserx', 'spiral', 'summon', 'gatling'], ['laserx', 'spiral', 'rain', 'sweep', 'gapring']] },
-  { name: 'Nuclear Throne', hp: 8000, r: 40, col: '#b24bff', move: 44, blink: 0.35, phases: [['ring', 'slam', 'fan', 'sweep'], ['spiral', 'laserx', 'slam', 'rain', 'summon'], ['ring', 'spiral', 'laserx', 'rain', 'leap', 'gatling', 'gapring']] },
+  { name: 'Sand Titan', hp: 7400, r: 38, col: '#f0c860', move: 58, phases: [['fan', 'charge', 'slam'], ['fan', 'charge', 'ring', 'summon', 'leap'], ['fan', 'ring', 'charge', 'gatling', 'summon', 'rain']] },
+  { name: 'Jungle King', hp: 8800, r: 38, col: '#3aff6a', move: 66, phases: [['leap', 'aimed', 'gapring'], ['leap', 'charge', 'summon', 'spiral'], ['leap', 'charge', 'rain', 'spiral', 'summon', 'gatling']] },
+  { name: 'Magma Lord', hp: 10600, r: 40, col: '#ff5a1f', move: 50, phases: [['slam', 'ring', 'sweep'], ['slam', 'rain', 'gatling', 'leap', 'summon'], ['slam', 'rain', 'spiral', 'sweep', 'gapring', 'charge']] },
+  { name: 'Void Eater', hp: 12800, r: 40, col: '#9a6aff', move: 46, blink: 0.4, phases: [['laserx', 'spiral', 'aimed'], ['laserx', 'spiral', 'rain', 'summon', 'gapring'], ['laserx', 'spiral', 'rain', 'sweep', 'gatling', 'leap', 'gapring']] },
+  { name: 'Nuclear Throne', hp: 15000, r: 40, col: '#b24bff', move: 44, blink: 0.35, phases: [['ring', 'slam', 'fan', 'sweep'], ['spiral', 'laserx', 'slam', 'rain', 'summon'], ['ring', 'spiral', 'laserx', 'rain', 'leap', 'gatling', 'gapring']] },
 ];
 
 // ---------- Stat sheet ----------

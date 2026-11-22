@@ -149,12 +149,14 @@ const Game = {
   takeDrawback(id) { this.run.drawbacks.push(id); this.recalc(); },
   bank(frac, why) {
     const run = this.run, s = Save.data;
+    if (!run.testRun) {   // a run continued after dying is a test run: it never counts
     s.stats.runs++; s.stats.kills += run.kills;
     s.stats.bestAct = Math.max(s.stats.bestAct, run.act + 1);
     s.stats.bestRooms = Math.max(s.stats.bestRooms, run.rooms);
     s.stats.bestPlv = Math.max(s.stats.bestPlv || 0, run.plv || 1); s.stats.bosses = (s.stats.bosses || 0) + (run.bosses || 0);
     if (why === 'win') s.stats.wins++;
     if (why === 'dead') s.stats.deaths++;
+    }
     const res = { why, run: Object.assign({}, run) };
     s.run = null; Save.write(true);
     this.run = null; this.C = null; this.mode = 'menu';
@@ -168,7 +170,14 @@ const Game = {
   winRun() { UI.summary(this.bank(1.6 + 0.25 * Math.floor(this.run.act / LOOP_LEVELS), 'win')); },
   abandon() { UI.summary(this.bank(0.25, 'dead')); },
   die() {
-    UI.summary(this.bank(0.4, 'dead'));
+    UI.show('<h1 style="color:#ff2d3d;text-shadow:0 0 14px #ff2d3d">YOU DIED</h1><p class="dim">Test mode: you can carry on, but this run will no longer count (no stats, no records).</p><div class="row" style="margin-top:20px"><button class="btn big" onclick="Game.revive()">CONTINUE (NOT COUNTED)</button></div><div class="row"><button class="btn red" onclick="UI.summary(Game.bank(0.4,\'dead\'))">END RUN</button></div>', 'clear');
+    UI.acts(() => this.revive());
+  },
+  revive() {   // testing: full health, keep the run going, but nothing from it is banked any more
+    const run = this.run, C = this.C; if (!run || !C) return;
+    run.testRun = true; run.hp = this.P.maxhp; run.phoenixUsed = run.phoenixUsed || false;
+    C.dead = false; C.p.inv = 2.5; C.p.shield = 0; C.eb.length = 0; C.haz.length = 0;
+    this.frozen = false; this.paused = false; UI.hide(); document.body.classList.add('fight'); this.persist();
   },
 
   // ================= room =================
@@ -227,13 +236,13 @@ const Game = {
     if (act >= 1 || row >= 2) avail.push('turret');
     if (row >= 2) avail.push('rat');
     if (row >= 2 || act > 0) avail.push('scorpion');
-    if (row >= 1 || act > 0) avail.push('raider', 'crab', 'frostwolf', 'icetower', 'smelter', 'drone', 'laser', 'warden', 'wraith');
+    if (row >= 1 || act > 0) avail.push('raider', 'crab', 'frostwolf', 'icetower', 'smelter', 'drone', 'laser', 'warden', 'wraith', ...NEW_ENEMIES);
     const cast = AREA_ENEMIES[areaOf(act)].filter(t => avail.includes(t)); if (cast.length) avail = cast;
     const list = [];
     while (budget > 0) {
       const o = avail.filter(t => ENEMY[t].cost <= budget);
       if (!o.length) break;
-      const t = wpick(o, x => x === 'grunt' ? 1.6 : x === 'tank' ? 0.8 : ['shooter', 'spitter', 'sniper', 'turret', 'raider', 'drone', 'laser', 'icetower', 'warden'].includes(x) ? 3 : 1.4);
+      const t = wpick(o, x => x === 'grunt' ? 1.6 : x === 'tank' ? 0.8 : ['shooter', 'spitter', 'sniper', 'turret', 'raider', 'drone', 'laser', 'icetower', 'warden', 'sandtotem', 'vinetrap', 'magmaturret', 'riftmaw', 'darter', 'voidsniper', 'toadspit', 'voiddrone', 'ashbat', 'cinderer', 'duneraider'].includes(x) ? 3 : 1.4);
       list.push(t); budget -= ENEMY[t].cost;
     }
     return list;
@@ -330,7 +339,7 @@ const Game = {
     const C = this.C, p = C.p, P = this.P, run = this.run;
     if (!C || p.inv > 0) return false;
     if (p.shield > 0) { C.fx.push({ k: 'ring', x: p.x, y: p.y, r: 30, t: 0.2, max: 0.2, col: '#ffe94a' }); return false; }
-    const d = dmg * P.taken;
+    const d = Math.max(10, Math.round(dmg * P.taken / 10) * 10);   // hits always cost whole hearts (1 heart = 10 HP)
     run.hp -= d; p.inv = 0.3; p.flash = 0.2; C.shake = Math.max(C.shake, 8); C.noHit = false; Sfx.hurt(); this.impact(0.09, '#ff2a2a', 0.38); C.hitstop = Math.max(C.hitstop || 0, 0.08);
     this.floatText(p.x, p.y - 20, '-' + (Math.round(d) / 10), '#ff2d3d', 1.2);
     this.burst(p.x, p.y, '#ff2d3d', 12, 200);
@@ -821,7 +830,9 @@ const Game = {
       h.done = true;
       C.fx.push({ k: 'ring', x: h.x, y: h.y, r: h.r, t: 0.22, max: 0.22, col: h.friendly ? '#ff8a1f' : '#ff4a4a' });
       if (!h.quick) { this.burst(h.x, h.y, h.friendly ? '#ff8a1f' : '#ff4a4a', 10, 170); Sfx.boom(h.r); C.shake = Math.max(C.shake, 5); if (h.friendly && h.r > 60) this.impact(0.04, '#ffffff', 0.2); }
-      if (h.friendly) { for (const e of C.en.slice()) if (!e.dead && dist(e, h) < h.r + e.r) this.hitEnemy(e, h.dmg, { raw: !!h.quick, noProc: !!h.quick, noCrit: !!h.quick }); for (const pr of C.props) if (!pr.dead && dist(pr, h) < h.r + pr.r) this.damageProp(pr, h.dmg * 1.5 + 10); }
+      if (h.friendly) { for (const e of C.en.slice()) if (!e.dead && dist(e, h) < h.r + e.r) this.hitEnemy(e, h.dmg, { raw: !!h.quick, noProc: !!h.quick, noCrit: !!h.quick }); for (const pr of C.props) if (!pr.dead && dist(pr, h) < h.r + pr.r) this.damageProp(pr, h.dmg * 1.5 + 10);
+        // your own weapon explosions hurt you too (kill blasts excepted); Boiling Veins / Boiler Core make you immune
+        if (!h.quick && !this.P.blastImmune && dist(h, p) < h.r + p.r * 0.5) this.hurt(10 * clamp(Math.ceil(h.dmg / 60), 1, 3), null); }
       else {
         if (dist(h, p) < h.r + p.r && !(this.P.blastImmune && !h.owner)) this.hurt(h.dmg, h.owner);
         if (h.ring) for (let i = 0; i < h.ring; i++) this.eShoot({ x: h.x, y: h.y, col: h.col || '#ff4a4a' }, i / h.ring * 6.283, 200, 8 * C.dmgS, 5);

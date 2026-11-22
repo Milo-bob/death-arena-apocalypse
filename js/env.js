@@ -8,6 +8,10 @@ const BIOME = [
   { name: 'foundry', decor: 1, slabs: ['#3b2c25', '#43322a', '#372920', '#4a372d'], grout: '#1a110d', hi: '#6a4a38', crack: '#120b08', puddle: '#120e0c', wall: ['#2c1e18', '#38271f', '#1a110d'], amb: 0.242, tint: '24,8,2' },
   { name: 'frozen', decor: 0, slabs: ['#3a4a5a', '#41546a', '#34445a', '#4a5f78'], grout: '#1a2430', hi: '#a8d4f0', crack: '#101822', puddle: '#2a4a6a', wall: ['#2a3a4c', '#334860', '#1a2634'], amb: 0.22, tint: '10,18,30' },
   { name: 'labs', decor: 2, slabs: ['#2c3a3a', '#324444', '#283636', '#385050'], grout: '#0e1818', hi: '#4ad0c0', crack: '#081212', puddle: '#143a3a', wall: ['#1c2a2a', '#263838', '#101c1c'], amb: 0.264, tint: '2,18,18' },
+  { name: 'desert', decor: 0, slabs: ['#7a6238', '#846a3c', '#705a32', '#8c7244'], grout: '#3a2e18', hi: '#c8a868', crack: '#2a2010', puddle: '#5a4624', wall: ['#4a3a20', '#5a4628', '#2c2212'], amb: 0.2, tint: '30,18,4' },
+  { name: 'jungle', decor: 0, slabs: ['#1e3a22', '#244428', '#1a3320', '#2a4c2e'], grout: '#08160a', hi: '#4aa05a', crack: '#05100a', puddle: '#1c4a2a', wall: ['#12261a', '#1a3322', '#08140c'], amb: 0.3, tint: '2,20,8' },
+  { name: 'volcano', decor: 1, slabs: ['#2c1a16', '#35201a', '#281612', '#3c241c'], grout: '#120806', hi: '#ff6a2a', crack: '#ff5a1a', puddle: '#5a1a08', wall: ['#1e100c', '#2a1812', '#0e0604'], amb: 0.3, tint: '30,6,0' },
+  { name: 'void', decor: 2, slabs: ['#161230', '#1c163a', '#120e2a', '#221a44'], grout: '#08051a', hi: '#6a4aff', crack: '#3a2a8a', puddle: '#0e0a24', wall: ['#100c24', '#18123a', '#080514'], amb: 0.38, tint: '6,0,24' },
   { name: 'core', decor: 2, slabs: ['#241a2e', '#2b1f36', '#20172a', '#30223c'], grout: '#100a16', hi: '#44305a', crack: '#0a0610', puddle: '#1a0f26', wall: ['#1c1226', '#271a33', '#120a1a'], amb: 0.308, tint: '14,2,20' },
 ];
 
