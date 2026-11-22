@@ -77,7 +77,7 @@ const UI = {
       else {
         const c = CLANS[d.clan];
         h += '<div class="card slot" style="--c:' + c.color + '" onclick="UI.openSlot(' + i + ')"><h3 style="color:' + c.color + '">WASTELAND</h3><p class="sm dim">Slot ' + (i + 1) + '</p><table>'
-          + '<tr><td>Cores</td><td>' + d.cores + '</td></tr><tr><td>Runs</td><td>' + d.stats.runs + ' (' + d.stats.wins + ' won)</td></tr><tr><td>Best act</td><td>' + (d.stats.bestAct || '-') + '</td></tr><tr><td>Max heat</td><td>' + d.heatMax + '</td></tr></table>'
+          + '<tr><td>Runs</td><td>' + d.stats.runs + ' (' + d.stats.wins + ' won)</td></tr><tr><td>Best act</td><td>' + (d.stats.bestAct || '-') + '</td></tr><tr><td>Max heat</td><td>' + d.heatMax + '</td></tr></table>'
           + (d.run ? '<p class="pro sm">Run in progress</p>' : '') + '<p style="text-align:center;margin-top:10px"><span class="btn">PLAY</span> <span class="btn red" onclick="event.stopPropagation();UI.delSlot(' + i + ')">DELETE</span></p></div>';
       }
     }
@@ -108,23 +108,6 @@ const UI = {
     h += '<div class="tabs">' + [].map(t => '<button class="btn ' + (this.tab === t[0] ? 'sel' : '') + '" onclick="UI.hub(\'' + t[0] + '\')">' + t[1] + '</button>').join('') + '</div>';
     if (this.tab === 'run') {
       h += this.selectHtml(s);
-    } else if (this.tab === 'hero') {
-      h += this.heroTab(s, c);
-    } else if (this.tab === 'armory') {
-      h += '<p class="sm dim">Unlock new perks. They join the pool of rewards for every run of this slot.</p><div class="row">';
-      const ids = Object.keys(PERKS).filter(id => PERKS[id].lock && (!PERKS[id].clan || PERKS[id].clan === s.clan));
-      for (const id of ids) {
-        const pk = PERKS[id], own = !!s.perks[id];
-        h += '<div class="card rar-' + pk.r + ' ' + (own ? '' : 'locked') + '" style="width:200px;min-height:130px" onclick="UI.unlockPerk(\'' + id + '\')"><h3>' + pk.name + '</h3>' + this.tags(pk.tags) + '<p class="sm">' + pk.d + '</p><p class="sm ' + (own ? 'pro' : '') + '">' + (own ? 'Unlocked' : 'Unlock: ' + pk.lock + ' cores') + '</p></div>';
-      }
-      h += '</div>';
-    } else if (this.tab === 'upgrades') {
-      h += '<p class="sm dim">Small permanent bonuses with a hard cap. New options matter more than raw numbers.</p><div class="row">';
-      for (const [id, u] of Object.entries(META_UPS)) {
-        const l = s.meta[id] || 0, max = l >= u.max;
-        h += '<div class="card" style="width:200px;min-height:130px" onclick="UI.buyMeta(\'' + id + '\')"><h3>' + u.name + '</h3><p class="sm">' + u.d + '</p><p class="sm">Level ' + l + ' / ' + u.max + '</p><p class="sm">' + (max ? '<span class="pro">Maxed</span>' : 'Upgrade: ' + u.cost(l) + ' cores') + '</p></div>';
-      }
-      h += '</div>';
     } else {
       h += '<p style="margin-top:30px;text-align:center">The shared hub is coming:<br>see other players between runs, leaderboards and clan progress.</p><p class="dim sm">Needs the Supabase project (presence + leaderboard tables).</p>';
     }
@@ -164,51 +147,6 @@ const UI = {
     document.getElementById('csActions').innerHTML = act;
   },
   startFromSelect() { const s = Save.data; if (!s || !s.heroes[this.selId]) return; if (s.run) Game.resume(); else Game.startRun(); },
-  heroTab(s, c) {
-    s.loadout = s.loadout || {}; s.tree = s.tree || {};
-    const hero = HEROES[s.hero], lo = s.loadout[s.hero] || {}, wId = this.kitId(s, lo.w), aId = this.kitId(s, lo.a), tr = s.tree[s.hero] || {}, rank = treeRank(tr);
-    const owned = Object.keys(HEROES).filter(k => HEROES[k].clan === s.clan && s.heroes[k]);
-    let h = '<div class="row" style="margin-bottom:6px">' + owned.map(k => '<img src="' + Sprites.url(k) + '" title="' + HEROES[k].name + '" data-k="' + k + '" onclick="UI.pickHero(this.dataset.k)" style="width:44px;height:44px;image-rendering:pixelated;cursor:pointer;border:3px solid ' + (k === s.hero ? c.color : '#345') + ';padding:2px">').join('') + '</div>';
-    h += '<h3 style="text-align:center;margin:4px">' + hero.name.toUpperCase() + ' <span class="dim sm">rank ' + rank + ' / ' + RANK_CAP + '</span></h3>';
-    h += '<p class="sm dim" style="text-align:center;margin:2px">Loadout: mix the weapon and ability of any unlocked ' + c.name + ' hero. Your hero keeps its own passive and skill tree.</p>';
-    const kit = (kind, cur) => '<div class="row" style="margin:4px 0"><span class="sm" style="width:70px;align-self:center">' + (kind === 'w' ? 'WEAPON' : 'ABILITY') + '</span>' + owned.map(k => {
-      const it = kind === 'w' ? HEROES[k].weapon : HEROES[k].ability;
-      return '<span class="btn ' + (k === cur ? 'sel' : '') + '" title="' + esc(HEROES[k].name) + '" data-kind="' + kind + '" data-k="' + k + '" onclick="UI.setKit(this.dataset.kind,this.dataset.k)" style="font-size:10px;padding:4px 7px">' + esc(it.name) + (kind === 'w' ? ' (' + it.type + ')' : ' (' + it.cd + 's)') + '</span>';
-    }).join('') + '</div>';
-    h += kit('w', wId) + kit('a', aId);
-    h += '<div class="row" style="margin-top:10px;align-items:flex-start">';
-    for (const br of ['Offense', 'Defense', 'Utility']) {
-      h += '<div style="width:270px"><div class="sm" style="text-align:center;color:' + c.color + '">' + br.toUpperCase() + '</div>';
-      for (const [id, t] of Object.entries(TREE)) {
-        if (t.branch !== br) continue;
-        const l = tr[id] || 0, maxed = l >= t.max, can = !maxed && rank < RANK_CAP && s.cores >= treeCost(l);
-        h += '<div class="card ' + (can ? '' : 'locked') + '" style="width:auto;min-height:0;margin:4px 0;padding:8px" data-id="' + id + '" onclick="UI.treeUp(this.dataset.id)"><b>' + t.name + '</b> <span class="sm">' + '■'.repeat(l) + '□'.repeat(t.max - l) + '</span><div class="sm dim">' + t.d + '</div><div class="sm ' + (maxed ? 'pro' : '') + '">' + (maxed ? 'Maxed' : rank >= RANK_CAP ? 'Rank cap reached' : treeCost(l) + ' cores') + '</div></div>';
-      }
-      h += '</div>';
-    }
-    h += '</div><div class="row" style="margin-top:8px"><button class="btn red" ' + (rank ? '' : 'disabled') + ' onclick="UI.respec()">RESPEC (free, refunds cores)</button></div>';
-    return h;
-  },
-  kitId(s, id) { return id && s.heroes[id] && HEROES[id].clan === s.clan ? id : s.hero; },
-  setKit(kind, id) { const s = Save.data; s.loadout = s.loadout || {}; const lo = s.loadout[s.hero] = s.loadout[s.hero] || {}; lo[kind] = id; Save.write(); this.hub(); },
-  treeUp(id) {
-    const s = Save.data, t = TREE[id]; s.tree = s.tree || {}; const tr = s.tree[s.hero] = s.tree[s.hero] || {}, l = tr[id] || 0;
-    if (l < t.max && treeRank(tr) < RANK_CAP && s.cores >= treeCost(l)) { s.cores -= treeCost(l); tr[id] = l + 1; Save.write(true); }
-    this.hub();
-  },
-  respec() {
-    const s = Save.data, tr = (s.tree || {})[s.hero] || {};
-    for (const [id, l] of Object.entries(tr)) for (let i = 0; i < l; i++) s.cores += treeCost(i);
-    s.tree[s.hero] = {}; Save.write(true); this.hub();
-  },
-  pickHero(id) {
-    const s = Save.data, hero = HEROES[id];
-    if (s.heroes[id]) { s.hero = id; Save.write(); }
-    this.hub();
-  },
-  unlockPerk(id) { const s = Save.data, pk = PERKS[id]; if (!s.perks[id] && s.cores >= pk.lock) { s.cores -= pk.lock; s.perks[id] = 1; Save.write(true); } this.hub(); },
-  buyMeta(id) { const s = Save.data, u = META_UPS[id], l = s.meta[id] || 0; if (l < u.max && s.cores >= u.cost(l)) { s.cores -= u.cost(l); s.meta[id] = l + 1; Save.write(true); } this.hub(); },
-
   // ---------- shared bits ----------
   tags(list) { return list.map(t => '<span class="tag" style="color:' + TAGS[t] + '">' + t.toUpperCase() + '</span>').join(''); },
   perkCard(id, onclick, extra, key) {
@@ -235,17 +173,11 @@ const UI = {
   },
 
   // ---------- rewards ----------
-  reward(rw, cores) {
+  reward(rw) {
     let h = '<h2>ROOM CLEARED</h2>' + this.status();
-    if (rw.kind === 'gold') {
-      Game.run.gold += rw.amount;
-      h += '<p style="margin:20px;color:#ffd91f;font-family:Silk;font-size:22px">+' + rw.amount + ' GOLD</p><button class="btn big" onclick="Game.nodeDone()">CONTINUE</button>';
-      this.show(h); this.acts(() => Game.nodeDone()); return;
-    }
     const offers = Game.offerPerks(3, rw.min);
     if (!offers.length) { h += '<p>No perks left to find.</p><button class="btn" onclick="Game.nodeDone()">CONTINUE</button>'; this.show(h); return; }
-    h += '<p>Choose a perk</p><div class="row">' + offers.map((id, i) => this.perkCard(id, 'UI.take(\'' + id + '\')', '', i + 1)).join('') + '</div>'
-      + '<div class="row"><button class="btn" onclick="Game.run.gold+=25;Game.nodeDone()">SKIP (+25 GOLD)</button></div>' + this.buildList();
+    h += '<p>Choose a perk</p><div class="row">' + offers.map((id, i) => this.perkCard(id, 'UI.take(\'' + id + '\')', '', i + 1)).join('') + '</div>';
     this.show(h); this.acts(...offers.map(id => () => this.take(id)));
   },
   take(id) { Game.takePerk(id); Game.nodeDone(); },
@@ -262,26 +194,6 @@ const UI = {
     this.acts(...offers.map(id => () => this.take(id)));
   },
 
-  // ---------- shop ----------
-  shop(n) {
-    const run = Game.run;
-    if (!n.shop) n.shop = { offers: Game.offerPerks(3), bought: [], healed: false, rerolls: 0 };
-    const sh = n.shop, price = id => Math.round(RARITY[PERKS[id].r].price * (1 + 0.1 * run.act));
-    let h = '<h2>BLACK MARKET</h2>' + this.status() + '<div class="row">';
-    sh.offers.forEach((id, i) => {
-      const bought = sh.bought.includes(id), pr = price(id);
-      h += bought ? '<div class="card nopick locked"><h3>' + PERKS[id].name + '</h3><p>Sold</p></div>' : this.perkCard(id, run.gold >= pr ? 'UI.buy(\'' + id + '\')' : '', '<p style="margin-top:6px;color:' + (run.gold >= pr ? '#ffd91f' : '#ff7a85') + '">' + pr + ' GOLD</p>');
-    });
-    const healCost = 30, canHeal = !sh.healed && run.gold >= healCost && !Game.P.noHeal && run.hp < Game.P.maxhp;
-    h += '</div><div class="row"><button class="btn" ' + (canHeal ? '' : 'disabled') + ' onclick="UI.buyHeal()">HEAL 35% (' + healCost + 'G)</button><button class="btn" ' + (run.gold >= 20 ? '' : 'disabled') + ' onclick="UI.reroll()">REROLL (20G)</button><button class="btn big" onclick="Game.nodeDone()">LEAVE</button></div>' + this.buildList();
-    this.show(h);
-  },
-  buy(id) {
-    const run = Game.run, n = Game.C.node, pr = Math.round(RARITY[PERKS[id].r].price * (1 + 0.1 * run.act));
-    if (run.gold < pr) return; run.gold -= pr; n.shop.bought.push(id); Game.takePerk(id); Game.persist(); this.shop(n);
-  },
-  buyHeal() { const run = Game.run, n = Game.C.node; if (run.gold < 30) return; run.gold -= 30; n.shop.healed = true; Game.heal(0.35); Game.persist(); this.shop(n); },
-  reroll() { const run = Game.run, n = Game.C.node; if (run.gold < 20) return; run.gold -= 20; n.shop.offers = Game.offerPerks(3); n.shop.bought = []; Game.persist(); this.shop(n); },
 
   // ---------- rest ----------
   rest(n) {
@@ -334,13 +246,12 @@ const UI = {
     Game.persist();
     if (last) {
       this.show('<h1>THE APOCALYPSE ENDS</h1><p>You beat ' + BOSSES[areaOf(run.act)].name + '.</p>' + this.status() + '<p class="dim" style="max-width:560px;text-align:center">Claim victory now, or loop back to the ruins. Enemies and bosses come back much tougher, victory pays more with every loop.</p><div class="row" style="margin-top:20px">'
-        + '<div class="card" onclick="Game.winRun()" style="--c:#39ff6e"><h3 class="pro">CLAIM VICTORY</h3><p>x' + (1.6 + 0.25 * loops).toFixed(2) + ' cores.</p></div>'
+        + '<div class="card" onclick="Game.winRun()" style="--c:#39ff6e"><h3 class="pro">CLAIM VICTORY</h3><p>End the run as a winner.</p></div>'
         + '<div class="card" onclick="Game.descend()" style="--c:#ff2d3d"><h3 class="con">LOOP ' + (loops + 1) + '</h3><p>Back to the ruins, much tougher. Heal 35%. Keep all perks and weapons.</p></div></div>');
       return;
     }
-    const ex = Math.round(run.cores * 1.25);
-    this.show('<h1>AREA ' + (areaOf(run.act) + 1) + ' CLEARED</h1>' + this.status() + '<p class="dim" style="max-width:560px;text-align:center">Exit now and bank your cores with a 25% bonus, or descend. Deeper acts pay more, but if you die you only keep 40% of everything unbanked.</p><div class="row" style="margin-top:20px">'
-      + '<div class="card" onclick="Game.exitRun()" style="--c:#39ff6e"><h3 class="pro">EXIT WITH LOOT</h3><p>Bank <b>' + ex + '</b> cores now.</p></div>'
+    this.show('<h1>AREA ' + (areaOf(run.act) + 1) + ' CLEARED</h1>' + this.status() + '<p class="dim" style="max-width:560px;text-align:center">Leave the wasteland now, or descend into a tougher area.</p><div class="row" style="margin-top:20px">'
+      + '<div class="card" onclick="Game.exitRun()" style="--c:#39ff6e"><h3 class="pro">EXIT WITH LOOT</h3><p>End the run here.</p></div>'
       + '<div class="card" onclick="Game.descend()" style="--c:#ff2d3d"><h3 class="con">DESCEND</h3><p>Area ' + (areaOf(run.act + 1) + 1) + ': ' + ACT_NAMES[areaOf(run.act + 1)] + '. Heal 35%. Enemies are tougher, rewards bigger.</p></div></div>');
   },
   summary(res) {
@@ -351,7 +262,7 @@ const UI = {
     try { window.parent !== window && window.parent.postMessage({ type: 'gameOver', score: res.run.rooms }, '*'); } catch (e) { /* ignore */ }
   },
   pause() {
-    this.show('<h1 style="margin-top:120px">PAUSED</h1><div class="row"><button class="btn big" onclick="Game.togglePause()">RESUME</button></div><div class="row"><button class="btn" onclick="View.toggle();UI.pause()">VIEW: ' + (View.front ? 'SLANTED FRONT' : 'TOP-DOWN') + ' (V)</button></div><div class="row"><button class="btn red" onclick="if(confirm(\'Abandon the run?\')){Game.paused=false;UI.summary(Game.bank(0.25,\'dead\'))}">ABANDON RUN</button></div><p class="dim sm">P or Backspace also resumes.</p>', 'clear');
+    this.show('<h1 style="margin-top:120px">PAUSED</h1><div class="row"><button class="btn big" onclick="Game.togglePause()">RESUME</button></div><div class="row"><button class="btn red" onclick="if(confirm(\'Abandon the run?\')){Game.paused=false;UI.summary(Game.bank(0.25,\'dead\'))}">ABANDON RUN</button></div><p class="dim sm">P or Backspace also resumes.</p>', 'clear');
   },
 };
 

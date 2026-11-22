@@ -105,7 +105,7 @@ const HEROES = {
     ability: { type: 'shield', name: 'Pressure Valve', cd: 15, dur: 3 }, mod(P) { P.blastRad *= 1.1; } },
   tinker: { clan: 'steam', name: 'Tinkerer', cost: 600, blurb: 'Piercing bolts and a deployable cannon.',
     weapon: { type: 'shot', name: 'Bolt Driver', rate: 2.4, dmg: 16, speed: 480, n: 1, spread: 0.02, pierce: 1, life: 0.9, size: 4 },
-    ability: { type: 'turret', name: 'Auto Cannon', cd: 12, dur: 9, rate: 5, dmg: 9 }, mod(P) { P.goldMul *= 1.15; } },
+    ability: { type: 'turret', name: 'Auto Cannon', cd: 12, dur: 9, rate: 5, dmg: 9 }, mod(P) { } },
   prism: { clan: 'solar', name: 'Prismkeeper', cost: 400, blurb: 'Twin piercing beams, splits light into a burst.',
     weapon: { type: 'shot', name: 'Prism Beam', rate: 3, dmg: 12, speed: 540, n: 2, spread: 0.12, pierce: 1, life: 0.8, size: 3 },
     ability: { type: 'nova', name: 'Prism Burst', cd: 10, r: 180, dmg: 40, knock: 200, burn: 3 }, mod(P) { P.crit += 0.05; } },
@@ -140,41 +140,41 @@ const HEROES = {
 // ---------- Nuclear-Throne style roster: 12 playable characters, loot weapons are separate entries (w_*) ----------
 const PLAYABLE = ['sun', 'weaver', 'hive', 'boiler', 'clock', 'gunner', 'net', 'brute', 'runner', 'siege', 'phantom', 'umbra'];   // grouped by clan: bio, steam, solar, cyber, void;   // Fish, Crystal, Eyes, Melting, Plant, Y.V., Robot, Chicken - all selectable from the start
 const NO_ABILITY = { type: 'overdrive', name: '-', cd: 99, dur: 0, rate: 1 };
-Object.assign(HEROES.sun, { name: 'Fish', cost: 0, start: 'w_revolver', blurb: 'Extra ammo from drops. Q: roll through danger.',
-  ability: { type: 'roll', name: 'Roll', cd: 3.5 }, mod(P) { P.ammoMul *= 1.35; } });
-Object.assign(HEROES.gunner, { name: 'Crystal', cost: 0, start: 'w_revolver', blurb: 'Tough shell. Q: shield that reflects bullets.',
-  ability: { type: 'shield', name: 'Shield', cd: 9, dur: 2.5 }, mod(P) { P.maxhp -= 10; P.taken *= 0.95; } });
+Object.assign(HEROES.sun, { name: 'Fish', cost: 0, start: 'w_revolver', blurb: 'Extra ammo from drops. RMB: roll through danger.',
+  ability: { type: 'roll', name: 'Roll', cd: 0.6 }, mod(P) { P.ammoMul *= 1.35; } });
+Object.assign(HEROES.gunner, { name: 'Crystal', cost: 0, start: 'w_revolver', blurb: 'Tough shell. RMB (hold): shield that reflects bullets.',
+  ability: { type: 'shield', name: 'Shield', cd: 1, hold: 1, drain: 0.4, regen: 0.35 }, mod(P) { P.maxhp -= 10; P.taken *= 0.95; } });
 Object.assign(HEROES.runner, { name: 'Y.V.', cost: 150, start: 'w_revolver', blurb: 'Gun god: shoots faster, ammo goes further. Q: pop pop.',
-  ability: { type: 'overdrive', name: 'Pop Pop', cd: 11, dur: 4, rate: 1.8 }, mod(P) { P.rate *= 1.12; P.crit += 0.05; P.ammoCost *= 0.7; } });
+  ability: { type: 'overdrive', name: 'Pop Pop', cd: 1, hold: 1, drain: 0.3, regen: 0.3, rate: 1.8 }, mod(P) { P.rate *= 1.12; P.crit += 0.05; P.ammoCost *= 0.7; } });
 Object.assign(HEROES.net, { name: 'Eyes', cost: 250, start: 'w_revolver', blurb: 'Loot flies to you. Q: telekinesis shove.',
-  ability: { type: 'nova', name: 'Telekinesis', cd: 6, r: 210, dmg: 6, knock: 430, burn: 0 }, mod(P) { P.magnet *= 2.5; P.xpMul *= 1.1; } });
+  ability: { type: 'nova', name: 'Telekinesis', cd: 1, hold: 1, drain: 0.35, regen: 0.35, r: 210, dmg: 6, knock: 430, burn: 0 }, mod(P) { P.magnet *= 2.5; P.crit += 0.04; } });
 Object.assign(HEROES.boiler, { name: 'Melting', cost: 150, start: 'w_revolver', blurb: 'Fragile, but kills burst into flames. Q: rad burst.',
-  ability: { type: 'nova', name: 'Rad Burst', cd: 9, r: 170, dmg: 70, knock: 240, burn: 6 }, mod(P) { P.maxhp -= 40; P.killBlast += 18; P.burn += 2; } });
+  ability: { type: 'nova', name: 'Rad Burst', cd: 5, r: 170, dmg: 70, knock: 240, burn: 6 }, mod(P) { P.maxhp -= 40; P.killBlast += 18; P.burn += 2; } });
 Object.assign(HEROES.weaver, { name: 'Plant', cost: 350, start: 'w_revolver', blurb: 'Fast and regenerating. Q: snare (slows enemies).',
-  ability: { type: 'zone', name: 'Snare', cd: 10, r: 120, dur: 5, dps: 6, slow: 0.8, poison: 0 }, mod(P) { P.speed *= 1.12; P.regen += 0.6; } });
+  ability: { type: 'zone', name: 'Snare', cd: 3.5, r: 120, dur: 5, dps: 6, slow: 0.8, poison: 0 }, mod(P) { P.speed *= 1.12; P.regen += 0.6; } });
 Object.assign(HEROES.clock, { name: 'Steroids', cost: 450, start: 'w_revolver', start2: 'w_revolver', blurb: 'Dual wields: both guns fire together. Q: berserk.',
-  ability: { type: 'overdrive', name: 'Berserk', cd: 13, dur: 5, rate: 1.5 }, mod(P) { P.dual = 1; P.ammoMul *= 1.2; } });
+  ability: { type: 'overdrive', name: 'Berserk', cd: 1, hold: 1, drain: 0.3, regen: 0.3, rate: 1.5 }, mod(P) { P.dual = 1; P.ammoMul *= 1.2; } });
 Object.assign(HEROES.brute, { name: 'Robot', cost: 550, start: 'w_revolver', blurb: 'Eats weapons for ammo and health with Q.',
-  ability: { type: 'eat', name: 'Eat Weapon', cd: 3 }, mod(P) { P.ammoMul *= 1.1; P.dropMul *= 1.8; P.lootTier += 1; } });
+  ability: { type: 'eat', name: 'Eat Weapon', cd: 0.6 }, mod(P) { P.ammoMul *= 1.1; P.dropMul *= 1.8; P.lootTier += 1; } });
 Object.assign(HEROES.siege, { name: 'Rebel', cost: 650, start: 'w_revolver', blurb: 'Brings a drone ally. Q: call another.',
-  ability: { type: 'turret', name: 'Ally Drone', cd: 8, dur: 14, rate: 4, dmg: 8 }, mod(P) { P.maxhp -= 20; P.regen += 0.3; } });
+  ability: { type: 'turret', name: 'Ally Drone', cd: 4, dur: 14, rate: 4, dmg: 8 }, mod(P) { P.maxhp -= 20; P.regen += 0.3; } });
 Object.assign(HEROES.hive, { name: 'Chicken', cost: 750, start: 'w_revolver', blurb: 'Keeps going when it should be dead (revive). Q: flap dash.',
-  ability: { type: 'roll', name: 'Flap', cd: 3 }, mod(P) { P.phoenix = 1; P.maxhp -= 40; P.speed *= 1.1; } });
-Object.assign(HEROES.phantom, { name: 'Wraith', cost: 850, start: 'w_revolver', blurb: 'Feeds on radiation: more rads. Q: radiation pulse.',
-  ability: { type: 'zone', name: 'Radiation', cd: 9, r: 140, dur: 3, dps: 45, slow: 0.2, poison: 0 }, mod(P) { P.xpMul *= 1.45; } });
+  ability: { type: 'roll', name: 'Flap', cd: 0.6 }, mod(P) { P.phoenix = 1; P.maxhp -= 40; P.speed *= 1.1; } });
+Object.assign(HEROES.phantom, { name: 'Wraith', cost: 850, start: 'w_revolver', blurb: 'Radiation makes it hit harder. Q: radiation pulse.',
+  ability: { type: 'zone', name: 'Radiation', cd: 1, hold: 1, drain: 0.4, regen: 0.3, r: 140, dps: 45, slow: 0.2, poison: 0 }, mod(P) { P.dmg *= 1.12; P.aura += 8; } });
 Object.assign(HEROES.umbra, { name: 'Outlaw', cost: 950, start: 'w_revolver', blurb: 'Crits and ambushes. Q: call down a strike at the cursor.',
-  ability: { type: 'strike', name: 'Strike', cd: 7, dmg: 110, r: 110 }, mod(P) { P.crit += 0.12; P.critMul += 0.3; P.maxhp -= 20; } });
+  ability: { type: 'strike', name: 'Strike', cd: 2.5, dmg: 110, r: 110 }, mod(P) { P.crit += 0.12; P.critMul += 0.3; P.maxhp -= 20; } });
 
 Object.assign(HEROES.sun, { passive: 'More ammo from every pickup.', active: 'Roll: a quick dodge roll, you cannot be hit.' });
-Object.assign(HEROES.gunner, { passive: 'Takes less damage.', active: 'Shield: reflects enemy bullets back for a short time.' });
-Object.assign(HEROES.net, { passive: 'Loot is pulled to you from far away, a bit more rads.', active: 'Telekinesis: shoves enemies and bullets away.' });
+Object.assign(HEROES.gunner, { passive: 'Takes less damage.', active: 'Shield: hold to reflect enemy bullets back. It drains while held and recharges when released.' });
+Object.assign(HEROES.net, { passive: 'Loot is pulled to you from far away.', active: 'Telekinesis: hold to shove enemies and bullets away (drains while held).' });
 Object.assign(HEROES.boiler, { passive: 'Only 4 hearts, but kills explode.', active: 'Rad Burst: a big radiation explosion around you.' });
 Object.assign(HEROES.weaver, { passive: 'Walks faster and slowly regenerates.', active: 'Snare: slows every enemy in the area.' });
-Object.assign(HEROES.runner, { passive: 'Shoots faster and ammo lasts longer.', active: 'Pop Pop: rapid fire for a few seconds.' });
+Object.assign(HEROES.runner, { passive: 'Shoots faster and ammo lasts longer.', active: 'Pop Pop: hold for rapid fire (drains while held).' });
 Object.assign(HEROES.siege, { passive: 'Brings a drone ally and regenerates a little.', active: 'Ally Drone: calls another drone that shoots for you.' });
-Object.assign(HEROES.phantom, { passive: 'Feeds on radiation: collects more rads.', active: 'Radiation: a burning radiation field around you.' });
+Object.assign(HEROES.phantom, { passive: 'Radiation makes it hit 12% harder and burns enemies close to it.', active: 'Radiation: hold for a burning radiation field around you (drains while held).' });
 Object.assign(HEROES.umbra, { passive: 'More critical hits, but fragile.', active: 'Strike: calls down a big blast at your cursor.' });
-Object.assign(HEROES.clock, { passive: 'Dual wield: both weapons fire at once.', active: 'Berserk: fire even faster for a few seconds.' });
+Object.assign(HEROES.clock, { passive: 'Dual wield: both weapons fire at once.', active: 'Berserk: hold to fire even faster (drains while held).' });
 Object.assign(HEROES.hive, { passive: 'Keeps going once when it should be dead.', active: 'Flap: a quick roll, you cannot be hit.' });
 Object.assign(HEROES.brute, { passive: 'Better drop rates: more ammo, health and weapons, and better weapon loot.', active: 'Eat Weapon: turns a nearby weapon into ammo and health.' });
 HEROES.sun.clan = 'aqua'; HEROES.gunner.clan = 'void'; HEROES.weaver.clan = 'bio'; HEROES.brute.clan = 'iron';
@@ -210,7 +210,7 @@ HEROES.hive.ultras = [
   { name: 'Headless', d: '+25% move speed, +20% attack speed.', a: P => { P.speed *= 1.25; P.rate *= 1.2; } }];
 HEROES.phantom.ultras = [
   { name: 'Meltdown', d: 'Burning aura, +1 heart.', a: P => { P.aura += 20; P.maxhp += 10; } },
-  { name: 'Rad Feast', d: '+50% more rads, +15% damage.', a: P => { P.xpMul *= 1.5; P.dmg *= 1.15; } }];
+  { name: 'Rad Feast', d: '+25% damage.', a: P => { P.dmg *= 1.25; } }];
 HEROES.umbra.ultras = [
   { name: 'Assassin', d: '+15% crit chance, crits hit +60% harder.', a: P => { P.crit += 0.15; P.critMul += 0.6; } },
   { name: 'Bombardier', d: 'Explosions 40% wider and +25% blast damage.', a: P => { P.blastRad *= 1.4; P.blastMul *= 1.25; } }];
@@ -283,18 +283,39 @@ const POOL_WEAPONS = {
   katana: ['Katana', { type: 'cone', tier: 3, rate: 3.2, dmg: 15.6, range: 104, arc: 2.2 }],
   energysword: ['Energy Sword', { type: 'cone', tier: 4, rate: 3, dmg: 22.6, range: 112, arc: 2.4 }],
   energyhammer: ['Energy Hammer', { type: 'cone', tier: 5, rate: 1.4, dmg: 66.3, range: 100, arc: 2.6 }],
+  twinpistols: ['Twin Pistols', { type: 'shot', ammo: 'bullet', tier: 1, rate: 4, dmg: 5.2, speed: 580, n: 2, spread: 0.22, pierce: 0, life: 0.8, size: 3 }],
+  burstpistol: ['Burst Pistol', { type: 'shot', ammo: 'bullet', tier: 1, rate: 2.2, dmg: 7, speed: 600, n: 1, spread: 0.06, pierce: 0, life: 0.8, size: 3, burst: 3 }],
+  marksman: ['Marksman Rifle', { type: 'shot', ammo: 'bullet', tier: 2, rate: 1.8, dmg: 25, speed: 850, n: 1, spread: 0.01, pierce: 1, life: 1.1, size: 4 }],
+  ricochet: ['Ricochet Rifle', { type: 'shot', ammo: 'bullet', tier: 3, rate: 3.6, dmg: 12, speed: 640, n: 1, spread: 0.06, pierce: 0, life: 2.2, size: 3, bounce: 5 }],
+  pump: ['Pump Shotgun', { type: 'shot', ammo: 'shell', tier: 2, rate: 0.9, dmg: 11, speed: 540, n: 7, spread: 0.45, pierce: 0, life: 0.38, size: 3 }],
+  ripper: ['Ripper', { type: 'shot', ammo: 'shell', tier: 3, rate: 1.7, dmg: 13, speed: 600, n: 3, spread: 0.3, pierce: 3, life: 0.5, size: 4 }],
+  harpoon: ['Harpoon Gun', { type: 'shot', ammo: 'bolt', tier: 3, rate: 1.1, dmg: 40, speed: 900, n: 1, spread: 0.01, pierce: 6, life: 1.3, size: 5 }],
+  boltfan: ['Bolt Fan', { type: 'shot', ammo: 'bolt', tier: 3, rate: 1.6, dmg: 6, speed: 680, n: 7, spread: 0.9, pierce: 1, life: 0.8, size: 3 }],
+  cluster: ['Cluster Launcher', { type: 'shot', ammo: 'explosive', tier: 4, rate: 0.9, dmg: 8, speed: 420, n: 4, spread: 0.6, pierce: 0, life: 1.1, size: 5, boom: 42, boomDmg: 28 }],
+  minelayer: ['Mine Layer', { type: 'mortar', ammo: 'explosive', tier: 3, rate: 0.8, dmg: 72, r: 80, delay: 1.3, reach: 240 }],
+  rocketpods: ['Rocket Pods', { type: 'shot', ammo: 'explosive', tier: 4, rate: 1.0, dmg: 10, speed: 420, n: 3, spread: 0.3, pierce: 0, life: 1.6, size: 5, boom: 46, boomDmg: 32, homing: 2 }],
+  arcpistol: ['Arc Pistol', { type: 'shot', ammo: 'energy', tier: 1, rate: 4, dmg: 8.5, speed: 780, n: 1, spread: 0.1, pierce: 2, life: 0.3, size: 3, homing: 10 }],
+  ionbeam: ['Ion Beam', { type: 'shot', ammo: 'energy', tier: 4, rate: 12, dmg: 4.6, speed: 1100, n: 1, spread: 0.02, pierce: 99, life: 0.5, size: 2, cost: 0.5 }],
+  pulseshotgun: ['Pulse Shotgun', { type: 'shot', ammo: 'energy', tier: 3, rate: 1.5, dmg: 8, speed: 760, n: 6, spread: 0.5, pierce: 1, life: 0.4, size: 3 }],
+  teslagun: ['Tesla Gun', { type: 'shot', ammo: 'energy', tier: 4, rate: 2.5, dmg: 9, speed: 800, n: 3, spread: 0.4, pierce: 4, life: 0.45, size: 3, homing: 6 }],
+  fryingpan: ['Frying Pan', { type: 'cone', tier: 0, rate: 2.6, dmg: 9, range: 66, arc: 2.0 }],
+  crowbar: ['Crowbar', { type: 'cone', tier: 1, rate: 2.8, dmg: 10.5, range: 78, arc: 1.7 }],
+  pickaxe: ['Pickaxe', { type: 'cone', tier: 2, rate: 1.6, dmg: 24, range: 84, arc: 1.5 }],
+  spear: ['Spear', { type: 'lance', tier: 2, rate: 2.6, dmg: 12, reach: 125, width: 12 }],
+  rapier: ['Rapier', { type: 'lance', tier: 3, rate: 5, dmg: 8, reach: 112, width: 10 }],
+  halberd: ['Halberd', { type: 'cone', tier: 4, rate: 1.5, dmg: 31, range: 120, arc: 2.2 }],
 };
 for (const [id, [name, w]] of Object.entries(POOL_WEAPONS)) HEROES['w_' + id] = { clan: 'steam', name, cost: 99999, blurb: '', weapon: Object.assign({ name, art: id }, w), ability: NO_ABILITY, mod() {}, pool: true };
 
 // ammo types (like the original: bullets, shells, bolts, explosives, energy); melee weapons need none
 const AMMO = {
   bullet: { name: 'BULLETS', col: '#ffd91f', max: 200, amt: 50, L: 'B' },
-  shell: { name: 'SHELLS', col: '#ff6a6a', max: 60, amt: 10, L: 'S' },
-  bolt: { name: 'BOLTS', col: '#39ff6e', max: 60, amt: 10, L: 'T' },
-  explosive: { name: 'EXPLOSIVES', col: '#ff8a1f', max: 60, amt: 8, L: 'X' },
-  energy: { name: 'ENERGY', col: '#3de8ff', max: 90, amt: 15, L: 'E' },
+  shell: { name: 'SHELLS', col: '#ff6a6a', max: 100, amt: 18, L: 'S' },
+  bolt: { name: 'BOLTS', col: '#39ff6e', max: 100, amt: 18, L: 'T' },
+  explosive: { name: 'EXPLOSIVES', col: '#ff8a1f', max: 80, amt: 14, L: 'X' },
+  energy: { name: 'ENERGY', col: '#3de8ff', max: 140, amt: 26, L: 'E' },
 };
-const startAmmo = () => ({ bullet: 150, shell: 24, bolt: 24, explosive: 20, energy: 40 });
+const startAmmo = () => ({ bullet: 150, shell: 50, bolt: 50, explosive: 36, energy: 80 });
 function ammoOf(w) {
   if (w.ammo !== undefined) return w.ammo;
   if (w.type === 'mortar') return 'explosive';
@@ -319,10 +340,12 @@ function kitOf(run) {
 const RARITY = { common: { w: 60, c: '#9fb4c8', price: 40 }, rare: { w: 28, c: '#3d9bff', price: 75 }, epic: { w: 10, c: '#b24bff', price: 130 }, legendary: { w: 3, c: '#ffd91f', price: 200 } };
 const TAGS = { toxic: '#7dff4a', blast: '#ff8a1f', swift: '#3de8ff', vital: '#ff6a8a', orbit: '#b24bff', crit: '#ffd91f', tech: '#9fb4c8' };
 // ---------- Mutations (the level-up upgrades): pick 1 of 4 at every level, each only once per run, like the original ----------
+// mutations the player wants to see more often: bigger ammo capacity, faster ability recharge, no / less explosion damage to yourself
+const PERK_BOOST = { back: 3, packrat: 3, thronebutt: 3, quicklearner: 3, c_overclock: 3, boiling: 3, c_boilercore: 3 };
 const PERKS = {
   rhino: { name: 'Rhino Skin', tags: [], r: 'common', d: '+4 hearts and heal 4 hearts.', heal: 40, a: P => { P.maxhp += 40; } },
   extrafeet: { name: 'Extra Feet', tags: [], r: 'common', d: 'You move 18% faster.', a: P => { P.speed *= 1.18; } },
-  plutonium: { name: 'Plutonium Hunger', tags: [], r: 'common', d: 'Rads and loot fly to you from much further away.', a: P => { P.magnet *= 1.7; } },
+  plutonium: { name: 'Plutonium Hunger', tags: [], r: 'common', d: 'Loot flies to you from much further away.', a: P => { P.magnet *= 1.7; } },
   rabbit: { name: 'Rabbit Paw', tags: [], r: 'common', d: 'Enemies drop more ammo, health and weapons.', a: P => { P.dropMul *= 1.4; } },
   thronebutt: { name: 'Throne Butt', tags: [], r: 'common', d: 'Your active ability recharges 30% faster.', a: P => { P.abCd *= 0.7; } },
   lucky: { name: 'Lucky Shot', tags: [], r: 'common', d: '+10% chance for critical hits.', a: P => { P.crit += 0.1; } },
@@ -349,13 +372,54 @@ const PERKS = {
   open: { name: 'Open Mind', tags: [], r: 'common', d: 'One more mutation to choose from at every level.', a: P => { P.choices += 1; } },
   heavy: { name: 'Heavy Heart', tags: [], r: 'common', d: 'Explosions are 20% wider, +10% damage.', a: P => { P.blastRad *= 1.2; P.dmg *= 1.1; } },
   patience: { name: 'Patience', tags: [], r: 'common', d: 'You take 15% less damage.', a: P => { P.taken *= 0.85; } },
+  // ----- more mutations -----
+  piercer: { name: 'Piercing Rounds', tags: ['tech'], r: 'common', d: 'Your shots pierce one more enemy.', a: P => { P.pierce += 1; } },
+  hotblood: { name: 'Hot Blood', tags: ['blast'], r: 'common', d: 'Your hits set enemies on fire.', a: P => { P.burn += 3; } },
+  toxsaliva: { name: 'Toxic Saliva', tags: ['toxic'], r: 'common', d: 'Your hits poison enemies.', a: P => { P.poison += 4; } },
+  contagion: { name: 'Contagion', tags: ['toxic'], r: 'rare', d: 'Poison spreads to nearby enemies when a poisoned one dies.', a: P => { P.poisonSpread = 1; P.poison += 2; } },
+  leechfangs: { name: 'Leech Fangs', tags: ['toxic', 'vital'], r: 'rare', d: 'Poisoned enemies heal you a little.', a: P => { P.poisonLeech += 0.35; P.poison += 2; } },
+  adrenal: { name: 'Adrenal Gland', tags: ['swift'], r: 'common', d: 'Move 10% faster and shoot 10% faster.', a: P => { P.speed *= 1.1; P.rate *= 1.1; } },
+  ironlung: { name: 'Iron Lungs', tags: ['vital'], r: 'common', d: '+2 hearts and a little regeneration.', a: P => { P.maxhp += 20; P.regen += 0.3; } },
+  glasscannon: { name: 'Glass Cannon', tags: [], r: 'rare', d: '+45% damage, but you take 25% more damage.', a: P => { P.dmg *= 1.45; P.taken *= 1.25; } },
+  berserkgene: { name: 'Berserker Gene', tags: [], r: 'rare', d: 'The lower your health, the harder you hit (up to +60%).', a: P => { P.berserk = 1; } },
+  steadyhands: { name: 'Steady Hands', tags: [], r: 'common', d: 'Standing still makes you hit 50% harder.', a: P => { P.still = 1; } },
+  executioner: { name: 'Executioner', tags: ['crit'], r: 'epic', d: 'Critical hits instantly kill weakened enemies. +5% crit.', a: P => { P.execute = 1; P.crit += 0.05; } },
+  volatile: { name: 'Volatile Crits', tags: ['crit', 'blast'], r: 'rare', d: 'Critical hits explode. +6% crit.', a: P => { P.critBlast = 1; P.crit += 0.06; } },
+  chainreact: { name: 'Chain Reaction', tags: ['tech'], r: 'rare', d: '25% chance that a hit jumps to a nearby enemy.', a: P => { P.chain += 0.25; } },
+  barbed: { name: 'Barbed Skin', tags: [], r: 'common', d: 'Enemies that hit you take damage.', a: P => { P.thorns += 10; } },
+  orbiter: { name: 'Orbiting Blade', tags: ['orbit'], r: 'rare', d: 'A blade circles around you and cuts what it touches.', a: P => { P.blades += 1; } },
+  whirlwind: { name: 'Whirlwind', tags: ['orbit'], r: 'epic', d: 'Two more orbiting blades that hit 20% harder.', a: P => { P.blades += 2; P.bladeDmg *= 1.2; } },
+  magnethands: { name: 'Magnet Hands', tags: [], r: 'common', d: 'Loot flies to you from further away, +8% crit chance.', a: P => { P.magnet *= 1.5; P.crit += 0.08; } },
+  quicklearner: { name: 'Quick Hands', tags: ['swift'], r: 'common', d: 'Your abilities recharge 25% faster.', a: P => { P.abCd *= 0.75; } },
+  mutagen: { name: 'Mutagen', tags: [], r: 'rare', d: 'Every 10 kills you permanently deal +2% damage this run.', a: P => { P.mutagen = 1; } },
+  packrat: { name: 'Pack Rat', tags: [], r: 'common', d: 'Carry 50% more ammo and get 25% more from pickups.', a: P => { P.ammoCap *= 1.5; P.ammoMul *= 1.25; } },
+  thrifty: { name: 'Thrifty', tags: ['tech'], r: 'common', d: 'Shots cost 25% less ammo.', a: P => { P.ammoCost *= 0.75; } },
+  scavenger: { name: 'Scavenger', tags: [], r: 'rare', d: 'More drops and better weapons from chests and enemies.', a: P => { P.dropMul *= 1.3; P.lootTier += 1; } },
+  secondwind: { name: 'Second Wind', tags: ['vital'], r: 'common', d: 'Heal 15% of your health when the level is cleared.', a: P => { P.clearHeal += 0.15; } },
+  regrowth: { name: 'Regrowth', tags: ['vital'], r: 'rare', d: 'Regenerate 0.8 HP per second.', a: P => { P.regen += 0.8; } },
+  armorplate: { name: 'Armor Plating', tags: ['vital'], r: 'common', d: '+2 hearts and you take 8% less damage.', a: P => { P.maxhp += 20; P.taken *= 0.92; } },
+  seekereyes: { name: 'Seeker Eyes', tags: ['tech'], r: 'rare', d: 'All your shots curve towards enemies.', a: P => { P.homing += 3; } },
+  farsight: { name: 'Far Sight', tags: ['tech'], r: 'common', d: 'Your shots and melee reach 30% further.', a: P => { P.range *= 1.3; } },
+  tightgrip: { name: 'Tight Grip', tags: [], r: 'common', d: 'Half the spread, +5% damage.', a: P => { P.spreadMul *= 0.5; P.dmg *= 1.05; } },
+  blastmaster: { name: 'Blast Mastery', tags: ['blast'], r: 'rare', d: 'Explosions are 15% wider and deal 35% more damage.', a: P => { P.blastRad *= 1.15; P.blastMul *= 1.35; } },
+  killerinstinct: { name: 'Killer Instinct', tags: ['blast'], r: 'rare', d: 'Every kill makes the enemy explode.', a: P => { P.killBlast += 14; } },
+  dualgrip: { name: 'Dual Grip', tags: [], r: 'epic', d: 'Both of your weapons fire at the same time.', a: P => { P.dual = 1; } },
+  luckycharm: { name: 'Lucky Charm', tags: ['crit'], r: 'rare', d: '+8% crit chance and crits hit 40% harder.', a: P => { P.crit += 0.08; P.critMul += 0.4; } },
+  gammaburst: { name: 'Gamma Burst', tags: ['toxic'], r: 'rare', d: 'A strong radiation aura burns everything around you.', a: P => { P.aura += 26; } },
+  frostveins: { name: 'Frost Veins', tags: [], r: 'rare', d: 'Enemies move 20% slower.', a: P => { P.foeSlow *= 0.8; } },
+  overkill: { name: 'Overkill', tags: [], r: 'epic', d: '+30% damage and your shots pierce one more enemy.', a: P => { P.dmg *= 1.3; P.pierce += 1; } },
+  speeddemon: { name: 'Speed Demon', tags: ['swift'], r: 'epic', d: 'Shoot 25% faster and move 10% faster.', a: P => { P.rate *= 1.25; P.speed *= 1.1; } },
+  titanheart: { name: 'Titan Heart', tags: ['vital'], r: 'legendary', d: '+6 hearts and healing is 30% stronger.', a: P => { P.maxhp += 60; P.healMul *= 1.3; } },
+  deathaura: { name: 'Death Aura', tags: ['toxic'], r: 'legendary', d: 'A deadly aura and thorns that punish everything near you.', a: P => { P.aura += 40; P.thorns += 14; } },
+  perfectaim: { name: 'Perfect Aim', tags: ['crit', 'tech'], r: 'legendary', d: 'Almost no spread, +12% crit, one more pierce.', a: P => { P.spreadMul *= 0.2; P.crit += 0.12; P.pierce += 1; } },
+  armageddon: { name: 'Armageddon', tags: ['blast'], r: 'legendary', d: 'Explosions are 30% wider, +60% damage, and kills explode.', a: P => { P.blastRad *= 1.3; P.blastMul *= 1.6; P.killBlast += 22; } },
 };
 
 // ---------- Set bonuses: collect N perks of a tag ----------
 const SYN = {
   toxic: { n: 3, name: 'Plague', d: 'Poison ticks 50% faster and slows enemies.', a: P => { P.poisonMul *= 1.5; P.poisonSlow = 1; } },
   blast: { n: 3, name: 'Demolition', d: 'All explosions deal +40% damage.', a: P => { P.blastMul *= 1.4; } },
-  swift: { n: 3, name: 'Slipstream', d: 'Dashing leaves a trail that burns enemies.', a: P => { P.trail = 1; } },
+  swift: { n: 3, name: 'Slipstream', d: '+15% move speed and +10% attack speed.', a: P => { P.speed *= 1.15; P.rate *= 1.1; } },
   vital: { n: 3, name: 'Lifeblood', d: '+30 max HP and +1 regen.', a: P => { P.maxhp += 30; P.regen += 1; } },
   orbit: { n: 3, name: 'Gyroscope', d: 'Blades knock enemies back and deflect bullets.', a: P => { P.bladeKnock = 1; P.blades += 1; } },
   crit: { n: 3, name: 'Executioner', d: 'Crits against weakened enemies (<30% HP) kill instantly.', a: P => { P.execute = 1; } },
@@ -380,30 +444,6 @@ const CURSES = {
   swarm: { name: 'Swarm', d: '+50% more enemies.', count: 1.5 },
   deadly: { name: 'Deadly', d: 'Enemies deal +60% damage.', dmg: 1.6 },
   fragile: { name: 'Blood Pact', d: 'Your max HP is halved during this room.', halfhp: true },
-};
-
-// ---------- Hero skill tree: spend cores per hero. Every hero has the same budget of RANK_CAP levels, so you have to choose. ----------
-const RANK_CAP = 8;
-const TREE = {
-  power: { name: 'Power', branch: 'Offense', d: '+6% damage per level.', max: 3, a: (P, l) => { P.dmg *= 1 + 0.06 * l; } },
-  tempo: { name: 'Tempo', branch: 'Offense', d: '+6% attack speed per level.', max: 3, a: (P, l) => { P.rate *= 1 + 0.06 * l; } },
-  precision: { name: 'Precision', branch: 'Offense', d: '+3% crit chance per level.', max: 3, a: (P, l) => { P.crit += 0.03 * l; } },
-  hull: { name: 'Hull', branch: 'Defense', d: '+10 max HP per level.', max: 3, a: (P, l) => { P.maxhp += 10 * l; } },
-  ward: { name: 'Ward', branch: 'Defense', d: '-4% damage taken per level.', max: 3, a: (P, l) => { P.taken *= 1 - 0.04 * l; } },
-  mend: { name: 'Mend', branch: 'Defense', d: '+0.4 HP regen per level.', max: 3, a: (P, l) => { P.regen += 0.4 * l; } },
-  agility: { name: 'Agility', branch: 'Utility', d: '+4% move speed per level.', max: 3, a: (P, l) => { P.speed *= 1 + 0.04 * l; } },
-  focus: { name: 'Focus', branch: 'Utility', d: '-7% ability cooldown per level.', max: 3, a: (P, l) => { P.abCd *= 1 - 0.07 * l; } },
-  greed: { name: 'Greed', branch: 'Utility', d: '+10% gold from enemies per level.', max: 3, a: (P, l) => { P.goldMul *= 1 + 0.1 * l; } },
-};
-const treeCost = l => 50 * (l + 1);
-const treeRank = t => Object.values(t || {}).reduce((a, b) => a + b, 0);
-
-// ---------- Meta upgrades (small, capped) ----------
-const META_UPS = {
-  vit: { name: 'Vitality', d: '+0.5 heart per level.', max: 4, cost: l => 60 * (l + 1), a: (P, l) => { P.maxhp += 5 * l; } },
-  fort: { name: 'Fortune', d: '+25 starting gold per level.', max: 4, cost: l => 50 * (l + 1), a: () => {} },
-  reflex: { name: 'Reflexes', d: '-4% dash cooldown per level.', max: 4, cost: l => 70 * (l + 1), a: (P, l) => { P.dashCd *= 1 - 0.04 * l; } },
-  salvage: { name: 'Salvage', d: 'Keep +8% more cores when you die (per level).', max: 3, cost: l => 90 * (l + 1), a: () => {} },
 };
 
 // ---------- Enemies ----------
@@ -467,17 +507,15 @@ const BOSSES = [
 function newStats() {
   return { dmg: 1, rate: 1.3, speed: 1, maxhp: 80, pierce: 0, extra: 0, crit: 0.05, critMul: 1.75, killHeal: 0, regen: 0, dashCd: 1, dashDmg: 0, range: 1,
     blades: 0, spin: 1, bladeDmg: 1, orbitR: 1, bladeKnock: 0, poison: 0, poisonMul: 1, poisonSlow: 0, poisonSpread: 0, poisonLeech: 0, burn: 0, killBlast: 0, blastRad: 1, blastMul: 1,
-    chain: 0, thorns: 0, taken: 1, goldMul: 1, aura: 0, clearHeal: 0, enemyHp: 1, noHeal: 0, homing: 0, phoenix: 0, dashBlast: 0, critBlast: 0, berserk: 0, still: 0,
-    mutagen: 0, trail: 0, execute: 0, abCd: 1, ammoMul: 1, magnet: 1, dual: 0, xpMul: 1, ammoCost: 1, dropMul: 1, lootTier: 0, meleeMul: 1, choices: 0, healMul: 1, ammoCap: 1, foeSlow: 1, refund: 0, shellMul: 1, energyMul: 1, spreadMul: 1, knockMul: 1, stress: 0, blastImmune: 0, bloodlust: 0, boltHoming: 0, tags: {} };
+    chain: 0, thorns: 0, taken: 1, aura: 0, clearHeal: 0, enemyHp: 1, noHeal: 0, homing: 0, phoenix: 0, dashBlast: 0, critBlast: 0, berserk: 0, still: 0,
+    mutagen: 0, trail: 0, execute: 0, abCd: 1, ammoMul: 1, magnet: 1, dual: 0, ammoCost: 1, dropMul: 1, lootTier: 0, meleeMul: 1, choices: 0, healMul: 1, ammoCap: 1, foeSlow: 1, refund: 0, shellMul: 1, energyMul: 1, spreadMul: 1, knockMul: 1, stress: 0, blastImmune: 0, bloodlust: 0, boltHoming: 0, tags: {} };
 }
 function buildStats(run, save) {
   const hero = HEROES[run.hero], P = newStats();
   CLANS[run.clan].mod(P);
   if (hero.mod) hero.mod(P);
-  for (const [k, l] of Object.entries(save.meta || {})) if (META_UPS[k] && l) META_UPS[k].a(P, l);
   for (const id of run.perks) { const pk = PERKS[id]; pk.a(P); for (const t of pk.tags) P.tags[t] = (P.tags[t] || 0) + 1; }
   if (clanPerkCount(run) >= CLAN_SET[run.clan].n) CLAN_SET[run.clan].a(P);
-  for (const [k, l] of Object.entries((save.tree && save.tree[run.hero]) || {})) if (TREE[k] && l) TREE[k].a(P, l);
   for (const id in P.tags) if (SYN[id] && P.tags[id] >= SYN[id].n) SYN[id].a(P);
   for (const id of run.drawbacks) DRAWBACKS[id].a(P);
   if (run.ultra != null && hero.ultras && hero.ultras[run.ultra]) hero.ultras[run.ultra].a(P);

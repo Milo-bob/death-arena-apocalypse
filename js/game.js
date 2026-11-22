@@ -63,7 +63,7 @@ function genDoors(room) {
   }
   if (room === 2 && !types.some(t => t === 'shop' || t === 'rest')) types[0] = pick(['shop', 'rest']);
   if (room === 4 && !types.includes('rest')) types[n - 1] = 'rest';
-  return types.map(type => ({ type, reward: type === 'fight' ? pick(['perk', 'perk', 'gold']) : type === 'elite' ? 'rare perk' : type === 'curse' ? 'epic perk' : '' }));
+  return types.map(type => ({ type, reward: type === 'fight' ? 'perk' : type === 'elite' ? 'rare perk' : type === 'curse' ? 'epic perk' : '' }));
 }
 
 const Game = {
@@ -75,7 +75,7 @@ const Game = {
   // ================= run management =================
   startRun() {
     const s = Save.data, hero = HEROES[s.hero];
-    this.run = { hero: s.hero, clan: hero.clan, act: 0, room: 0, cur: { type: 'fight', reward: 'perk' }, doors: [], perks: [], drawbacks: [], hp: 100, gold: 20 + 25 * (s.meta.fort || 0), cores: 0,
+    this.run = { hero: s.hero, clan: hero.clan, act: 0, room: 0, cur: { type: 'fight', reward: 'perk' }, doors: [], perks: [], drawbacks: [], hp: 100,
       heat: s.heat, kills: 0, rooms: 0, bonus: { mut: 0 }, mutKills: 0, killAcc: 0, phoenixUsed: false, t0: Date.now() };
     this.P = buildStats(this.run, s); this.run.hp = this.P.maxhp;
     this.enterRoom();
@@ -116,11 +116,11 @@ const Game = {
   interact() {
     const C = this.C; if (!C || !C.near || this.frozen || this.fade || this.paused) return;
     const o = C.near; this.frozen = true; Input.keys = {}; Input.down = false;
-    if (o.kind === 'shop') UI.shop(C.node); else if (o.kind === 'rest') UI.rest(C.node); else if (o.kind === 'event') UI.event(C.node); else if (o.kind === 'curse') UI.curse(C.node);
+    if (o.kind === 'rest') UI.rest(C.node); else if (o.kind === 'event') UI.event(C.node); else if (o.kind === 'curse') UI.curse(C.node);
   },
   worldUpdate() {
     const C = this.C, p = C.p; C.near = null;
-    if (C.orb && dist(C.orb, p) < 30) { const o = C.orb; this.frozen = true; Input.down = false; Input.keys = {}; UI.reward(o.reward, o.cores); return; }
+    if (C.orb && dist(C.orb, p) < 30) { const o = C.orb; this.frozen = true; Input.down = false; Input.keys = {}; UI.reward(o.reward); return; }
     if (C.obj && !C.obj.used && dist(C.obj, p) < 52) C.near = C.obj;
     if (C.doorsOpen && p.y < ARENA.y0 + 30 && !this.fade) {
       const ds = C.doors || [];
@@ -129,7 +129,7 @@ const Game = {
   },
   perkPool(minR) {
     const run = this.run, order = ['common', 'rare', 'epic', 'legendary'], ownedTags = this.P.tags;
-    const base = Object.keys(PERKS).filter(id => !run.perks.includes(id) && (!PERKS[id].clan || PERKS[id].clan === run.clan) && (!PERKS[id].lock || Save.data.perks[id]));
+    const base = Object.keys(PERKS).filter(id => !run.perks.includes(id) && (!PERKS[id].clan || PERKS[id].clan === run.clan));
     for (let m = order.indexOf(minR || 'common'); m >= 0; m--) {
       const pool = base.filter(id => order.indexOf(PERKS[id].r) >= m);
       if (pool.length >= 3 || m === 0) return pool;
@@ -140,7 +140,7 @@ const Game = {
     let pool = this.perkPool(minR), out = [];
     const ownedTags = this.P.tags;
     while (out.length < n && pool.length) {
-      const id = wpick(pool, i => RARITY[PERKS[i].r].w * (PERKS[i].clan ? 1.6 : 1) * (1 + 0.9 * PERKS[i].tags.reduce((s, t) => s + Math.min(2, ownedTags[t] || 0), 0)));
+      const id = wpick(pool, i => RARITY[PERKS[i].r].w * (PERKS[i].clan ? 1.6 : 1) * (PERK_BOOST[i] || 1) * (1 + 0.9 * PERKS[i].tags.reduce((s, t) => s + Math.min(2, ownedTags[t] || 0), 0)));
       out.push(id); pool = pool.filter(x => x !== id);
     }
     return out;
@@ -168,8 +168,7 @@ const Game = {
   winRun() { UI.summary(this.bank(1.6 + 0.25 * Math.floor(this.run.act / LOOP_LEVELS), 'win')); },
   abandon() { UI.summary(this.bank(0.25, 'dead')); },
   die() {
-    const salv = (Save.data.meta.salvage || 0) * 0.08;
-    UI.summary(this.bank(0.4 + salv, 'dead'));
+    UI.summary(this.bank(0.4, 'dead'));
   },
 
   // ================= room =================
@@ -177,7 +176,7 @@ const Game = {
     const run = this.run, P = this.P = buildStats(run, Save.data), act = run.act, row = node.r;
     if (curse && curse.halfhp) { P.maxhp = Math.round(P.maxhp / 2); run.hp = Math.min(run.hp, P.maxhp); }
     const boss = node.type === 'boss', elite = node.type === 'elite', safe = ['shop', 'rest', 'event', 'curse'].includes(node.type) && !curse;
-    const C = this.C = { node, curse: curse || {}, t: 0, intro: 1.2, en: [], eb: [], pb: [], haz: [], zones: [], gold: [], parts: [], fl: [], turrets: [], beams: [], markers: [], pillars: [], fx: [],
+    const C = this.C = { node, curse: curse || {}, t: 0, intro: 1.2, en: [], eb: [], pb: [], haz: [], zones: [], heals: [], parts: [], fl: [], turrets: [], beams: [], markers: [], pillars: [], fx: [],
       waves: [], waveIdx: 0, waveCd: 0, shake: 0, cleared: false, clearT: 0, boss: null, bladeAng: 0, noHit: true, banner: 0, bannerText: '', roomMax: P.maxhp, elitesLeft: elite ? 2 : 0,
       p: { x: W / 2, y: 450, r: 12, aim: -Math.PI / 2, fireT: 0.3, dashT: 0, dashCd: 0, dashDir: 0, dashHit: [], inv: 0.5, abT: 2, flash: 0, over: 0, overRate: 1, shield: 0, still: 0, trailT: 0, regenAcc: 0, face: -Math.PI / 2 },
       hpS: (1 + 0.35 * act) * (1 + 0.04 * row) * P.enemyHp * ((curse && curse.hp) || 1),
@@ -317,9 +316,7 @@ const Game = {
     if (this.dropWeapon) this.dropWeapon(e);
     if (this.onKill) this.onKill(e);
     if (e.boss) { C.eb.length = 0; C.haz.length = 0; C.beams.length = 0; C.markers.length = 0; for (const q of C.en) if (q !== e) q.dead = true; C.shake = 14; }
-    const gv = Math.max(1, Math.round((e.boss ? 40 : e.elite ? 12 : ENEMY[e.type].cost * rnd(1.5, 3)) * P.goldMul));
-    C.gold.push({ x: e.x, y: e.y, v: gv, vx: rnd(-60, 60), vy: rnd(-60, 60), t: 0 });
-    if (Math.random() < 0.04 && !P.noHeal) C.gold.push({ x: e.x, y: e.y, v: 0, heal: 8, vx: rnd(-40, 40), vy: rnd(-40, 40), t: 0 });
+    if (Math.random() < 0.04 && !P.noHeal) C.heals.push({ x: e.x, y: e.y, v: 0, heal: 8, vx: rnd(-40, 40), vy: rnd(-40, 40), t: 0 });
     run.killAcc += P.killHeal;
     if (run.killAcc >= 1) { run.killAcc -= 1; this.healP(1); }
     if (P.mutagen && ++run.mutKills % 10 === 0) { run.bonus.mut += 0.02; this.floatText(C.p.x, C.p.y - 24, 'MUTATION +2%', '#7dff4a'); }
@@ -374,11 +371,17 @@ const Game = {
     this.collide(p, p.r);
     if (p.dashCd > 0) p.dashCd -= dt;
     if (p.inv > 0) p.inv -= dt; if (p.flash > 0) p.flash -= dt; if (p.over > 0) p.over -= dt; if (p.shield > 0) p.shield -= dt; if (p.abT > 0) p.abT -= dt;
-    if ((Input.keys.q || Input.rdown) && p.abT <= 0) this.useAbility();
+    const ab = this.scaledAbility(kitOf(run).ability), held = Input.keys.q || Input.rdown;
+    if (ab.hold) {   // Nuclear-Throne style: hold the button, an energy bar drains while it is active and refills when released
+      if (p.abE === undefined) { p.abE = 1; p.abLock = false; }
+      if (held && !p.abLock && p.abE > 0) { p.abE -= ab.drain * dt; this.holdAbility(ab, dt); if (p.abE <= 0) { p.abE = 0; p.abLock = true; } }
+      else { p.abE = Math.min(1, p.abE + ab.regen / P.abCd * dt); if (p.abLock && p.abE >= 0.3) p.abLock = false; }
+    } else if (held && p.abT <= 0) this.useAbility();
     if (P.regen && run.hp < P.maxhp) run.hp = Math.min(P.maxhp, run.hp + P.regen * dt);
     // ---- attack ----
     const w = kitOf(run).weapon;
     if (p.fireT > 0) p.fireT -= dt;
+    if (p.wa) p.wa.t += dt;
     if ((Input.down || Input.auto) && p.fireT <= 0 && w.type !== 'blades' && C.intro < 1.0) {
       if (this.useAmmo(w)) { this.fire(w); if (P.dual && run.wpn2) { const w2 = HEROES[run.wpn2].weapon; if (w2.type !== 'blades' && this.useAmmo(w2)) this.fire(w2); } p.fireT = 1 / (w.rate * FIRE_RATE_MUL * P.rate * (1 +P.stress * (1 - run.hp / P.maxhp)) * (p.over > 0 ? p.overRate : 1)); } else { p.fireT = 0.25; this.noAmmo(); }
     }
@@ -398,27 +401,22 @@ const Game = {
     C.en = C.en.filter(e => !e.dead);
     this.updateFx(dt);
     this.encUpdate(dt);
-    if (!C.enc) for (const gd of C.gold) gd.pull = true;
+    if (!C.enc) for (const gd of C.heals) gd.pull = true;
     this.worldUpdate(dt);
     this.camUpdate(dt);
   },
   roomCleared() {
     const run = this.run, C = this.C, n = C.node;
     run.rooms++;
-    const base = { fight: 6, elite: 14, curse: 22, boss: 45 }[n.type] || 0;
-    const got = Math.round(base * (1 + 0.35 * run.act));
-    run.cores += got;
     this.P = buildStats(run, Save.data); run.hp = Math.min(run.hp, this.P.maxhp);
     if (this.P.clearHeal) this.heal(this.P.clearHeal);
     let reward;
     if (n.type === 'boss') reward = { kind: 'perk', min: 'rare' };
     else if (n.type === 'elite') reward = { kind: 'perk', min: 'rare' };
     else if (n.type === 'curse') reward = { kind: 'perk', min: 'epic' };
-    else reward = n.reward === 'gold' ? { kind: 'gold', amount: Math.round(35 + 8 * n.r) } : { kind: 'perk', min: 'common' };
-    this.floatText(C.p.x, C.p.y - 34, '+' + got + ' CORES', '#3de8ff', 1.1);
+    else reward = { kind: 'perk', min: 'common' };
     C.doors = n.type === 'boss' ? [{ type: 'exit', reward: '' }] : run.doors;
-    if (reward.kind === 'gold') { run.gold += reward.amount; this.floatText(C.p.x, C.p.y - 52, '+' + reward.amount + ' GOLD', '#ffd91f', 1.2); C.doorsOpen = true; }
-    else { C.orb = { x: W / 2, y: 300, reward, cores: got }; C.doorsOpen = false; }
+    C.orb = { x: W / 2, y: 300, reward }; C.doorsOpen = false;
     this.persist();
   },
   updateWaves(dt) {
@@ -457,6 +455,7 @@ const Game = {
   // ---------- weapons ----------
   fire(w, noq) {
     const C = this.C, P = this.P, p = C.p, hero = HEROES[this.run.hero], col = CLANS[hero.clan].color, a0 = p.aim = this.assistAim(w);
+    this.weaponKick(w, a0);
     C.shake = Math.max(C.shake, w.dmg >= 25 || w.type === 'mortar' ? 3 : 1);
     if (w.type === 'shot') {
       const n = w.n + P.extra; Sfx.shoot(ammoOf(w), w.rate >= 7);
@@ -515,8 +514,31 @@ const Game = {
     }
     for (const e of C.en) if (e.bladeCd > 0) e.bladeCd -= dt;
   },
+  scaledAbility(a) {   // abilities grow with your level: more damage / duration / healing, wider areas, faster recharge
+    const lv = Math.max(0, ((this.run && this.run.plv) || 1) - 1), sc = 1 + 0.06 * lv, rc = 1 + 0.03 * lv, cs = 1 + 0.025 * lv, o = Object.assign({}, a);
+    for (const k of ['dmg', 'dps', 'heal', 'dur', 'knock']) if (o[k]) o[k] *= sc;
+    for (const k of ['r', 'dist']) if (o[k]) o[k] *= rc;
+    if (o.rate > 1) o.rate = 1 + (o.rate - 1) * sc;
+    if (o.cd) o.cd /= cs;
+    if (o.drain) o.drain /= cs;
+    if (o.regen) o.regen *= cs;
+    return o;
+  },
+  holdAbility(a, dt) {
+    const C = this.C, P = this.P, p = C.p, col = CLANS[this.run.clan].color;
+    if (a.type === 'shield') p.shield = Math.max(p.shield, 0.12);
+    else if (a.type === 'overdrive') { p.over = Math.max(p.over, 0.12); p.overRate = a.rate; }
+    else if (a.type === 'nova') {
+      for (const e of C.en) if (!e.dead && dist(e, p) < a.r + e.r) { this.knock(e, Math.atan2(e.y - p.y, e.x - p.x), a.knock * dt * 0.5); e.vx *= 0.97; e.vy *= 0.97; }
+      for (const b of C.eb) if (dist(b, p) < a.r) { const an = Math.atan2(b.y - p.y, b.x - p.x), v = Math.hypot(b.vx, b.vy); b.vx = Math.cos(an) * v; b.vy = Math.sin(an) * v; }
+      if (Math.random() < 0.5) C.parts.push({ x: p.x + rnd(-a.r, a.r) * 0.5, y: p.y + rnd(-a.r, a.r) * 0.5, vx: 0, vy: 0, t: 0.25, max: 0.25, col, s: 4 });
+    } else if (a.type === 'zone') {
+      for (const e of C.en) if (!e.dead && dist(e, p) < a.r + e.r) { this.dealDamage(e, a.dps * dt, false); e.slow = Math.max(e.slow, a.slow); e.slowT = 0.2; }
+      if (Math.random() < 0.6) C.parts.push({ x: p.x + rnd(-a.r, a.r) * 0.7, y: p.y + rnd(-a.r, a.r) * 0.7, vx: 0, vy: -20, t: 0.4, max: 0.4, col: '#7dff4a', s: 4 });
+    }
+  },
   useAbility() {
-    const C = this.C, P = this.P, p = C.p, a = kitOf(this.run).ability, col = CLANS[this.run.clan].color;
+    const C = this.C, P = this.P, p = C.p, a = this.scaledAbility(kitOf(this.run).ability), col = CLANS[this.run.clan].color;
     p.abT = a.cd * P.abCd * (a.type === 'roll' ? 1.7 : 1); Sfx.ability(a.type);
     if (a.type === 'eat') { this.eatWeapon(); return; }
     if (a.type === 'roll') { p.dashDir = p.aim; p.dashT = 0.2; p.dashHit = []; p.inv = Math.max(p.inv, 0.22); Sfx.dash(); return; }
@@ -832,17 +854,17 @@ const Game = {
       }
     }
     C.turrets = C.turrets.filter(t => t.t > 0);
-    for (const g of C.gold) {
+    for (const g of C.heals) {
       g.t += dt; const d = dist(g, p);
       if (g.pull || d < 110) { const a = Math.atan2(p.y - g.y, p.x - g.x), s = 360; g.vx = Math.cos(a) * s; g.vy = Math.sin(a) * s; }
       else { g.vx *= 0.95; g.vy *= 0.95; }
       g.x += g.vx * dt; g.y += g.vy * dt;
       if (d < 16 && g.t > 0.15) {
         g.got = true; Sfx.pick();
-        if (g.heal) this.healP(g.heal); else this.run.gold += g.v;
+        if (g.heal) this.healP(g.heal);
       }
     }
-    C.gold = C.gold.filter(g => !g.got);
+    C.heals = C.heals.filter(g => !g.got);
   },
   updateFx(dt) {
     const C = this.C;
@@ -904,10 +926,9 @@ const Game = {
     }
     for (const m of C.markers) { const k = 1 - m.t / m.max; ctx.globalAlpha = 0.25 + 0.55 * k; this.sprite('e:' + m.type, m.x, m.y, k * 6, 2); ctx.globalAlpha = 1; pxRing(m.x, m.y, 18 * (1.4 - 0.4 * k), ENEMY[m.type].col, 2); }
     // pickups
-    for (const g of C.gold) {
+    for (const g of C.heals) {
       const x = snap(g.x), y = snap(g.y);
       if (g.heal) { ctx.fillStyle = '#39ff6e'; ctx.fillRect(x - 6, y - 2, 12, 4); ctx.fillRect(x - 2, y - 6, 4, 12); ctx.fillStyle = '#e6fdff'; ctx.fillRect(x - 2, y - 2, 4, 4); }
-      else { const s = g.v > 8 ? 4 : 3; ctx.fillStyle = '#ffd91f'; ctx.fillRect(x - s, y - s, s * 2, s * 2); ctx.fillStyle = '#fff3a0'; ctx.fillRect(x - s, y - s, s * 2, 2); ctx.fillRect(x - s, y - s, 2, s * 2); ctx.fillStyle = '#a07a00'; ctx.fillRect(x + s - 2, y - s + 2, 2, s * 2 - 2); ctx.fillRect(x - s + 2, y + s - 2, s * 2 - 2, 2); }
     }
     // turrets
     for (const t of C.turrets) { const x = snap(t.x), y = snap(t.y); pxLine(t.x, t.y, t.x + Math.cos(t.a || 0) * 16, t.y + Math.sin(t.a || 0) * 16, 6, t.col); ctx.fillStyle = t.col; ctx.fillRect(x - 8, y - 8, 16, 16); ctx.fillStyle = '#0a0f26'; ctx.fillRect(x - 6, y - 6, 12, 12); ctx.fillStyle = '#e6fdff'; ctx.fillRect(x - 2, y - 2, 4, 4); }
@@ -1006,7 +1027,7 @@ const Game = {
     if (p.inv > 0 && Math.floor(C.t * 20) % 2 === 0 && p.dashT <= 0) ctx.globalAlpha = 0.45;
     if (p.shield > 0) pxRing(p.x, p.y, 22, '#ffe94a', 2);
     if (p.over > 0) pxRing(p.x, p.y, 19, '#ffd91f', 2);
-    if (View.front) this.drawHero(p); else { this.sprite(this.run.hero, p.x, p.y, p.aim, 2, p.flash > 0); if (WEAPON_ART[kitOf(this.run).weapon.art]) this.drawArtWeapon(p); }
+    this.sprite(this.run.hero, p.x, p.y, p.aim, 2, p.flash > 0); this.drawHeldTop(p);
     ctx.globalAlpha = 1;
   },
   drawEnemy(e, p) {
@@ -1020,8 +1041,7 @@ const Game = {
     if (e.type === 'boss') {
       const fa = e.pat === 'charge' && e.pt > 0.9 ? e.ang : ang;
       if (e.pat === 'charge' && e.pt < 0.9) { ctx.globalAlpha = 0.3 + 0.3 * Math.sin(C.t * 30); pxLine(e.x, e.y, e.x + Math.cos(e.ang) * 900, e.y + Math.sin(e.ang) * 900, Math.round(e.r / 2) * 2, '#ff3a3a'); ctx.globalAlpha = 1; }
-      if (View.front) this.drawFront('b:' + areaOf(this.run.act) + ':f', e.x, e.y, Math.cos(fa) >= 0 ? 1 : -1, 2, fl, e.r, e.pat ? -Math.abs(Math.sin(C.t * 8)) * 3 : -Math.sin(C.t * 2) * 1.5);
-      else this.sprite('b:' + areaOf(this.run.act), e.x, e.y, fa, 2, fl);
+      this.sprite('b:' + areaOf(this.run.act), e.x, e.y, fa, 2, fl);
     } else {
       let fa = ang;
       const eai = ENEMY[e.type].ai || e.type;
@@ -1037,8 +1057,7 @@ const Game = {
       if (e.type === 'bomber' && e.state === 'fuse') { pxRing(e.x, e.y, 76, 'rgba(255,100,120,.7)', 2); if (Math.floor(C.t * 14) % 2) fa += 0; }
       const sc = e.type === 'bomber' && e.state === 'fuse' ? 2 : 2;
       const flw = fl || (e.type === 'bomber' && e.state === 'fuse' && Math.floor(C.t * 14) % 2 === 0);
-      if (View.front) { const mv = ENEMY[e.type].speed > 0; this.drawFront('e:' + e.type + ':f', e.x, e.y, Math.cos(fa) >= 0 ? 1 : -1, sc, flw, e.r, mv ? -Math.abs(Math.sin(C.t * 12 + e.x * 0.05)) * 2.5 : 0); }
-      else this.sprite('e:' + e.type, e.x, e.y, fa, sc, flw);
+      this.sprite('e:' + e.type, e.x, e.y, fa, sc, flw);
     }
     ctx.globalAlpha = 1;
     if (!e.boss && e.hp < e.maxhp) { const x = snap(e.x) - 12, y = snap(e.y - e.r - 8); ctx.fillStyle = '#000'; ctx.fillRect(x - 2, y - 2, 28, 6); ctx.fillStyle = e.elite ? ELITE_MODS[e.elite].col : '#ff5a5a'; ctx.fillRect(x, y, 24 * clamp(e.hp / e.maxhp, 0, 1), 2); }
@@ -1054,9 +1073,9 @@ const Game = {
     this.drawHearts(14, 7, run.hp, P.maxhp);
     ctx.font = '12px Silk, monospace'; ctx.textAlign = 'left'; ctx.fillStyle = '#fff'; 
     // dash / ability pips
-    const ak = p.abT > 0 ? 1 - p.abT / (w.ability.cd * P.abCd) : 1;
-    pxBar(14, 32, 230, 10, ak, ak >= 1 ? clan.color : '#555');
-    ctx.font = '9px Silk, monospace'; ctx.fillStyle = '#000'; ctx.fillStyle = '#fff'; ctx.fillText('[RMB] ' + w.ability.name.toUpperCase().slice(0, 20) + (ak >= 1 ? '  READY' : ''), 20, 41);
+    const ak = w.ability.hold ? (p.abE === undefined ? 1 : p.abE) : p.abT > 0 ? 1 - p.abT / (this.scaledAbility(w.ability).cd * P.abCd) : 1;
+    pxBar(14, 32, 230, 10, ak, ak >= 1 || (w.ability.hold && !p.abLock) ? clan.color : '#555');
+    ctx.font = '9px Silk, monospace'; ctx.fillStyle = '#000'; ctx.fillStyle = '#fff'; ctx.fillText('[RMB] ' + w.ability.name.toUpperCase().slice(0, 20) + (w.ability.hold ? '  HOLD' : ak >= 1 ? '  READY' : ''), 20, 41);
     // center info
     ctx.textAlign = 'center'; ctx.font = '12px Silk, monospace'; ctx.fillStyle = '#9fc'; ctx.fillText(this.levelLabel ? this.levelLabel() : '', W / 2, 18);
     ctx.fillStyle = '#fff'; ctx.fillText(HEROES[run.hero].name.toUpperCase() + ' / ' + w.weapon.name.toUpperCase(), W / 2, 36);
@@ -1115,7 +1134,6 @@ addEventListener('keydown', e => {
   if ([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'backspace'].includes(k)) e.preventDefault();
   Input.keys[k] = true;
   if (k === 'p' || k === 'backspace') Game.togglePause();
-  if (k === 'v' && Game.mode !== 'menu') View.toggle();
   if (k === 'f' && Game.mode === 'fight') Input.auto = !Input.auto;
   if (k === 'e') Game.interact();
   if (k === 'm') Music.toggle();

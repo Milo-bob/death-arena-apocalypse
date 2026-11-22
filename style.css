@@ -80,3 +80,15 @@ body.fight #cv{cursor:none}
 .mico{display:block;width:48px;height:48px;image-rendering:pixelated;margin:0 auto 6px;filter:drop-shadow(0 0 6px var(--c))}
 .lvcard .mico{width:72px;height:72px;margin-bottom:10px}
 .lvcard:hover .mico{transform:scale(1.12) rotate(-4deg)}
+
+/* level-up: all mutation cards must fit on one screen without scrolling */
+.screen:has(.lvrow){overflow:hidden;padding-top:10px}
+.screen:has(.lvrow) .lvbig{font-size:34px;letter-spacing:4px}
+.screen:has(.lvrow) .lvh{margin:0 0 4px;font-size:16px}
+.lvrow{flex-wrap:nowrap;gap:8px;margin-top:2px}
+.lvrow .lvcard{flex:1 1 0;min-width:0;max-width:200px;width:auto;min-height:0;padding:8px}
+.lvrow .lvcard h3{font-size:15px}
+.lvrow .lvcard p{font-size:12px;line-height:1.25}
+.lvrow .lvcard .tag{font-size:9px;padding:0 4px}
+.lvrow .lvcard .mico,.lvcard .mico{width:48px;height:48px;margin-bottom:4px}
+.screen:has(.lvrow) > div.sm{max-height:58px;overflow:hidden}

@@ -115,14 +115,14 @@ Object.assign(Game, {
   startRun() {
     const s = Save.data, hero = HEROES[s.hero];
     const lo = (s.loadout && s.loadout[s.hero]) || {}, own = id => (id && s.heroes[id] && HEROES[id].clan === hero.clan ? id : s.hero);
-    this.run = { hero: s.hero, wpn: hero.start || s.hero, abl: s.hero, clan: hero.tribe, act: 0, seed: (Math.random() * 1e9) | 0, cstate: {}, cleared: 0, perks: [], drawbacks: [], hp: 100, gold: 20 + 25 * (s.meta.fort || 0),
+    this.run = { hero: s.hero, wpn: hero.start || s.hero, abl: s.hero, clan: hero.tribe, act: 0, seed: (Math.random() * 1e9) | 0, cstate: {}, cleared: 0, perks: [], drawbacks: [], hp: 100,
       kills: 0, rooms: 0, xp: 0, plv: 1, coreAcc: 0, ammo: startAmmo(), wpn2: hero.start2 || null, bonus: { mut: 0 }, mutKills: 0, killAcc: 0, phoenixUsed: false, t0: Date.now() };
     this.P = buildStats(this.run, s); this.run.hp = this.P.maxhp;
     this.enterAct();
   },
   resume() { this.run = Save.data.run; this.P = buildStats(this.run, Save.data); this.enterAct(); },
   descend(h) {
-    const run = this.run; run.act++; run.seed = (Math.random() * 1e9) | 0; run.cstate = {}; run.cleared = 0;
+    const run = this.run; run.act++; run.plv = (run.plv || 1) + 1; run.pendLv = (run.pendLv || 0) + 1; run.seed = (Math.random() * 1e9) | 0; run.cstate = {}; run.cleared = 0;
     this.heal(h === undefined ? 0.35 : h); this.frozen = false; this.enterAct();
   },
   enterAct() {
@@ -130,7 +130,7 @@ Object.assign(Game, {
     for (const c of W.cells) c.state = run.cstate[c.id] || (run.cstate[c.id] = {});
     const sc = W.cells[W.startId]; sc.state.visited = true;
     const P = this.P = buildStats(run, Save.data);
-    const C = this.C = { world: W, t: 0, en: [], eb: [], pb: [], haz: [], zones: [], gold: [], parts: [], fl: [], turrets: [], beams: [], markers: [], fx: [], pillars: W.pillars,
+    const C = this.C = { world: W, t: 0, en: [], eb: [], pb: [], haz: [], zones: [], heals: [], parts: [], fl: [], turrets: [], beams: [], markers: [], fx: [], pillars: W.pillars,
       waves: [], waveIdx: 0, waveCd: 0, shake: 0, boss: null, bladeAng: 0, intro: 0, banner: 2.6, bannerText: ACT_NAMES[areaOf(act)].toUpperCase() + ' ' + (areaOf(act) + 1) + '-' + (act % 3 + 1), enc: null, props: [], burstQ: [], items: [], chests: [], lvlKills: 0, levelTotal: 0, portal: null, levelUps: 0, wdrops: [], hitstop: 0, curCell: sc, cam: { x: clamp(sc.cx - W_ / 2, 0, W.w - W_), y: clamp(sc.cy + 70 - H / 2, 0, W.h - H) }, mx: 0, my: 0,
       noHit: true, hpS: 1, dmgS: 1, spdS: 1, curse: {}, clearMsg: 0, near: null,
       p: { x: sc.cx, y: sc.cy + 70, lx: sc.cx, ly: sc.cy + 70, r: 12, aim: -Math.PI / 2, fireT: 0.3, dashT: 0, dashCd: 0, dashDir: 0, dashHit: [], inv: 0.5, abT: 2, flash: 0, over: 0, overRate: 1, shield: 0, still: 0, trailT: 0, regenAcc: 0 },
@@ -236,21 +236,19 @@ Object.assign(Game, {
     C.levelTotal = C.en.filter(e => e.free).length;
     // rule: chests wait in dead ends first (the furthest dead end holds the best one), then in other caverns
     const spots = Wd.nodes.filter(n => n.type === 'cave' || n.type === 'boss').sort((a, b) => (b.deg === 1) - (a.deg === 1) || Math.hypot(b.x - sc.cx, b.y - sc.cy) - Math.hypot(a.x - sc.cx, a.y - sc.cy));
-    const kinds = ['weapon', 'ammo', 'heal', 'ammo', 'rad'];
+    const kinds = ['weapon', 'ammo', 'heal', 'ammo'];
     spots.slice(0, 4).forEach((n, i) => {
       const sp = this.safeSpot(n.x + (R() - 0.5) * 60, n.y + (R() - 0.5) * 60, 22);
-      let kind = i === 0 ? (R() < 0.4 + 0.04 * act ? 'gold' : 'weapon') : kinds[Math.floor(R() * kinds.length)];
+      let kind = i === 0 ? 'weapon' : kinds[Math.floor(R() * kinds.length)];
       if (n.type === 'boss') kind = 'ammo';
       C.chests.push({ x: sp.x, y: sp.y, kind, open: false });
     });
   },
   onKill(e) {
     const C = this.C, run = this.run, P = this.P; if (!C || !C.world) return;
-    const xp = e.boss ? 60 : e.elite ? 14 : ENEMY[e.type].cost * 2, n = Math.min(8, Math.max(1, Math.round(xp / 2)));
-    for (let i = 0; i < n; i++) this.spawnItem(e.x, e.y, 'rad', { amt: xp / n });
     run.ammo = run.ammo || startAmmo();
-    const want = this.ammoWanted(), low = run.ammo[want] / AMMO[want].max < 0.35;
-    if (!e.boss && Math.random() < Math.min(0.85, (low ? 0.2 : 0.09) * P.dropMul)) this.spawnItem(e.x, e.y, 'ammo', { type: want, amt: AMMO[want].amt });
+    const want = this.ammoWanted(), low = run.ammo[want] / AMMO[want].max < 0.45;
+    if (!e.boss && Math.random() < Math.min(0.9, (low ? 0.34 : 0.13) * P.dropMul)) this.spawnItem(e.x, e.y, 'ammo', { type: want, amt: AMMO[want].amt });
     if (!e.boss && !P.noHeal && Math.random() < (run.hp < P.maxhp * 0.5 ? 0.05 : 0.015) * Math.min(P.dropMul, 1.8)) this.spawnItem(e.x, e.y, 'heal', { amt: 10 });
     if (P.bloodlust && !e.boss && !P.noHeal && Math.random() < P.bloodlust) this.healP(10);
     if (e.free) {
@@ -269,42 +267,43 @@ Object.assign(Game, {
       }
     }
   },
-  // ---------- the hero: front view, flips left/right, the gun turns towards the cursor ----------
-  drawHero(p) {
-    const run = this.run, id = run.hero, C = this.C;
-    if (!View.front) { this.sprite(id, p.x, p.y, p.aim, 2, p.flash > 0); return; }
-    const face = Math.cos(p.aim) >= 0 ? 1 : -1, moving = Math.hypot(p.x - (p.dpx === undefined ? p.x : p.dpx), p.y - (p.dpy === undefined ? p.y : p.dpy)) > 0.4;
-    p.dpx = p.x; p.dpy = p.y;
-    const bob = moving ? -Math.abs(Math.sin(C.t * 14)) * 3 : -Math.sin(C.t * 2.6) * 1.2, sq = moving ? 1 + Math.sin(C.t * 28) * 0.04 : 1;
-    const spr = p.flash > 0 ? Sprites.white(id + ':f') : Sprites.get(id + ':f'), fx = snap(p.x), fy = snap(p.y + 15);
-    ctx.save(); ctx.globalAlpha = 0.4; ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse(fx, fy, 15, 5, 0, 0, 6.283); ctx.fill(); ctx.restore();
-    ctx.imageSmoothingEnabled = false; ctx.save(); ctx.translate(fx, fy + snap(bob)); ctx.scale(face, sq); ctx.drawImage(spr, -20, -40, 40, 40); ctx.restore();
-    this.drawHeldWeapon(p, fx + face * 8, fy + snap(bob) - 14, face);
+  // ---------- the weapon in the hero's hands, seen from above (symmetric top-down sprite, two hands, attack animations) ----------
+  weaponKick(w, a) {
+    const p = this.C.p, am = ammoOf(w), dir = p.wa ? -p.wa.dir : 1;
+    const R = w.type === 'shot' ? clamp(2.5 + w.dmg * Math.max(1, w.n) * 0.12, 2.5, 8) : w.type === 'mortar' ? 7 : 0;
+    p.wa = { t: 0, kind: w.type, dir, R, n: w.n || 1, dmg: w.dmg, rate: w.rate, am, arc: w.arc || 1.8, reach: w.reach || 80, dur: w.type === 'cone' ? clamp(0.8 / w.rate, 0.1, 0.24) : w.type === 'lance' ? clamp(0.7 / w.rate, 0.1, 0.18) : clamp(0.7 / w.rate, 0.08, 0.22), pump: w.type === 'shot' && am === 'shell' && w.rate < 2, jit: w.type === 'shot' && w.rate >= 10 };
+    if (w.type !== 'shot' && w.type !== 'mortar') return;
+    const C = this.C, k = 0.8, meta = WEAPON_TOP_META[w.art] || { rear: 8, muz: 50 }, mx = p.x + Math.cos(a) * (6 + (meta.muz - meta.rear) * k), my = p.y + Math.sin(a) * (6 + (meta.muz - meta.rear) * k);
+    if ((am === 'bullet' || am === 'shell') && C.parts.length < 380) { const s = a + 1.57 + rnd(-0.5, 0.5); C.parts.push({ x: p.x + Math.cos(a) * 12, y: p.y + Math.sin(a) * 12, vx: Math.cos(s) * rnd(60, 120), vy: Math.sin(s) * rnd(60, 120), t: 0.45, max: 0.45, col: '#d9a441', s: 2 }); }
+    if (am === 'explosive') this.burst(mx, my, '#b8b8c0', 4, 70);
+    if (am === 'energy') this.burst(mx, my, AMMO.energy.col, 3, 90);
   },
-  drawFront(key, x, y, face, scale, flash, r, bob) {   // anything standing: shadow, flip left/right, small bob when it moves
-    const s = flash ? Sprites.white(key) : Sprites.get(key), w = s.width * scale, h = s.height * scale, fx = snap(x), fy = snap(y + r * 0.85);
-    ctx.save(); ctx.globalAlpha *= 0.4; ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse(fx, fy, w * 0.36, w * 0.13, 0, 0, 6.283); ctx.fill(); ctx.restore();
-    ctx.imageSmoothingEnabled = false; ctx.save(); ctx.translate(fx, fy + snap(bob || 0)); ctx.scale(face, 1); ctx.drawImage(s, -w / 2, -h, w, h); ctx.restore();
-  },
-  drawArtWeapon(p) {   // the big late-game weapons are drawn in front of the hero
-    const w = kitOf(this.run).weapon; ctx.save(); ctx.translate(snap(p.x + Math.cos(p.aim) * 15), snap(p.y + Math.sin(p.aim) * 15)); ctx.rotate(p.aim); ctx.imageSmoothingEnabled = false;
-    const s = Sprites.get('w:' + w.art), k = 1.5; ctx.drawImage(s, -4, -s.height * k / 2, s.width * k, s.height * k); ctx.restore();
-  },
-  drawHeldWeapon(p, x, y, face) {
-    const w = kitOf(this.run).weapon, O = '#0c0c12', M = '#5a5e6a', L = '#9aa0ae';
-    ctx.save(); ctx.translate(x, y); ctx.rotate(p.aim); if (face < 0) ctx.scale(1, -1);
-    if (WEAPON_ART[w.art]) { ctx.imageSmoothingEnabled = false; ctx.drawImage(Sprites.get('w:' + w.art), -4, -16, 32, 32); }
-    else if (w.type === 'cone') {
-      ctx.fillStyle = O; ctx.fillRect(-2, -4, 12, 8); ctx.fillStyle = '#6a4a2a'; ctx.fillRect(-1, -3, 10, 6);
-      ctx.fillStyle = O; ctx.fillRect(8, -5, 26, 10); ctx.fillStyle = L; ctx.fillRect(9, -4, 24, 8); ctx.fillStyle = '#eef2fa'; ctx.fillRect(9, -4, 24, 2);
-    } else if (w.type === 'lance') {
-      ctx.fillStyle = O; ctx.fillRect(-4, -3, 40, 6); ctx.fillStyle = '#8a6a3a'; ctx.fillRect(-3, -2, 30, 4); ctx.fillStyle = L; ctx.fillRect(26, -3, 10, 6);
-    } else if (w.type !== 'blades') {
-      ctx.fillStyle = O; ctx.fillRect(-3, -4, 26, 8); ctx.fillStyle = M; ctx.fillRect(-2, -3, 24, 6); ctx.fillStyle = L; ctx.fillRect(-2, -3, 24, 2);
-      ctx.fillStyle = O; ctx.fillRect(0, 3, 7, 8); ctx.fillStyle = '#4a3220'; ctx.fillRect(1, 3, 5, 6);
-      ctx.fillStyle = O; ctx.fillRect(20, -3, 6, 6);
+  drawHeldTop(p) {
+    const run = this.run, w = kitOf(run).weapon; if (!w.art) return;
+    const spr = Sprites.get('wt:' + w.art), meta = WEAPON_TOP_META[w.art] || { rear: 8, fore: null, muz: 50 }, k = 0.8, C = this.C, wa = p.wa;
+    const u = wa ? clamp(wa.t / wa.dur, 0, 1) : 1, active = wa && u < 1;
+    let fo = 9, ang = 0, rec = 0, thr = 0, pumpOff = 0, jy = 0;
+    const idle = Math.sin(C.t * 2.2) * 0.4;
+    if (active) {
+      if (wa.kind === 'shot' || wa.kind === 'mortar') { rec = wa.R * (1 - u) * (1 - u); if (wa.pump) pumpOff = Math.sin(Math.PI * clamp((u - 0.25) / 0.6, 0, 1)) * 6; if (wa.jit) jy = (Math.random() - 0.5) * 1.6; }
+      else if (wa.kind === 'cone') { const e = u * u * (3 - 2 * u); ang = wa.dir * (wa.arc / 2) * (1 - 2 * e); fo += 4 * Math.sin(Math.PI * u); }
+      else if (wa.kind === 'lance') thr = wa.reach * 0.3 * Math.sin(Math.PI * Math.min(1, u * 1.3));
     }
-    ctx.restore();
+    const ax = fo - rec + thr + idle, rearX = ax, foreX = meta.fore ? ax + (meta.fore - meta.rear) * k - pumpOff : null;
+    const drawAt = (a2, alpha) => {
+      ctx.save(); ctx.translate(snap(p.x), snap(p.y)); ctx.rotate(p.aim + a2); ctx.globalAlpha = alpha; ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(spr, rearX - meta.rear * k, -14 * k + jy, 56 * k, 28 * k);
+      if (alpha === 1) {
+        if (active && (wa.kind === 'shot' || wa.kind === 'mortar') && u < 0.4) {   // muzzle flash
+          const mxp = rearX + (meta.muz - meta.rear) * k, sz = (4 + Math.min(9, wa.dmg * wa.n * 0.12)) * (1 - u / 0.4), col = wa.am ? AMMO[wa.am].col : '#fff3b0';
+          ctx.fillStyle = col; ctx.beginPath(); for (let i = 0; i < 8; i++) { const a3 = i * 0.785, rr = i % 2 ? sz * 0.45 : sz; ctx.lineTo(mxp + 2 + Math.cos(a3) * rr, Math.sin(a3) * rr * 0.8); } ctx.closePath(); ctx.fill();
+          ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(mxp + 2, 0, sz * 0.32, 0, 6.283); ctx.fill();
+        }
+      }
+      ctx.restore();
+    };
+    if (active && wa.kind === 'cone') { for (const [d, al] of [[-0.35, 0.16], [-0.18, 0.28]]) drawAt(ang + wa.dir * -d * (wa.arc / 2), al); }
+    drawAt(ang, 1);
   },
   // ---------- light aim assist (off by default, set AIM_ASSIST = true in data.js to bring it back): when an enemy is close to your aim line the shot bends towards it ----------
   assistAim(w) {
@@ -356,16 +355,12 @@ Object.assign(Game, {
     g.globalAlpha = 1;
   },
   boomAt(b) { if (b.boom) { this.C.haz.push({ x: b.x, y: b.y, r: b.boom * this.P.blastRad, t: 0.05, max: 0.05, dmg: b.boomDmg, friendly: true }); } },
-  // ---------- pickups: rads (xp), ammo, health; chests ----------
+  // ---------- pickups: ammo, health; chests ----------
   spawnItem(x, y, kind, o) { const C = this.C; if (C.items.length > 220) return; C.items.push(Object.assign({ x, y, kind, vx: rnd(-110, 110), vy: rnd(-110, 110), t: 0 }, o || {})); },
-  addXp(n) {
-    const run = this.run, C = this.C; run.plv = run.plv || 1; run.xp = (run.xp || 0) + n * (this.P.xpMul || 1);
-    while (run.xp >= 24 + 16 * run.plv) { run.xp -= 24 + 16 * run.plv; run.plv++; run.pendLv = (run.pendLv || 0) + 1; }
-  },
   addAmmo(type, amt) { const run = this.run; run.ammo = run.ammo || startAmmo(); run.ammo[type] = Math.min(Math.round(AMMO[type].max * this.P.ammoCap), (run.ammo[type] || 0) + Math.round(amt * this.P.ammoMul)); },
   ammoWanted() {   // mostly the ammo your weapons use
     const run = this.run, types = [run.wpn || run.hero, run.wpn2].filter(Boolean).map(id => ammoOf(HEROES[id].weapon)).filter(Boolean);
-    return types.length && Math.random() < 0.75 ? pick(types) : pick(Object.keys(AMMO));
+    return types.length && Math.random() < 0.85 ? pick(types) : pick(Object.keys(AMMO));
   },
   updatePickups(dt) {
     const C = this.C, p = C.p, P = this.P;
@@ -373,10 +368,10 @@ Object.assign(Game, {
       it.t += dt; const ox = it.x, oy = it.y;
       it.x += it.vx * dt; it.y += it.vy * dt; it.vx *= Math.pow(0.04, dt); it.vy *= Math.pow(0.04, dt);
       if (!this.walkable(it.x, it.y)) { it.x = ox; it.y = oy; it.vx = it.vy = 0; }
-      const d = dist(it, p), mag = (it.kind === 'rad' ? 150 : 100) * P.magnet;
+      const d = dist(it, p), mag = 100 * P.magnet;
       if (it.t > 0.35 && d < mag) { const a = Math.atan2(p.y - it.y, p.x - it.x), sp = 360 * (1 - d / mag * 0.5), nx = it.x + Math.cos(a) * sp * dt, ny = it.y + Math.sin(a) * sp * dt; if (this.walkable(nx, ny)) { it.x = nx; it.y = ny; } }
       if (d < 22 && it.t > 0.2) { it.dead = true; this.collectItem(it); }
-      if (it.kind !== 'rad' && it.t > 45) it.dead = true;
+      if (it.t > 45) it.dead = true;
     }
     C.items = C.items.filter(i => !i.dead);
     for (const pr of C.props) if (pr.flash > 0) pr.flash -= dt;
@@ -385,16 +380,13 @@ Object.assign(Game, {
   },
   collectItem(it) {
     const p = this.C.p;
-    if (it.kind === 'rad') { this.addXp(it.amt); const C = this.C; if (!C.radSnd || C.t - C.radSnd > 0.06) { Sfx.tick(); C.radSnd = C.t; } }
-    else if (it.kind === 'ammo') { this.addAmmo(it.type, it.amt); this.floatText(p.x, p.y - 22, '+' + AMMO[it.type].name, AMMO[it.type].col); Sfx.ammo(); }
+    if (it.kind === 'ammo') { this.addAmmo(it.type, it.amt); this.floatText(p.x, p.y - 22, '+' + AMMO[it.type].name, AMMO[it.type].col); Sfx.ammo(); }
     else if (it.kind === 'heal') { if (!this.P.noHeal) { this.healP(it.amt * this.P.healMul); Sfx.heal(); } }
   },
   openChest(ch) {
     const C = this.C; Sfx.chest(ch.kind); C.shake = Math.max(C.shake, 3);
-    if (ch.kind === 'ammo') for (let i = 0, k = Math.round(4 * this.P.dropMul); i < k; i++) { const t = this.ammoWanted(); this.spawnItem(ch.x, ch.y, 'ammo', { type: t, amt: AMMO[t].amt }); }
+    if (ch.kind === 'ammo') for (let i = 0, k = Math.round(6 * this.P.dropMul); i < k; i++) { const t = this.ammoWanted(); this.spawnItem(ch.x, ch.y, 'ammo', { type: t, amt: AMMO[t].amt }); }
     else if (ch.kind === 'weapon') this.spawnWeapon(ch.x, ch.y + 30, false, true);
-    else if (ch.kind === 'gold') { this.spawnWeapon(ch.x, ch.y + 30, false, true, 2); C.shake = 6; this.floatText(ch.x, ch.y - 30, 'GOLDEN CHEST', '#ffe94a', 1.3); }
-    else if (ch.kind === 'rad') for (let i = 0; i < 10; i++) this.spawnItem(ch.x, ch.y, 'rad', { amt: 3 });
     else for (let i = 0; i < 2; i++) this.spawnItem(ch.x, ch.y, 'heal', { amt: 10 });
   },
   useAmmo(w) {
@@ -449,7 +441,7 @@ Object.assign(Game, {
   },
   weaponIcon(w, col) {
     const O = '#0c0c12', M = '#9aa0ae';
-    if (w.art) { const s = Sprites.get('w:' + w.art), k = s.width > 30 ? 1.05 : 1.15; ctx.imageSmoothingEnabled = false; ctx.drawImage(s, -s.width * k / 2, -s.height * k / 2, s.width * k, s.height * k); return; }
+    if (w.art) { const s = Sprites.get('w:' + w.art), k = 0.5; ctx.imageSmoothingEnabled = false; ctx.drawImage(s, -s.width * k / 2, -s.height * k / 2, s.width * k, s.height * k); return; }
     if (w.type === 'cone') { ctx.fillStyle = O; ctx.fillRect(-16, -3, 9, 7); ctx.fillRect(-9, -5, 25, 10); ctx.fillStyle = '#6a4a2a'; ctx.fillRect(-15, -2, 7, 5); ctx.fillStyle = '#d8dce8'; ctx.fillRect(-8, -4, 23, 8); ctx.fillStyle = col; ctx.fillRect(-8, 1, 23, 2); }
     else if (w.type === 'lance') { ctx.fillStyle = O; ctx.fillRect(-16, -2, 32, 5); ctx.fillStyle = '#8a6a3a'; ctx.fillRect(-15, -1, 22, 3); ctx.fillStyle = '#d8dce8'; ctx.fillRect(7, -1, 9, 3); }
     else if (w.type === 'blades') { ctx.fillStyle = col; ctx.fillRect(-4, -4, 8, 8); ctx.fillStyle = O; ctx.fillRect(-2, -2, 4, 4); }
@@ -510,10 +502,9 @@ Object.assign(Game, {
     if (this.P.clearHeal) this.heal(this.P.clearHeal);
     if (n === 'elite' || (n === 'fight' && Math.random() < 0.3)) this.spawnWeapon(cell.cx, cell.cy + 90);
     const kind = cell.rewardKind;
-    if (n === 'curse' || kind === 'epic') cell.state.reward = { kind: 'perk', min: 'epic', cores: got };
-    else if (n === 'boss' || n === 'elite') cell.state.reward = { kind: 'perk', min: 'rare', cores: got };
-    else if (kind === 'gold') { const g = Math.round(35 + 10 * run.cleared + 20 * run.act); run.gold += g; this.floatText(p.x, p.y - 52, '+' + g + ' GOLD', '#ffd91f', 1.2); cell.state.rewarded = true; }
-    else cell.state.reward = { kind: 'perk', min: 'common', cores: got };
+    if (n === 'curse' || kind === 'epic') cell.state.reward = { kind: 'perk', min: 'epic' };
+    else if (n === 'boss' || n === 'elite') cell.state.reward = { kind: 'perk', min: 'rare' };
+    else cell.state.reward = { kind: 'perk', min: 'common' };
     this.gatesUpdate(); Music.play('menu'); this.persist();
   },
   discover(cell) {
@@ -556,7 +547,7 @@ Object.assign(Game, {
     if (cc && !C.enc && cc.type === 'boss' && !cc.state.cleared && dist(p, { x: cc.cx, y: cc.cy }) < cc.r * 0.55) this.startEncounter(cc, null);
     for (const c of W.cells) {
       const s = c.state;
-      if (s.cleared && s.reward && !s.rewarded) { const o = this.orbPos(c); if (dist(o, p) < 30) { C.nodeCell = c; C.node = s; C.pendingOrb = true; C.pendingObj = false; this.frozen = true; Input.down = false; Input.keys = {}; UI.reward(s.reward, s.reward.cores); return; } }
+      if (s.cleared && s.reward && !s.rewarded) { const o = this.orbPos(c); if (dist(o, p) < 30) { C.nodeCell = c; C.node = s; C.pendingOrb = true; C.pendingObj = false; this.frozen = true; Input.down = false; Input.keys = {}; UI.reward(s.reward); return; } }
       if (c.type === 'boss' && s.cleared && s.rewarded && dist(this.portalPos(c), p) < 40) { const q = this.portalPos(c); C.suck = { x: q.x, y: q.y, t: 0, h: 0.35 }; Sfx.portal(); this.impact(0.08, '#a06bff', 0.4); return; }
       if (c.obj && !s.used && dist(c.obj, p) < 52) C.near = c;
     }
@@ -582,7 +573,7 @@ Object.assign(Game, {
     if (C && !C.near && C.nearW && !this.frozen && !this.paused) { this.pickWeapon(C.nearW); return; }
     if (!C || !C.near || this.frozen || this.fade && this.fade.t < 0.5 && !this.fade.done || this.paused) return;
     const c = C.near, o = c.obj; C.nodeCell = c; C.node = c.state; C.pendingObj = true; C.pendingOrb = false; this.frozen = true; Input.keys = {}; Input.down = false;
-    if (o.kind === 'shop') UI.shop(c.state); else if (o.kind === 'rest') UI.rest(c.state); else if (o.kind === 'event') UI.event(c.state); else if (o.kind === 'curse') UI.curse(c.state);
+    if (o.kind === 'rest') UI.rest(c.state); else if (o.kind === 'event') UI.event(c.state); else if (o.kind === 'curse') UI.curse(c.state);
   },
   nodeDone() {
     const C = this.C; this.frozen = false; UI.hide(); document.body.classList.add('fight');
@@ -653,7 +644,7 @@ Object.assign(Game, {
     }
     for (const ch of C.chests) {
       if (ch.x < vx0 || ch.x > vx1 || ch.y < vy0 || ch.y > vy1) continue;
-      const col = { ammo: '#ffd91f', weapon: '#3d9bff', heal: '#ff3a5a', rad: '#7dff4a', gold: '#ffe94a' }[ch.kind], x = snap(ch.x), y = snap(ch.y);
+      const col = { ammo: '#ffd91f', weapon: '#3d9bff', heal: '#ff3a5a' }[ch.kind], x = snap(ch.x), y = snap(ch.y);
       ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.fillRect(x - 16, y + 10, 32, 6);
       ctx.fillStyle = '#15171c'; ctx.fillRect(x - 15, y - 11, 30, 22); ctx.fillStyle = ch.open ? '#444' : col; ctx.fillRect(x - 15, y - 11, 30, 3); ctx.fillRect(x - 15, y - 11, 3, 22); ctx.fillRect(x + 12, y - 11, 3, 22); ctx.fillRect(x - 15, y + 8, 30, 3);
       if (!ch.open) { ctx.fillStyle = col; ctx.fillRect(x - 3, y - 5, 6, 8); }
@@ -661,8 +652,7 @@ Object.assign(Game, {
     for (const it of C.items) {
       if (it.x < vx0 || it.x > vx1 || it.y < vy0 || it.y > vy1) continue;
       const x = snap(it.x), y = snap(it.y + Math.sin(C.t * 6 + it.x) * 1.5);
-      if (it.kind === 'rad') { ctx.fillStyle = 'rgba(80,255,80,.25)'; ctx.fillRect(x - 6, y - 6, 12, 12); ctx.fillStyle = '#7dff4a'; ctx.fillRect(x - 3, y - 3, 6, 6); ctx.fillStyle = '#e6ffd0'; ctx.fillRect(x - 1, y - 1, 2, 2); }
-      else if (it.kind === 'ammo') { const A = AMMO[it.type]; ctx.fillStyle = '#0a0b0e'; ctx.fillRect(x - 8, y - 6, 16, 12); ctx.fillStyle = A.col; ctx.fillRect(x - 8, y - 6, 16, 2); ctx.fillRect(x - 8, y + 4, 16, 2); ctx.font = '9px Silk, monospace'; ctx.fillText(A.L, x, y + 3); }
+      if (it.kind === 'ammo') { const A = AMMO[it.type]; ctx.fillStyle = '#0a0b0e'; ctx.fillRect(x - 8, y - 6, 16, 12); ctx.fillStyle = A.col; ctx.fillRect(x - 8, y - 6, 16, 2); ctx.fillRect(x - 8, y + 4, 16, 2); ctx.font = '9px Silk, monospace'; ctx.fillText(A.L, x, y + 3); }
       else { ctx.fillStyle = '#ff3a5a'; ctx.fillRect(x - 3, y - 7, 6, 14); ctx.fillRect(x - 7, y - 3, 14, 6); ctx.fillStyle = '#ffd0d8'; ctx.fillRect(x - 1, y - 5, 2, 10); }
     }
     if (C.portal) {
@@ -673,13 +663,19 @@ Object.assign(Game, {
     if (C.suck) { const s = C.suck; for (let i = 0; i < 36; i++) { const a = i * 0.37 + C.t * 7, r = (1 - ((i / 36 + C.t * 1.6) % 1)) * (50 + s.t * 150); ctx.fillStyle = i % 2 ? '#a06bff' : '#3de8ff'; ctx.fillRect(snap(s.x + Math.cos(a) * r) - 2, snap(s.y + Math.sin(a) * r) - 2, 4, 4); } }
     for (const d of C.wdrops) {
       if (d.x < vx0 || d.x > vx1 || d.y < vy0 || d.y > vy1) continue;
-      const h = HEROES[d.id], col = CLANS[h.clan].color, x = snap(d.x), y = snap(d.y + Math.sin(C.t * 4 + d.x) * 2);
-      ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.fillRect(x - 12, y + 12, 24, 6);
-      if (h.weapon.art) { const s = Sprites.get('w:' + h.weapon.art); ctx.imageSmoothingEnabled = false; ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(x - 24, y - 15, 48, 30); ctx.fillStyle = col; ctx.fillRect(x - 24, y - 15, 48, 2); ctx.drawImage(s, x - s.width * 0.7, y - s.height * 0.7, s.width * 1.4, s.height * 1.4); } else {
-      ctx.fillStyle = '#0a0b0e'; ctx.fillRect(x - 12, y - 12, 24, 24); ctx.fillStyle = col; ctx.fillRect(x - 12, y - 12, 24, 2); ctx.fillRect(x - 12, y + 10, 24, 2); ctx.fillRect(x - 12, y - 12, 2, 24); ctx.fillRect(x + 10, y - 12, 2, 24);
-      ctx.font = '12px Silk, monospace'; ctx.fillText({ shot: 'S', cone: 'C', blades: 'B', lance: 'L', mortar: 'M' }[h.weapon.type], x, y + 5); }
+      const h = HEROES[d.id], am = ammoOf(h.weapon), col = am ? AMMO[am].col : '#e8ecf4', x = snap(d.x), y = snap(d.y + Math.sin(C.t * 4 + d.x) * 2);
+      const pulse = 0.55 + 0.25 * Math.sin(C.t * 4 + d.x);
+      ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(x - 16, y + 12, 32, 4);
+      const s = Sprites.get('w:' + h.weapon.art), k = 0.72; ctx.imageSmoothingEnabled = false;
+      ctx.save(); ctx.shadowColor = col; ctx.shadowBlur = 10 * pulse + 3;
+      ctx.drawImage(s, snap(x - s.width * k / 2), snap(y - s.height * k / 2), s.width * k, s.height * k); ctx.restore();
     }
-    if (C.nearW && !C.near) { const h = HEROES[C.nearW.id], t = '[E] ' + h.weapon.name.toUpperCase() + ' (' + h.weapon.type + ')', x = snap(C.nearW.x), y = snap(C.nearW.y); ctx.font = '12px Silk, monospace'; ctx.fillStyle = '#000'; ctx.fillText(t, x + 1, y - 23); ctx.fillStyle = '#ffd91f'; ctx.fillText(t, x, y - 24); }
+    if (C.nearW && !C.near) {   // name + ammo type (coloured, with a small ammo icon) so you know what it uses before picking it up
+      const h = HEROES[C.nearW.id], am = ammoOf(h.weapon), x = snap(C.nearW.x), y = snap(C.nearW.y), t = '[E] ' + h.weapon.name.toUpperCase(), t2 = am ? AMMO[am].name : 'MELEE - NO AMMO', c2 = am ? AMMO[am].col : '#c8ccd8';
+      ctx.font = '12px Silk, monospace'; ctx.fillStyle = '#000'; ctx.fillText(t, x + 1, y - 35); ctx.fillStyle = '#ffd91f'; ctx.fillText(t, x, y - 36);
+      ctx.font = '10px Silk, monospace'; ctx.fillStyle = '#000'; ctx.fillText(t2, x + 1, y - 23); ctx.fillStyle = c2; ctx.fillText(t2, x, y - 24);
+      if (am) { const tw = ctx.measureText(t2).width; this.ammoIcon(am, x - tw / 2 - 11, y - 27); }
+    }
     if (C.near) { const o = C.near.obj, txt = '[E] ' + { shop: 'TRADE', rest: 'REST', event: 'PRAY', curse: 'TOUCH THE STONE' }[o.kind]; ctx.font = '12px Silk, monospace'; ctx.fillStyle = '#000'; ctx.fillText(txt, snap(o.x) + 1, o.y - 51); ctx.fillStyle = '#ffd91f'; ctx.fillText(txt, snap(o.x), o.y - 52); }
     ctx.textAlign = 'left';
   },
